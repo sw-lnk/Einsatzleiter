@@ -73,32 +73,26 @@ class Arbeitsbereich(ttk.Frame):
         self.tabel.heading('eintrag', text='Eintrag')
         self.tabel.heading('von', text='Absender')
         self.tabel.heading('an', text='Empfänger')
-        self.tabel.heading('funker', text='Bearbeiter')
-
-        # Füllen der Tabelle mit Einträgen
-        # ToDo: Lesen der Daten aus einer Datenbank z.B. MongoDB
-        for einsatz in liste_einsatz:
-            self.tabel.insert(parent='', index='end', values=(
-                datetime.datetime.now(),
-                einsatz,
-                'Ab',
-                'An',
-                self.parent.parent.user_login.get()
-            ))
+        self.tabel.heading('funker', text='Bearbeiter')        
 
     def update_tabel(self, id):
-        pass
-        # Tabelle anhand des ausgewählten Einsatzes füllen.
-
+        for element in self.tabel.get_children():
+            self.tabel.delete(element)
+        
+        for einsatz in self.liste_einsatz:
+            if einsatz['id'] == id:                
+                for eintrag in einsatz['liste_eintrag']:
+                    self.tabel.insert(parent='', index='end', values=eintrag)
+                break
 
     def add_entry(self, _):
         entry = self.entry_funk.get()
         funker = self.parent.parent.user_login.get()
         
-        # Eintrag erzeugen wenn Eingabefeld Inhalt hat
+        # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
         if entry:
             self.tabel.insert(parent='', index='end', values=(
-                datetime.datetime.now(),
+                datetime.datetime.now().strftime('%d.%m.%Y %H:%M'),
                 entry,
                 'Ab',
                 'An',
@@ -131,26 +125,36 @@ class Einsatzliste(ttk.Frame):
     def __init__(self, parent, liste_einsatz):
         super().__init__(parent)
 
+        self.parent = parent
         self.liste_einsatz = liste_einsatz
 
         self.grid(row=1, column=0, pady=5, padx=5, sticky='nw')
         ttk.Label(self, text='Einsatzliste').grid()
 
         # Tabelle aller Einsätze
-        self.tabel_einsatz = ttk.Treeview(master=self, columns=('stichwort', 'strasse', 'status'), show='headings')
+        self.tabel_einsatz = ttk.Treeview(master=self, columns=('id', 'stichwort', 'strasse', 'status'), show='headings')
         self.tabel_einsatz.grid(row=1)
+        self.tabel_einsatz.heading('id', text='Nr.')
         self.tabel_einsatz.heading('stichwort', text='Stichwort')
         self.tabel_einsatz.heading('strasse', text='Straße')
         self.tabel_einsatz.heading('status', text='Status')
+
+        self.tabel_einsatz.bind('<<TreeviewSelect>>', self.item_selection)
 
         # Alle Einsätze in Tabelle schreiben
         # ToDo: Lesen der Daten aus einer Datenbank z.B. MongoDB
         for einsatz in liste_einsatz:
             self.tabel_einsatz.insert(parent='', index='end', values=(
+                einsatz['id'],
                 einsatz['stichwort'],
                 einsatz['strasse'],
-                'in Arbeit'                 
+                einsatz['status']                 
             ))
+        
+    def item_selection(self, _):
+        selection = self.tabel_einsatz.selection()
+        id = self.tabel_einsatz.item(selection[0])['values'][0]
+        self.parent.parent.arbeitsbereich.update_tabel(id)
 
 
 class Login(ttk.Frame):

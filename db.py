@@ -1,18 +1,21 @@
 from pymongo import MongoClient
 from getpass import getpass
 
-user = 'swen' #input('Username: ')
+user = input('Username: ')
 pwd = getpass('Password: ')
+ip = '192.168.178.41'
+port = '27017'
 
-client = MongoClient(f"mongodb://{user}:{pwd}@192.168.178.41:27017")
+client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}")
 
 db = client.einsatz
 
 berichte = db.berichte
 
-berichte.insert_one({'einsatznummer': 12345678, 'einsatzart': 'Brand'})
+berichte.insert_one(
+    {'id': 99, 'stichwort': 'TH0 ', 'strasse': 'Neustr.', 'status': 'offen',
+     'liste_eintrag': [
+         ('01.02.2024 09:55', 'Einsatz angelegt', '', '', 'Max Mustermann')
+        ]})
 
-for bericht in berichte.find():
-    print(bericht)
-    
-berichte.delete_many({})
+#berichte.delete_many({})
