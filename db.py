@@ -1,21 +1,35 @@
 from pymongo import MongoClient
 from getpass import getpass
+from einsatzdb import beispiel_einsatz_db
+from datetime import datetime
 
-user = input('Username: ')
-pwd = getpass('Password: ')
+user = 'user' #input('Username: ')
+pwd = 'user' #getpass('Password: ')
 ip = '192.168.178.41'
 port = '27017'
+db = 'einsatztagebuch'
 
-client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}")
+client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
 
-db = client.einsatz
+db = client.einsatztagebuch
+einsatzstellen = db.einsatzstellen
+updates = db.updates
 
-berichte = db.berichte
+ests = einsatzstellen.find()
 
-berichte.insert_one(
-    {'id': 99, 'stichwort': 'TH0 ', 'strasse': 'Neustr.', 'status': 'offen',
-     'liste_eintrag': [
-         ('01.02.2024 09:55', 'Einsatz angelegt', '', '', 'Max Mustermann')
-        ]})
+for est in ests:
+    print(est)
 
-#berichte.delete_many({})
+print(list(updates.find()))
+
+# einsatzstellen.insert_many(beispiel_einsatz_db)
+
+# einsatzstellen.insert_one(
+#     {'id': 88, 'stichwort': 'TH2', 'strasse': 'Großestr.', 'status': 'offen', 'liste_eintrag': [
+#          ['01.02.2024 10:01', 'Einsatz angelegt', '', '', 'Max Mustermann']
+#         ]})
+    
+# updates.insert_one({'date': datetime.now()})
+
+# einsatzstellen.delete_many({})
+# updates.delete_many({})
