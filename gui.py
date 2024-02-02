@@ -38,9 +38,14 @@ class App(ttk.Window):
         self.einsatzliste = Einsatzliste(self.main, liste_einsatz)       
         
         # Arbeitsfenster
-        self.arbeitsbereich = Arbeitsbereich(self.main, liste_einsatz)
-        self.bind('<Return>', self.arbeitsbereich.add_entry) 
+        self.arbeitsbereich = Arbeitsbereich(self.main, liste_einsatz)        
 
+        self.loop()
+    
+    def loop(self):   
+        # Diese Funktion wird alle 5000ms ausgeführt     
+        self.after(5000, self.loop)
+                
 
 class Hauptfenster(ttk.Frame):
     def __init__(self, parent):
@@ -61,9 +66,10 @@ class Arbeitsbereich(ttk.Frame):
         # Eingabe für den nächsten Eintrag im Funktagebuch
         self.entry_funk = ctk.CTkEntry(master=self, placeholder_text='Eintrag Funktagebuch')
         self.entry_funk.grid(row=3, column=0, sticky='news', padx=10)
+        self.entry_funk.bind('<Return>', self.add_entry)
 
         # Anzeige ausgewählter Einsatz
-        self.label_einsatz = ttk.Label(master=self, text='- ausgewählter Einsatz -', style='primary', font='bold')
+        self.label_einsatz = ttk.Label(master=self, text='- Einsatz -', style='primary', font='bold')
         self.label_einsatz.grid(column=0, row=0, sticky='nw')
         
         # Tabelle zur Anzeige alle Einträge zum ausgewähltem Einsatz
@@ -80,7 +86,12 @@ class Arbeitsbereich(ttk.Frame):
             self.tabel.delete(element)
         
         for einsatz in self.liste_einsatz:
-            if einsatz['id'] == id:                
+            if einsatz['id'] == id:
+                stichwort = einsatz['stichwort']
+                strasse = einsatz['strasse']
+                status = einsatz['status']
+                text = f'{stichwort}: {strasse} ({status})'
+                self.label_einsatz.config(text=text)              
                 for eintrag in einsatz['liste_eintrag']:
                     self.tabel.insert(parent='', index='end', values=eintrag)
                 break
