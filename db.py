@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from bson import ObjectId
 from getpass import getpass
 from einsatzdb import beispiel_einsatz_db
 from datetime import datetime
@@ -17,21 +18,25 @@ db = client.einsatztagebuch
 einsatzstellen = db.einsatzstellen
 updates = db.updates
 
-ests = einsatzstellen.find()
+alle_einsatzstellen = einsatzstellen.find()
 
-for est in ests:
-    print(est)
+eine_einsatzstelle = einsatzstellen.find_one(ObjectId('65be9246b026001556c778ce'))
 
-print(list(updates.find()))
+# print(eine_einsatzstelle)
+
+# for est in alle_einsatzstellen:
+#     print(est)
+
+# print(list(updates.find()))
 
 # einsatzstellen.insert_many(beispiel_einsatz_db)
 
-# einsatzstellen.insert_one(
-#     {'id': 88, 'stichwort': 'TH2', 'strasse': 'Großestr.', 'status': 'offen', 'liste_eintrag': [
-#          ['01.02.2024 10:01', 'Einsatz angelegt', '', '', 'Max Mustermann']
-#         ]})
+einsatzstellen.insert_one(
+    {'nr_lst': 2024000006, 'stichwort': 'TH0', 'strasse': 'Neustr.', 'status': 'offen', 'liste_eintrag': [
+         [datetime.now().strftime('%d.%m.%Y %H:%M'), 'Einsatz angelegt', '', '', 'Swen']
+        ]})
     
-# updates.insert_one({'date': datetime.now()})
+updates.insert_one({'date': datetime.now()})
 
 # einsatzstellen.delete_many({})
 # updates.delete_many({})

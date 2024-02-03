@@ -1,4 +1,5 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
+from bson import ObjectId
 from getpass import getpass
 import tkinter as tk
 #from tkinter import ttk
@@ -21,7 +22,7 @@ class App(ttk.Window):
         
         # Grundeinstellungen des Fensters
         self.title("Funktagebuch")
-        self.geometry(f"{1000}x{600}")        
+        #self.geometry(f"{1000}x{600}")        
 
         self.user_system = tk.StringVar(value=os.getlogin())
         self.user_login = tk.StringVar()
@@ -56,7 +57,8 @@ class App(ttk.Window):
         if check_database(self.db, self.last_update):
             self.last_update = datetime.datetime.now()
             self.einsatzstellen = read_database(self.db)
-        print(datetime.datetime.now().strftime('%H:%M:%S'))
+            self.arbeitsbereich.update_tabel(self.arbeitsbereich.einsatzstelle_arbeit)
+            self.einsatzliste.update_tabel()
         
                 
 
@@ -72,21 +74,39 @@ class Arbeitsbereich(ttk.Frame):
         super().__init__(parent)
 
         self.parent = parent
+        self.einsatzstelle_arbeit = None
 
         self.grid(row=2, column=0, padx=5, pady=5, sticky='news')
+        
+        ttk.Label(self, text='Eintrag').grid(row=3, column=0, columnspan=3, pady=(5, 0))
+        ttk.Label(self, text='Absender').grid(row=3, column=3, pady=(5, 0))
+        ttk.Label(self, text='Empfänger').grid(row=3, column=4, pady=(5, 0))
+        
 
         # Eingabe für den nächsten Eintrag im Funktagebuch
         self.entry_funk = ctk.CTkEntry(master=self, placeholder_text='Eintrag Funktagebuch')
-        self.entry_funk.grid(row=3, column=0, sticky='news', padx=10)
-        self.entry_funk.bind('<Return>', self.add_entry)
+        self.entry_funk.grid(row=4, column=0, sticky='news', padx=5, pady=5, columnspan=3)        
+        ctk.CTkButton(self, text='Absenden', command=lambda: self.add_entry(tk.Event())).grid(row=4, column=5, sticky='ew')
 
+        # Empfänger und Absender
+        self.entry_absender = ctk.CTkEntry(master=self, placeholder_text='Absender')
+        self.entry_absender.grid(row=4, column=3, sticky='news', padx=5, pady=5)
+        
+        self.entry_empfang = ctk.CTkEntry(master=self, placeholder_text='Empfänger')
+        self.entry_empfang.grid(row=4, column=4, sticky='news', padx=5, pady=5)
+        
+        # Eingabe erzeugen beim betätigen der Enter-Taste
+        self.entry_funk.bind('<Return>', self.add_entry)
+        self.entry_absender.bind('<Return>', self.add_entry)
+        self.entry_empfang.bind('<Return>', self.add_entry)        
+        
         # Anzeige ausgewählter Einsatz
         self.label_einsatz = ttk.Label(master=self, text='- Einsatz -', style='primary', font='bold')
         self.label_einsatz.grid(column=0, row=0, sticky='nw')
         
         # Tabelle zur Anzeige alle Einträge zum ausgewähltem Einsatz
         self.tabel = ttk.Treeview(master=self, columns=('datum', 'eintrag', 'von', 'an', 'funker'), show='headings')
-        self.tabel.grid(column=0, row=1)
+        self.tabel.grid(column=0, row=1, columnspan=6)
         self.tabel.heading('datum', text='Zeitstempel')
         self.tabel.heading('eintrag', text='Eintrag')
         self.tabel.heading('von', text='Absender')
@@ -94,22 +114,22 @@ class Arbeitsbereich(ttk.Frame):
         self.tabel.heading('funker', text='Bearbeiter')        
 
     def update_tabel(self, id):
-        print(f'Einsatz mit der ID {id} ausgewählt.')
-        
         for element in self.tabel.get_children():
             self.tabel.delete(element)
         
-        for einsatz in self.parent.parent.einsatzstellen:
-            print(einsatz)
-            if einsatz['id'] == id:               
-                stichwort = einsatz['stichwort']
-                strasse = einsatz['strasse']
-                status = einsatz['status']
-                text = f'{stichwort}: {strasse} ({status})'
-                self.label_einsatz.config(text=text)              
-                for eintrag in einsatz['liste_eintrag']:
-                    self.tabel.insert(parent='', index='end', values=tuple(eintrag))
-                break
+        if id:
+            self.einsatzstelle_arbeit = id
+            einsatzstelle = self.parent.parent.db.einsatzstellen.find_one(id)
+            
+            stichwort = einsatzstelle['stichwort']
+            strasse = einsatzstelle['strasse']
+            status = einsatzstelle['status']
+            text = f'{stichwort}: {strasse} ({status})'
+            self.label_einsatz.config(text=text)
+            
+            
+            for eintrag in einsatzstelle['liste_eintrag']:
+                self.tabel.insert(parent='', index='end', values=tuple(eintrag))
 
     def add_entry(self, _):
         entry = self.entry_funk.get()
@@ -117,14 +137,26 @@ class Arbeitsbereich(ttk.Frame):
         
         # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
         if entry:
-            self.tabel.insert(parent='', index='end', values=(
+            eintrag = (
                 datetime.datetime.now().strftime('%d.%m.%Y %H:%M'),
                 entry,
-                'Ab',
-                'An',
+                self.entry_absender.get(),
+                self.entry_empfang.get(),
                 funker                   
-            ))
-            self.entry_funk.delete(0, 'end')
+            )
+            
+            est = self.parent.parent.db.einsatzstellen.find_one(self.einsatzstelle_arbeit)
+            liste_eintrag = est['liste_eintrag']
+            liste_eintrag.append(list(eintrag))
+            
+            self.parent.parent.db.einsatzstellen.find_one_and_update(
+                {'_id': self.einsatzstelle_arbeit},
+                { '$set': { 'liste_eintrag' : liste_eintrag} }, 
+                return_document = ReturnDocument.AFTER
+            )
+            
+            self.tabel.insert(parent='', index='end', values=eintrag)
+            self.entry_funk.delete(0, 'end')            
 
 
 class Leiste_Kopf(ttk.Frame):
@@ -138,7 +170,7 @@ class Leiste_Kopf(ttk.Frame):
         
         ttk.Label(self, text='User: ').grid(row=0, column=0)
         ttk.Label(self, textvariable=self.funker_name).grid(row=0, column=1)
-        ttk.Button(self, text='Logout', command=self.logout).grid(row=1, columnspan=2, sticky='we')
+        ctk.CTkButton(self, text='Logout', command=self.logout).grid(row=1, columnspan=2, sticky='we')
 
         
     def logout(self):
@@ -154,31 +186,36 @@ class Einsatzliste(ttk.Frame):
         self.parent = parent
         
         self.grid(row=1, column=0, pady=5, padx=5, sticky='nw')
-        ttk.Label(self, text='Einsatzliste').grid()
+        ttk.Label(self, text='Einsatzliste').grid(row=0, column=0)
 
         # Tabelle aller Einsätze
-        self.tabel_einsatz = ttk.Treeview(master=self, columns=('id', 'stichwort', 'strasse', 'status'), show='headings')
-        self.tabel_einsatz.grid(row=1)
+        self.headings = ['id', 'stichwort', 'strasse', 'status']
+        self.tabel_einsatz = ttk.Treeview(master=self, columns=self.headings, displaycolumns=self.headings[1:], show='headings')
+        self.tabel_einsatz.grid(row=1, column=0)
         self.tabel_einsatz.heading('id', text='Nr.')
         self.tabel_einsatz.heading('stichwort', text='Stichwort')
         self.tabel_einsatz.heading('strasse', text='Straße')
         self.tabel_einsatz.heading('status', text='Status')
 
         self.tabel_einsatz.bind('<<TreeviewSelect>>', self.item_selection)
-
-        # Alle Einsätze in Tabelle schreiben
+        
+    
+    def update_tabel(self):
+        for element in self.tabel_einsatz.get_children():
+            self.tabel_einsatz.delete(element)
+        
         for einsatz in self.parent.parent.einsatzstellen:
             self.tabel_einsatz.insert(parent='', index='end', values=(
-                einsatz['id'],
+                einsatz['_id'],
                 einsatz['stichwort'],
                 einsatz['strasse'],
                 einsatz['status']                 
-            ))
-        
+            ))    
+    
     def item_selection(self, _):
         selection = self.tabel_einsatz.selection()
         id = self.tabel_einsatz.item(selection[0])['values'][0]
-        self.parent.parent.arbeitsbereich.update_tabel(id)
+        self.parent.parent.arbeitsbereich.update_tabel(ObjectId(id))
 
 
 class Login(ttk.Frame):
@@ -195,7 +232,7 @@ class Login(ttk.Frame):
         self.user_login_entry = ctk.CTkEntry(master=self, placeholder_text='Vorname Nachname')
 
         self.user_login_entry.pack(padx=(5,5), pady=5)
-        self.login_btn = ttk.Button(master=self, text='Login', command=self.login_event).pack(padx=5, pady=5)
+        self.login_btn = ctk.CTkButton(master=self, text='Login', command=self.login_event).pack(padx=5, pady=5)
     
     def login_event(self):
         user_login = self.user_login_entry.get()
@@ -221,7 +258,6 @@ def connect_database():
     return db
     
 
-
 def check_database(db, last_update):
     try:
         update = list(db.updates.find())[-1]
@@ -229,14 +265,12 @@ def check_database(db, last_update):
         
         if update_date > last_update:
             last_update = update_date                
-            # print('Update!')
             return True
         else:
-            # print('No update!')
             return False
         
     except Exception as error:
-        print(error)
+        print(f'check_database: {error}')
         return False
 
 
@@ -247,7 +281,7 @@ def read_database(db):
         einsatzstellen = liste_einsatz
     
     except Exception as error:
-        print(error)
+        print(f'read_database: {error}')
         einsatzstellen = beispiel_einsatz_db
         
     return einsatzstellen
