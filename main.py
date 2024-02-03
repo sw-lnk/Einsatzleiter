@@ -12,7 +12,7 @@ from einsatzdb import beispiel_einsatz_db # Durch eine Anbindung an eine Datenba
 
 # Einstellung zu verwendung vom Dezimaltrennzeichen
 # original_locale = locale.getlocale(locale.LC_NUMERIC)
-locale.setlocale(locale.LC_NUMERIC, "C")
+# locale.setlocale(locale.LC_NUMERIC, "C")
 # locale.setlocale(locale.LC_NUMERIC, original_locale)
 
 class App(ttk.Window):
@@ -27,9 +27,9 @@ class App(ttk.Window):
         self.user_login = tk.StringVar()
 
         # Lade Daten
+        self.db = connect_database()
         self.last_update = datetime.datetime(1,1,1)
-        self.einsatzstellen = None
-        self.read_database()
+        self.einsatzstellen = read_database(self.db)
         
         # Hauptfenster
         self.main = Hauptfenster(self)
@@ -49,34 +49,15 @@ class App(ttk.Window):
         # Loop-Funktion zur Aktualisierung div. Objekte
         self.loop()    
     
-
-    def read_database(self):
-        user = 'user' #input('Username: ')
-        pwd = 'user' #getpass('Password: ')
-        ip = '192.168.178.41'
-        port = '27017'
-        db = 'einsatztagebuch'
-
-        try:
-            client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-            db = client.einsatztagebuch
-            
-            update = list(db.updates.find())[-1]            
-            
-            if update['date'] > self.last_update:
-                self.last_update = update['date']                
-                einsatzstellen = db.einsatzstellen
-                liste_einsatz = einsatzstellen.find()
-                self.einsatzstellen = liste_einsatz
-                #print('Update!')
-        
-        except Exception as error:
-            print(error)
-            self.einsatzstellen = beispiel_einsatz_db
         
     def loop(self):   
-        self.read_database()
-        self.after(5000, self.loop)    
+        self.after(5000, self.loop)
+        
+        if check_database(self.db, self.last_update):
+            self.last_update = datetime.datetime.now()
+            self.einsatzstellen = read_database(self.db)
+        print(datetime.datetime.now().strftime('%H:%M:%S'))
+        
                 
 
 class Hauptfenster(ttk.Frame):
@@ -113,10 +94,14 @@ class Arbeitsbereich(ttk.Frame):
         self.tabel.heading('funker', text='Bearbeiter')        
 
     def update_tabel(self, id):
-        for element in self.tabel.get_children(): self.tabel.delete(element)
+        print(f'Einsatz mit der ID {id} ausgewählt.')
+        
+        for element in self.tabel.get_children():
+            self.tabel.delete(element)
         
         for einsatz in self.parent.parent.einsatzstellen:
-            if einsatz['id'] == id:                
+            print(einsatz)
+            if einsatz['id'] == id:               
                 stichwort = einsatz['stichwort']
                 strasse = einsatz['strasse']
                 status = einsatz['status']
@@ -221,6 +206,51 @@ class Login(ttk.Frame):
             self.main.grid(pady=10, padx=10)
         else:
             ttk.Label(self, text='enter a valid name', style='warning').pack(pady=(0, 5), padx=20)
+
+
+def connect_database():
+    user = 'user' #input('Username: ')
+    pwd = 'user' #getpass('Password: ')
+    ip = '192.168.178.41'
+    port = '27017'
+    db = 'einsatztagebuch'
+    
+    client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
+    db = client.einsatztagebuch
+    
+    return db
+    
+
+
+def check_database(db, last_update):
+    try:
+        update = list(db.updates.find())[-1]
+        update_date = update['date']            
+        
+        if update_date > last_update:
+            last_update = update_date                
+            # print('Update!')
+            return True
+        else:
+            # print('No update!')
+            return False
+        
+    except Exception as error:
+        print(error)
+        return False
+
+
+def read_database(db):
+    try:
+        einsatzstellen = db.einsatzstellen
+        liste_einsatz = einsatzstellen.find()
+        einsatzstellen = liste_einsatz
+    
+    except Exception as error:
+        print(error)
+        einsatzstellen = beispiel_einsatz_db
+        
+    return einsatzstellen
 
 
 if __name__ == "__main__":

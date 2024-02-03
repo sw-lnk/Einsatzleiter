@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from getpass import getpass
 from einsatzdb import beispiel_einsatz_db
 from datetime import datetime
+import time
 
 user = 'user' #input('Username: ')
 pwd = 'user' #getpass('Password: ')
@@ -12,6 +13,7 @@ db = 'einsatztagebuch'
 client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
 
 db = client.einsatztagebuch
+
 einsatzstellen = db.einsatzstellen
 updates = db.updates
 
