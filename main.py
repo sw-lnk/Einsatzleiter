@@ -201,11 +201,16 @@ class Einsatzliste(ttk.Frame):
         self.button_neuer_einsatz = ctk.CTkButton(self, text='Neuer Einsatz', command=self.einsatz_anlegen_maske)
         self.button_update_einsatz = ctk.CTkButton(self, text='Einsatz aktualisieren', command=self.einsatz_update_maske)
         
+        # Filter Optionen
+        self.check_arbeit_value = tk.IntVar(self, 0)
+        self.check_arbeit = ttk.Checkbutton(self, text='Abgeschlossene Einsätze ausblenden', variable=self.check_arbeit_value, command=self.update_tabel)
+                
         # Elemente ausrichten
         ttk.Label(self, text='Einsatzliste').grid(row=0, column=0)
         self.button_update_einsatz.grid(row=0, column=1, sticky='e')
         self.button_neuer_einsatz.grid(row=0, column=2, padx=5, sticky='e')
         self.tabel_einsatz.grid(row=1, column=0, columnspan=3, pady=5)
+        #self.check_arbeit.grid(row=2, column=0, sticky='w', pady=(5,20), padx=10)
     
     def einsatz_update_maske(self):
         db = self.parent.parent.parent.db
@@ -231,15 +236,27 @@ class Einsatzliste(ttk.Frame):
             einsatz_strasse = ctk.CTkEntry(eingabe_maske)
             einsatz_strasse.insert(0, strasse)
             
-            status_liste = ['offen', 'in Arbeit', 'abgeschlossen']
+            status_liste = ['unbearbeitet', 'in Arbeit', 'abgeschlossen']
             
             einsatz_status = ctk.CTkComboBox(eingabe_maske, values=status_liste, state='readonly')
             einsatz_status.set(status)
             
+            nr_einsatz = einsatz_nummer.get()
+            if nr_einsatz.isnumeric():
+                nr_einsatz = int(nr_einsatz)
+                
             button_abbruch = ctk.CTkButton(eingabe_maske, text="Abbrechen", command=eingabe_maske.destroy)
             button_update = ctk.CTkButton(
                 eingabe_maske,
                 text="Einsatz aktualisieren",
+                command= lambda: self.einsatz_update_schreiben(
+                    ObjectId(id),
+                    nr_einsatz,
+                    einsatz_status.get(),
+                    einsatz_stichwort.get(),
+                    einsatz_strasse.get(),
+                    eingabe_maske
+                    )
                 )
         
             # Elemente ausrichten
@@ -249,8 +266,45 @@ class Einsatzliste(ttk.Frame):
             einsatz_status.grid(row=4, column=1, pady=5, columnspan=2)
             button_abbruch.grid(row=5, column=1, pady=5, padx=5)
             button_update.grid(row=5, column=2, pady=5, padx=5)
+    
+    def einsatz_update_schreiben(self, id, nr, status, stichwort, strasse, fenster):
+        db = self.parent.parent.parent.db
+        user = self.parent.parent.parent.user_login.get()
+        now = datetime.datetime.now()
         
-        
+        if stichwort and strasse:
+            eintrag = (
+                datetime.datetime.now().strftime('%d.%m.%Y %H:%M'),
+                'Einsatzdaten aktualisiert',
+                '',
+                '',
+                self.parent.parent.parent.user_login.get()                  
+            )
+            
+            est = db.einsatzstellen.find_one(id)
+            liste_eintrag = est['liste_eintrag']
+            liste_eintrag.append(list(eintrag))
+            
+            db.einsatzstellen.find_one_and_update(
+                    {'_id': id},
+                    { '$set': {
+                        'nr_lst': nr,
+                        'stichwort': stichwort,
+                        'strasse': strasse,
+                        'status': status,
+                        'liste_eintrag': liste_eintrag} }, 
+                    return_document = ReturnDocument.AFTER
+                )
+            db.updates.insert_one({'date': now})
+            self.parent.parent.parent.last_update = now
+            self.parent.parent.parent.einsatzstellen = read_database(db)
+            self.update_tabel()
+            fenster.destroy()
+        else:
+            tk.messagebox.showwarning(
+                title='Einsatz update',
+                message='Einsatzstichwort und Strasse sind Pflichangaben.'
+            )
     
     def einsatz_anlegen_maske(self):
         eingabe_maske = ttk.Toplevel('Neuer Einsatz')
@@ -279,32 +333,45 @@ class Einsatzliste(ttk.Frame):
         if no.isnumeric():
             no = int(no)
         
-        db.einsatzstellen.insert_one({'nr_lst': no, 'stichwort': stichwort, 'strasse': strasse, 'status': 'offen', 'liste_eintrag': [
-         [datetime.datetime.now().strftime('%d.%m.%Y %H:%M'), 'Einsatz angelegt', '', '', user]
-        ]})
-        db.updates.insert_one({'date': now})
-        self.parent.parent.parent.last_update = now
-        
-        self.parent.parent.parent.einsatzstellen = read_database(db)
-        self.update_tabel()
-        fenster.destroy()
+        if stichwort and strasse:
+            db.einsatzstellen.insert_one({'nr_lst': no, 'stichwort': stichwort, 'strasse': strasse, 'status': 'unbearbeitet', 'liste_eintrag': [
+            [datetime.datetime.now().strftime('%d.%m.%Y %H:%M'), 'Einsatz angelegt', '', '', user]
+            ]})
+            db.updates.insert_one({'date': now})
+            self.parent.parent.parent.last_update = now
+            
+            self.parent.parent.parent.einsatzstellen = read_database(db)
+            self.update_tabel()
+            fenster.destroy()
+        else:
+            tk.messagebox.showwarning(
+                title='Neuer Einsatz',
+                message='Einsatzstichwort und Strasse sind Pflichangaben.'
+            )
     
     def update_tabel(self):
+        abgeschlossen = self.check_arbeit_value.get()
+        
         for element in self.tabel_einsatz.get_children():
             self.tabel_einsatz.delete(element)
         
-        for einsatz in self.parent.parent.parent.einsatzstellen:
+        for einsatz in self.parent.parent.parent.einsatzstellen:            
+            status = einsatz['status']
+            
+            #if abgeschlossen and (status == 'abgeschlossen'): continue
+            
             self.tabel_einsatz.insert(parent='', index='end', values=(
                 einsatz['_id'],
                 einsatz['stichwort'],
                 einsatz['strasse'],
-                einsatz['status']                 
+                status                 
             ))    
     
     def item_selection(self, _):
         selection = self.tabel_einsatz.selection()
-        id = self.tabel_einsatz.item(selection[0])['values'][0]
-        self.parent.parent.parent.einsatztagebuch.update_tabel(ObjectId(id))
+        if selection:
+            id = self.tabel_einsatz.item(selection[0])['values'][0]
+            self.parent.parent.parent.einsatztagebuch.update_tabel(ObjectId(id))
 
 
 class Login(ttk.Frame):
