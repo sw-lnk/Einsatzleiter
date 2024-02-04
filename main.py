@@ -2,7 +2,6 @@ from pymongo import MongoClient, ReturnDocument
 from bson import ObjectId
 from getpass import getpass
 import tkinter as tk
-#from tkinter import ttk
 import ttkbootstrap as ttk
 import customtkinter as ctk
 import os
@@ -39,13 +38,12 @@ class App(ttk.Window):
         self.login = Login(self)
         
         # Kopfleiste
-        self.kopfleiste = Leiste_Kopf(self.main)       
+        self.kopfleiste = Leiste_Kopf(self.main)
+        self.kopfleiste.grid(row=0, column=0, sticky='news')           
         
-        # Linkes Fenster (Einsatzübersicht)
-        self.einsatzliste = Einsatzliste(self.main)       
-        
-        # Arbeitsfenster
-        self.arbeitsbereich = Arbeitsbereich(self.main)             
+        # Einsatztagebuch
+        self.einsatztagebuch = Einsatztagebuch(self.main)
+        self.einsatztagebuch.grid(row=1, column=0, padx=5, pady=5, sticky='news')            
 
         # Loop-Funktion zur Aktualisierung div. Objekte
         self.loop()    
@@ -57,43 +55,33 @@ class App(ttk.Window):
         if check_database(self.db, self.last_update):
             self.last_update = datetime.datetime.now()
             self.einsatzstellen = read_database(self.db)
-            self.arbeitsbereich.update_tabel(self.arbeitsbereich.einsatzstelle_arbeit)
-            self.einsatzliste.update_tabel()
+            self.einsatztagebuch.update_tabel(self.einsatztagebuch.einsatzstelle_arbeit)
+            self.einsatztagebuch.einsatzliste.update_tabel()
         
                 
 
 class Hauptfenster(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        #self.grid(pady=20, padx=20)
         self.parent = parent
 
 
-class Arbeitsbereich(ttk.Frame):
+class Einsatztagebuch(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
 
         self.parent = parent
         self.einsatzstelle_arbeit = None
-
-        self.grid(row=2, column=0, padx=5, pady=5, sticky='news')
         
-        ttk.Label(self, text='Eintrag').grid(row=3, column=0, columnspan=3, pady=(5, 0))
-        ttk.Label(self, text='Absender').grid(row=3, column=3, pady=(5, 0))
-        ttk.Label(self, text='Empfänger').grid(row=3, column=4, pady=(5, 0))
-        
+        # Linkes Fenster (Einsatzübersicht)
+        self.einsatzliste = Einsatzliste(self)        
 
         # Eingabe für den nächsten Eintrag im Funktagebuch
         self.entry_funk = ctk.CTkEntry(master=self, placeholder_text='Eintrag Funktagebuch')
-        self.entry_funk.grid(row=4, column=0, sticky='news', padx=5, pady=5, columnspan=3)        
-        ctk.CTkButton(self, text='Absenden', command=lambda: self.add_entry(tk.Event())).grid(row=4, column=5, sticky='ew')
-
-        # Empfänger und Absender
-        self.entry_absender = ctk.CTkEntry(master=self, placeholder_text='Absender')
-        self.entry_absender.grid(row=4, column=3, sticky='news', padx=5, pady=5)
         
+        # Empfänger und Absender
+        self.entry_absender = ctk.CTkEntry(master=self, placeholder_text='Absender')        
         self.entry_empfang = ctk.CTkEntry(master=self, placeholder_text='Empfänger')
-        self.entry_empfang.grid(row=4, column=4, sticky='news', padx=5, pady=5)
         
         # Eingabe erzeugen beim betätigen der Enter-Taste
         self.entry_funk.bind('<Return>', self.add_entry)
@@ -102,16 +90,31 @@ class Arbeitsbereich(ttk.Frame):
         
         # Anzeige ausgewählter Einsatz
         self.label_einsatz = ttk.Label(master=self, text='- Einsatz -', style='primary', font='bold')
-        self.label_einsatz.grid(column=0, row=0, sticky='nw')
         
         # Tabelle zur Anzeige alle Einträge zum ausgewähltem Einsatz
         self.tabel = ttk.Treeview(master=self, columns=('datum', 'eintrag', 'von', 'an', 'funker'), show='headings')
-        self.tabel.grid(column=0, row=1, columnspan=6)
         self.tabel.heading('datum', text='Zeitstempel')
         self.tabel.heading('eintrag', text='Eintrag')
         self.tabel.heading('von', text='Absender')
         self.tabel.heading('an', text='Empfänger')
-        self.tabel.heading('funker', text='Bearbeiter')        
+        self.tabel.heading('funker', text='Bearbeiter')
+        
+        # Button zur Erstellung eines neuen Eintrags
+        self.button_absenden = ctk.CTkButton(self, text='Absenden', command=lambda: self.add_entry(tk.Event()))
+        
+        # Elemente ausrichten
+        self.einsatzliste.grid(row=0, column=0, pady=5, sticky='nw')        
+        self.label_einsatz.grid(row=1, column=0, sticky='nw')
+        self.tabel.grid(row=2, column=0, columnspan=6, sticky='nw')        
+        ttk.Label(self, text='Eintrag').grid(row=3, column=0, columnspan=3, pady=(5, 0))
+        ttk.Label(self, text='Absender').grid(row=3, column=3, pady=(5, 0))
+        ttk.Label(self, text='Empfänger').grid(row=3, column=4, pady=(5, 0))
+        
+        self.entry_funk.grid(row=4, column=0, sticky='news', padx=5, pady=5, columnspan=3)        
+        self.entry_absender.grid(row=4, column=3, sticky='news', padx=5, pady=5)
+        self.entry_empfang.grid(row=4, column=4, sticky='news', padx=5, pady=5)
+        self.button_absenden.grid(row=4, column=5, sticky='ew')        
+              
 
     def update_tabel(self, id):
         for element in self.tabel.get_children():
@@ -161,8 +164,7 @@ class Arbeitsbereich(ttk.Frame):
 
 class Leiste_Kopf(ttk.Frame):
     def __init__(self, parent):
-        super().__init__(parent)
-        self.grid(row=0, column=0, sticky='news',)
+        super().__init__(parent)        
         
         self.parent = parent
         self.login = parent.parent.login
@@ -185,13 +187,9 @@ class Einsatzliste(ttk.Frame):
 
         self.parent = parent
         
-        self.grid(row=1, column=0, pady=5, padx=5, sticky='nw')
-        ttk.Label(self, text='Einsatzliste').grid(row=0, column=0)
-
         # Tabelle aller Einsätze
         self.headings = ['id', 'stichwort', 'strasse', 'status']
         self.tabel_einsatz = ttk.Treeview(master=self, columns=self.headings, displaycolumns=self.headings[1:], show='headings')
-        self.tabel_einsatz.grid(row=1, column=0)
         self.tabel_einsatz.heading('id', text='Nr.')
         self.tabel_einsatz.heading('stichwort', text='Stichwort')
         self.tabel_einsatz.heading('strasse', text='Straße')
@@ -199,12 +197,103 @@ class Einsatzliste(ttk.Frame):
 
         self.tabel_einsatz.bind('<<TreeviewSelect>>', self.item_selection)
         
+        # Button zur Bearbeitung und Anlage eines Einsatzes
+        self.button_neuer_einsatz = ctk.CTkButton(self, text='Neuer Einsatz', command=self.einsatz_anlegen_maske)
+        self.button_update_einsatz = ctk.CTkButton(self, text='Einsatz aktualisieren', command=self.einsatz_update_maske)
+        
+        # Elemente ausrichten
+        ttk.Label(self, text='Einsatzliste').grid(row=0, column=0)
+        self.button_update_einsatz.grid(row=0, column=1, sticky='e')
+        self.button_neuer_einsatz.grid(row=0, column=2, padx=5, sticky='e')
+        self.tabel_einsatz.grid(row=1, column=0, columnspan=3, pady=5)
+    
+    def einsatz_update_maske(self):
+        db = self.parent.parent.parent.db
+        einsatzstellen = db.einsatzstellen
+        
+        selection = self.tabel_einsatz.selection()
+        if selection:
+            id = self.tabel_einsatz.item(selection[0])['values'][0]        
+            einsatz = einsatzstellen.find_one(ObjectId(id))
+            
+            stichwort = einsatz['stichwort']
+            nummer = einsatz['nr_lst']     
+            strasse = einsatz['strasse']
+            status = einsatz['status']
+            
+            eingabe_maske = ttk.Toplevel('Neuer Einsatz')
+            einsatz_stichwort = ctk.CTkEntry(eingabe_maske)
+            einsatz_stichwort.insert(0, stichwort)
+            
+            einsatz_nummer = ctk.CTkEntry(eingabe_maske)
+            einsatz_nummer.insert(0, nummer)
+                
+            einsatz_strasse = ctk.CTkEntry(eingabe_maske)
+            einsatz_strasse.insert(0, strasse)
+            
+            status_liste = ['offen', 'in Arbeit', 'abgeschlossen']
+            
+            einsatz_status = ctk.CTkComboBox(eingabe_maske, values=status_liste, state='readonly')
+            einsatz_status.set(status)
+            
+            button_abbruch = ctk.CTkButton(eingabe_maske, text="Abbrechen", command=eingabe_maske.destroy)
+            button_update = ctk.CTkButton(
+                eingabe_maske,
+                text="Einsatz aktualisieren",
+                )
+        
+            # Elemente ausrichten
+            einsatz_stichwort.grid(row=1, column=1, pady=5, columnspan=2)
+            einsatz_nummer.grid(row=2, column=1, pady=5, columnspan=2)
+            einsatz_strasse.grid(row=3, column=1, pady=5, columnspan=2)
+            einsatz_status.grid(row=4, column=1, pady=5, columnspan=2)
+            button_abbruch.grid(row=5, column=1, pady=5, padx=5)
+            button_update.grid(row=5, column=2, pady=5, padx=5)
+        
+        
+    
+    def einsatz_anlegen_maske(self):
+        eingabe_maske = ttk.Toplevel('Neuer Einsatz')
+        einsatz_stichwort = ctk.CTkEntry(eingabe_maske, placeholder_text='Einsatzstichwort')
+        einsatz_nummer = ctk.CTkEntry(eingabe_maske, placeholder_text='Einsatznummer')        
+        einsatz_strasse = ctk.CTkEntry(eingabe_maske, placeholder_text='Straße / Hausnummer')
+        button_abbruch = ctk.CTkButton(eingabe_maske, text="Abbrechen", command=eingabe_maske.destroy)
+        button_anlegen = ctk.CTkButton(
+            eingabe_maske,
+            text="Einsatz anlegen",
+            command= lambda: self.einsatz_in_db_schreiben(einsatz_nummer.get(), einsatz_stichwort.get(), einsatz_strasse.get(), eingabe_maske)
+            )
+        
+        # Elemente ausrichten
+        einsatz_stichwort.grid(row=1, column=1, pady=5, columnspan=2)
+        einsatz_nummer.grid(row=2, column=1, pady=5, columnspan=2)
+        einsatz_strasse.grid(row=3, column=1, pady=5, columnspan=2)
+        button_abbruch.grid(row=4, column=1, pady=5, padx=5)
+        button_anlegen.grid(row=4, column=2, pady=5, padx=5)
+        
+    def einsatz_in_db_schreiben(self, no, stichwort, strasse, fenster):
+        db = self.parent.parent.parent.db
+        user = self.parent.parent.parent.user_login.get()
+        now = datetime.datetime.now()
+        
+        if no.isnumeric():
+            no = int(no)
+        
+        db.einsatzstellen.insert_one({'nr_lst': no, 'stichwort': stichwort, 'strasse': strasse, 'status': 'offen', 'liste_eintrag': [
+         [datetime.datetime.now().strftime('%d.%m.%Y %H:%M'), 'Einsatz angelegt', '', '', user]
+        ]})
+        db.updates.insert_one({'date': now})
+        self.parent.parent.parent.last_update = now
+        
+        self.parent.parent.parent.einsatzstellen = read_database(db)
+        self.update_tabel()
+        fenster.destroy()
     
     def update_tabel(self):
         for element in self.tabel_einsatz.get_children():
             self.tabel_einsatz.delete(element)
         
-        for einsatz in self.parent.parent.einsatzstellen:
+        for einsatz in self.parent.parent.parent.einsatzstellen:
             self.tabel_einsatz.insert(parent='', index='end', values=(
                 einsatz['_id'],
                 einsatz['stichwort'],
@@ -215,7 +304,7 @@ class Einsatzliste(ttk.Frame):
     def item_selection(self, _):
         selection = self.tabel_einsatz.selection()
         id = self.tabel_einsatz.item(selection[0])['values'][0]
-        self.parent.parent.arbeitsbereich.update_tabel(ObjectId(id))
+        self.parent.parent.parent.einsatztagebuch.update_tabel(ObjectId(id))
 
 
 class Login(ttk.Frame):

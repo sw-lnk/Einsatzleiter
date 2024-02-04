@@ -24,8 +24,8 @@ eine_einsatzstelle = einsatzstellen.find_one(ObjectId('65be9246b026001556c778ce'
 
 # print(eine_einsatzstelle)
 
-# for est in alle_einsatzstellen:
-#     print(est)
+for est in alle_einsatzstellen:
+    print(est)
 
 # print(list(updates.find()))
 
