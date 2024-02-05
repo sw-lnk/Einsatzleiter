@@ -308,7 +308,7 @@ class Einsatzliste(ttk.Frame):
         if stichwort and anschrift:
             eintrag = (
                 now,
-                'Einsatzdaten aktualisiert',
+                f'Einsatzdaten aktualisiert: Einsatznummer [{nr}], Stichwort [{stichwort}], Anschrift [{anschrift}] Status [{status}]',
                 '',
                 '',
                 user                  
@@ -367,7 +367,7 @@ class Einsatzliste(ttk.Frame):
         
         if stichwort and anschrift:
             db.einsatzstellen.insert_one({'nr_lst': no, 'stichwort': stichwort, 'anschrift': anschrift, 'status': 'unbearbeitet', 'datum': now, 'liste_eintrag': [
-            [now, 'Einsatz angelegt', '', '', user]
+            [now, f'Einsatz angelegt: Einsatznummer [{no}], Stichwort [{stichwort}], Anschrift [{anschrift}], Status [unbearbeitet]', '', '', user]
             ]})
             self.parent.parent.parent.last_update = now
             
