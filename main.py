@@ -9,13 +9,15 @@ import datetime
 import locale
 import ctypes
 
-myappid = 'sw-lnk.einsatzleiter.v0.1' # arbitrary string
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)   
 
-# Einstellung zu verwendung vom Dezimaltrennzeichen
-# original_locale = locale.getlocale(locale.LC_NUMERIC)
-locale.setlocale(locale.LC_NUMERIC, "C")
-# locale.setlocale(locale.LC_NUMERIC, original_locale)
+if os.name == 'nt':
+    myappid = 'sw-lnk.einsatzleiter.v0.1' # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)   
+
+    # Einstellung zu verwendung vom Dezimaltrennzeichen
+    # original_locale = locale.getlocale(locale.LC_NUMERIC)
+    locale.setlocale(locale.LC_NUMERIC, "C")
+    # locale.setlocale(locale.LC_NUMERIC, original_locale)
 
 class App(ttk.Window):
     def __init__(self):
