@@ -86,7 +86,8 @@ class Einsatztagebuch(ttk.Frame):
         self.label_einsatz = ttk.Label(master=self, text='- Einsatz -', style='primary', font='bold')
         
         # Tabelle zur Anzeige alle Einträge zum ausgewähltem Einsatz
-        self.tabel = ttk.Treeview(master=self, columns=('datum', 'eintrag', 'von', 'an', 'funker'), show='headings')
+        self.headings = ['datum', 'eintrag', 'von', 'an', 'funker']
+        self.tabel = ttk.Treeview(master=self, columns=self.headings, displaycolumns=['datum', 'eintrag', 'funker'], show='headings')
         self.tabel.heading('datum', text='Zeitstempel')
         self.tabel.heading('eintrag', text='Eintrag')
         self.tabel.heading('von', text='Absender')
@@ -99,15 +100,17 @@ class Einsatztagebuch(ttk.Frame):
         # Elemente ausrichten
         self.einsatzliste.grid(row=0, column=0, pady=5, sticky='nw')        
         self.label_einsatz.grid(row=1, column=0, sticky='nw')
-        self.tabel.grid(row=2, column=0, columnspan=6, sticky='nw')        
-        ttk.Label(self, text='Eintrag').grid(row=3, column=0, columnspan=3, pady=(5, 0))
-        ttk.Label(self, text='Absender').grid(row=3, column=3, pady=(5, 0))
-        ttk.Label(self, text='Empfänger').grid(row=3, column=4, pady=(5, 0))
-        
-        self.entry_funk.grid(row=4, column=0, sticky='news', padx=5, pady=5, columnspan=3)        
-        self.entry_absender.grid(row=4, column=3, sticky='news', padx=5, pady=5)
-        self.entry_empfang.grid(row=4, column=4, sticky='news', padx=5, pady=5)
-        self.button_absenden.grid(row=4, column=5, sticky='ew')        
+        self.tabel.grid(row=2, column=0, sticky='news', columnspan=5)       
+        self.entry_funk.grid(row=4, column=0, sticky='news', padx=5, pady=5)
+        self.button_absenden.grid(row=4, column=4, sticky='w')
+
+        # Zusätzliche Abfrage von Absender und Empfänger inkl. Überschrift        
+        # ttk.Label(self, text='Eintrag').grid(row=3, column=0, pady=(5, 0))
+        # ttk.Label(self, text='Absender').grid(row=3, column=2, pady=(5, 0))
+        # ttk.Label(self, text='Empfänger').grid(row=3, column=3, pady=(5, 0))      
+        # self.entry_absender.grid(row=4, column=2, sticky='nws', padx=5, pady=5)
+        # self.entry_empfang.grid(row=4, column=3, sticky='nws', padx=5, pady=5)
+                
               
 
     def update_tabel(self, id):
