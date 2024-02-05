@@ -57,8 +57,8 @@ class App(ttk.Window):
         # Diese Schleife wird alle 5 Sekunden ausgeführt  
         self.after(5000, self.loop)
 
-        self.einsatztagebuch.update_tabel(self.einsatztagebuch.einsatzstelle_arbeit)
-        self.einsatztagebuch.einsatzliste.update_tabel()        
+        self.einsatztagebuch.update_table(self.einsatztagebuch.einsatzstelle_arbeit)
+        self.einsatztagebuch.einsatzliste.update_table()        
                 
 
 class Hauptfenster(ttk.Frame):
@@ -90,16 +90,18 @@ class Einsatztagebuch(ttk.Frame):
         self.entry_empfang.bind('<Return>', self.add_entry)        
         
         # Anzeige ausgewählter Einsatz
-        self.label_einsatz = ttk.Label(master=self, text='- Einsatz -', style='primary', font='bold')
+        self.label_einsatz_text = tk.StringVar(self, '- Einsatz -')
+        self.label_einsatz = ttk.Label(master=self, textvariable=self.label_einsatz_text, style='primary', font='bold')
         
         # Tabelle zur Anzeige alle Einträge zum ausgewähltem Einsatz
         self.headings = ['datum', 'eintrag', 'von', 'an', 'funker']
-        self.tabel = ttk.Treeview(master=self, columns=self.headings, displaycolumns=['datum', 'eintrag', 'funker'], show='headings')
+        self.tabel = ttk.Treeview(master=self, columns=self.headings, displaycolumns=['datum', 'eintrag', 'funker'], show='headings')        
         self.tabel.heading('datum', text='Zeitstempel')
         self.tabel.heading('eintrag', text='Eintrag')
         self.tabel.heading('von', text='Absender')
         self.tabel.heading('an', text='Empfänger')
         self.tabel.heading('funker', text='Bearbeiter')
+        #self.tabel.tag_configure('odd', background='lightblue')
         
         # Button zur Erstellung eines neuen Eintrags
         self.button_absenden = ctk.CTkButton(self, text='Absenden', command=lambda: self.add_entry(tk.Event()))
@@ -120,7 +122,7 @@ class Einsatztagebuch(ttk.Frame):
                 
               
 
-    def update_tabel(self, id):
+    def update_table(self, id):
         db = self.parent.parent.db
         for element in self.tabel.get_children():
             self.tabel.delete(element)
@@ -133,13 +135,16 @@ class Einsatztagebuch(ttk.Frame):
             strasse = einsatzstelle['strasse']
             status = einsatzstelle['status']
             text = f'{stichwort}: {strasse} ({status})'
-            self.label_einsatz.config(text=text)
+            self.label_einsatz_text.set(text)
             
             
-            for eintrag in einsatzstelle['liste_eintrag']:
+            for i, eintrag in enumerate(einsatzstelle['liste_eintrag']):
                 zeile = eintrag
                 zeile[0] = zeile[0].strftime('%d.%m.%Y %H:%M')
-                self.tabel.insert(parent='', index='end', values=zeile)
+
+                row_tag = 'even' if (i%2==0) else 'odd'
+
+                self.tabel.insert(parent='', index='end', values=zeile, tags=(row_tag,))
 
     def add_entry(self, _):
         db = self.parent.parent.db
@@ -203,6 +208,9 @@ class Einsatzliste(ttk.Frame):
         self.tabel_einsatz.heading('stichwort', text='Stichwort')
         self.tabel_einsatz.heading('strasse', text='Straße')
         self.tabel_einsatz.heading('status', text='Status')
+        self.tabel_einsatz.tag_configure('unbearbeitet', background='#ffcccb')
+        self.tabel_einsatz.tag_configure('in Arbeit', background='#ffffe0')
+        self.tabel_einsatz.tag_configure('abgeschlossen', background='#90ee90')        
 
         self.tabel_einsatz.bind('<<TreeviewSelect>>', self.item_selection)
         
@@ -212,7 +220,7 @@ class Einsatzliste(ttk.Frame):
         
         # Filter Optionen
         self.check_arbeit_value = tk.IntVar(self, 0)
-        self.check_arbeit = ttk.Checkbutton(self, text='Abgeschlossene Einsätze ausblenden', variable=self.check_arbeit_value, command=self.update_tabel)
+        self.check_arbeit = ttk.Checkbutton(self, text='Abgeschlossene Einsätze ausblenden', variable=self.check_arbeit_value, command=self.update_table)
                 
         # Elemente ausrichten
         ttk.Label(self, text='Einsatzliste').grid(row=0, column=0)
@@ -305,7 +313,7 @@ class Einsatzliste(ttk.Frame):
                     return_document = ReturnDocument.AFTER
                 )
             
-            self.update_tabel()
+            self.update_table()
             fenster.destroy()
         else:
             tk.messagebox.showwarning(
@@ -347,7 +355,7 @@ class Einsatzliste(ttk.Frame):
             ]})
             self.parent.parent.parent.last_update = now
             
-            self.update_tabel()
+            self.update_table()
             fenster.destroy()
         else:
             tk.messagebox.showwarning(
@@ -355,7 +363,7 @@ class Einsatzliste(ttk.Frame):
                 message='Einsatzstichwort und Strasse sind Pflichangaben.'
             )
     
-    def update_tabel(self):
+    def update_table(self):
         db = self.parent.parent.parent.db
         abgeschlossen = self.check_arbeit_value.get()        
 
@@ -369,21 +377,27 @@ class Einsatzliste(ttk.Frame):
         for element in self.tabel_einsatz.get_children():
             self.tabel_einsatz.delete(element)
         
-        for einsatz in einsatzstellen:            
+        for i, einsatz in enumerate(einsatzstellen):            
             status = einsatz['status']
+            tag_row = 'even' if (i%2==0) else 'odd'
             
             self.tabel_einsatz.insert(parent='', index='end', values=(
                 einsatz['_id'],
                 einsatz['stichwort'],
                 einsatz['strasse'],
                 status                 
-            ))
+            ), tags=(tag_row,status))
 
         for row in self.tabel_einsatz.get_children():
             id = ObjectId(self.tabel_einsatz.item(row)['values'][0])
             if self.einsatzstelle_focus == id:
                 self.tabel_einsatz.focus(row)
                 self.tabel_einsatz.selection_set(row)
+                break
+        else:
+            self.einsatzstelle_focus = None
+            self.parent.einsatzstelle_arbeit = None
+            self.parent.label_einsatz_text.set('- Einsatz -')
  
     def item_selection(self, _):
         selection = self.tabel_einsatz.selection()        
@@ -391,7 +405,7 @@ class Einsatzliste(ttk.Frame):
             id = self.tabel_einsatz.item(selection[0])['values'][0]
             id = ObjectId(id)
             self.einsatzstelle_focus = id
-            self.parent.parent.parent.einsatztagebuch.update_tabel(id)
+            self.parent.parent.parent.einsatztagebuch.update_table(id)
         else:
             self.einsatzstelle_focus = None
 
