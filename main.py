@@ -8,11 +8,10 @@ import os
 import datetime
 import locale
 
-from einsatzdb import beispiel_einsatz_db # Durch eine Anbindung an eine Datenbank ersetzen
 
 # Einstellung zu verwendung vom Dezimaltrennzeichen
 # original_locale = locale.getlocale(locale.LC_NUMERIC)
-# locale.setlocale(locale.LC_NUMERIC, "C")
+locale.setlocale(locale.LC_NUMERIC, "C")
 # locale.setlocale(locale.LC_NUMERIC, original_locale)
 
 class App(ttk.Window):
@@ -28,8 +27,6 @@ class App(ttk.Window):
 
         # Lade Daten
         self.db = connect_database()
-        self.last_update = datetime.datetime(1,1,1)
-        self.einsatzstellen = read_database(self.db)
         
         # Hauptfenster
         self.main = Hauptfenster(self)
@@ -49,15 +46,12 @@ class App(ttk.Window):
         self.loop()    
     
         
-    def loop(self):   
+    def loop(self):
+        # Diese Schleife wird alle 5 Sekunden ausgeführt  
         self.after(5000, self.loop)
-        
-        if check_database(self.db, self.last_update):
-            self.last_update = datetime.datetime.now()
-            self.einsatzstellen = read_database(self.db)
-            self.einsatztagebuch.update_tabel(self.einsatztagebuch.einsatzstelle_arbeit)
-            self.einsatztagebuch.einsatzliste.update_tabel()
-        
+
+        self.einsatztagebuch.update_tabel(self.einsatztagebuch.einsatzstelle_arbeit)
+        self.einsatztagebuch.einsatzliste.update_tabel()        
                 
 
 class Hauptfenster(ttk.Frame):
@@ -117,12 +111,13 @@ class Einsatztagebuch(ttk.Frame):
               
 
     def update_tabel(self, id):
+        db = self.parent.parent.db
         for element in self.tabel.get_children():
             self.tabel.delete(element)
         
         if id:
             self.einsatzstelle_arbeit = id
-            einsatzstelle = self.parent.parent.db.einsatzstellen.find_one(id)
+            einsatzstelle = db.einsatzstellen.find_one(id)
             
             stichwort = einsatzstelle['stichwort']
             strasse = einsatzstelle['strasse']
@@ -132,27 +127,30 @@ class Einsatztagebuch(ttk.Frame):
             
             
             for eintrag in einsatzstelle['liste_eintrag']:
-                self.tabel.insert(parent='', index='end', values=tuple(eintrag))
+                zeile = eintrag
+                zeile[0] = zeile[0].strftime('%d.%m.%Y %H:%M')
+                self.tabel.insert(parent='', index='end', values=zeile)
 
     def add_entry(self, _):
+        db = self.parent.parent.db
         entry = self.entry_funk.get()
         funker = self.parent.parent.user_login.get()
         
         # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
         if entry:
             eintrag = (
-                datetime.datetime.now().strftime('%d.%m.%Y %H:%M'),
+                datetime.datetime.now(),
                 entry,
                 self.entry_absender.get(),
                 self.entry_empfang.get(),
                 funker                   
             )
             
-            est = self.parent.parent.db.einsatzstellen.find_one(self.einsatzstelle_arbeit)
+            est = db.einsatzstellen.find_one(self.einsatzstelle_arbeit)
             liste_eintrag = est['liste_eintrag']
             liste_eintrag.append(list(eintrag))
             
-            self.parent.parent.db.einsatzstellen.find_one_and_update(
+            db.einsatzstellen.find_one_and_update(
                 {'_id': self.einsatzstelle_arbeit},
                 { '$set': { 'liste_eintrag' : liste_eintrag} }, 
                 return_document = ReturnDocument.AFTER
@@ -186,6 +184,7 @@ class Einsatzliste(ttk.Frame):
         super().__init__(parent)
 
         self.parent = parent
+        self.einsatzstelle_focus = None
         
         # Tabelle aller Einsätze
         self.headings = ['id', 'stichwort', 'strasse', 'status']
@@ -210,16 +209,15 @@ class Einsatzliste(ttk.Frame):
         self.button_update_einsatz.grid(row=0, column=1, sticky='e')
         self.button_neuer_einsatz.grid(row=0, column=2, padx=5, sticky='e')
         self.tabel_einsatz.grid(row=1, column=0, columnspan=3, pady=5)
-        #self.check_arbeit.grid(row=2, column=0, sticky='w', pady=(5,20), padx=10)
+        self.check_arbeit.grid(row=2, column=0, sticky='w', pady=(5,20), padx=10)
     
     def einsatz_update_maske(self):
         db = self.parent.parent.parent.db
-        einsatzstellen = db.einsatzstellen
         
         selection = self.tabel_einsatz.selection()
         if selection:
             id = self.tabel_einsatz.item(selection[0])['values'][0]        
-            einsatz = einsatzstellen.find_one(ObjectId(id))
+            einsatz = db.einsatzstellen.find_one(ObjectId(id))
             
             stichwort = einsatz['stichwort']
             nummer = einsatz['nr_lst']     
@@ -274,11 +272,11 @@ class Einsatzliste(ttk.Frame):
         
         if stichwort and strasse:
             eintrag = (
-                datetime.datetime.now().strftime('%d.%m.%Y %H:%M'),
+                now,
                 'Einsatzdaten aktualisiert',
                 '',
                 '',
-                self.parent.parent.parent.user_login.get()                  
+                user                  
             )
             
             est = db.einsatzstellen.find_one(id)
@@ -295,9 +293,7 @@ class Einsatzliste(ttk.Frame):
                         'liste_eintrag': liste_eintrag} }, 
                     return_document = ReturnDocument.AFTER
                 )
-            db.updates.insert_one({'date': now})
-            self.parent.parent.parent.last_update = now
-            self.parent.parent.parent.einsatzstellen = read_database(db)
+            
             self.update_tabel()
             fenster.destroy()
         else:
@@ -334,13 +330,11 @@ class Einsatzliste(ttk.Frame):
             no = int(no)
         
         if stichwort and strasse:
-            db.einsatzstellen.insert_one({'nr_lst': no, 'stichwort': stichwort, 'strasse': strasse, 'status': 'unbearbeitet', 'liste_eintrag': [
-            [datetime.datetime.now().strftime('%d.%m.%Y %H:%M'), 'Einsatz angelegt', '', '', user]
+            db.einsatzstellen.insert_one({'nr_lst': no, 'stichwort': stichwort, 'strasse': strasse, 'status': 'unbearbeitet', 'datum': now, 'liste_eintrag': [
+            [now, 'Einsatz angelegt', '', '', user]
             ]})
-            db.updates.insert_one({'date': now})
             self.parent.parent.parent.last_update = now
             
-            self.parent.parent.parent.einsatzstellen = read_database(db)
             self.update_tabel()
             fenster.destroy()
         else:
@@ -350,28 +344,45 @@ class Einsatzliste(ttk.Frame):
             )
     
     def update_tabel(self):
-        abgeschlossen = self.check_arbeit_value.get()
+        db = self.parent.parent.parent.db
+        abgeschlossen = self.check_arbeit_value.get()        
+
+        if abgeschlossen:
+            query = {'status': {'$nin': ['abgeschlossen']}}
+        else:
+            query = {}
         
+        einsatzstellen = db.einsatzstellen.find(query)
+
         for element in self.tabel_einsatz.get_children():
             self.tabel_einsatz.delete(element)
         
-        for einsatz in self.parent.parent.parent.einsatzstellen:            
+        for einsatz in einsatzstellen:            
             status = einsatz['status']
-            
-            #if abgeschlossen and (status == 'abgeschlossen'): continue
             
             self.tabel_einsatz.insert(parent='', index='end', values=(
                 einsatz['_id'],
                 einsatz['stichwort'],
                 einsatz['strasse'],
                 status                 
-            ))    
+            ))
+
+        for row in self.tabel_einsatz.get_children():
+            id = ObjectId(self.tabel_einsatz.item(row)['values'][0])
+            if self.einsatzstelle_focus == id:
+                self.tabel_einsatz.focus(row)
+                self.tabel_einsatz.selection_set(row)
+ 
     
     def item_selection(self, _):
-        selection = self.tabel_einsatz.selection()
-        if selection:
+        selection = self.tabel_einsatz.selection()        
+        if selection:            
             id = self.tabel_einsatz.item(selection[0])['values'][0]
-            self.parent.parent.parent.einsatztagebuch.update_tabel(ObjectId(id))
+            id = ObjectId(id)
+            self.einsatzstelle_focus = id
+            self.parent.parent.parent.einsatztagebuch.update_tabel(id)
+        else:
+            self.einsatzstelle_focus = None
 
 
 class Login(ttk.Frame):
@@ -430,17 +441,22 @@ def check_database(db, last_update):
         return False
 
 
-def read_database(db):
-    try:
-        einsatzstellen = db.einsatzstellen
-        liste_einsatz = einsatzstellen.find()
-        einsatzstellen = liste_einsatz
+# def read_database(db):
+#     try:
+#         einsatzstellen = db.einsatzstellen
+#         liste_einsatz = einsatzstellen.find()
+#         einsatzstellen = liste_einsatz
     
-    except Exception as error:
-        print(f'read_database: {error}')
-        einsatzstellen = beispiel_einsatz_db
+#     except Exception as error:
+#         print(f'read_database: {error}')
+#         einsatzstellen = beispiel_einsatz_db
         
-    return einsatzstellen
+#     return einsatzstellen
+
+
+# def update_database(db):
+#     now = datetime.datetime.now()
+#     db.updates.insert_one({'date': now})
 
 
 if __name__ == "__main__":
