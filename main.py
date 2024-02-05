@@ -7,7 +7,10 @@ import customtkinter as ctk
 import os
 import datetime
 import locale
+import ctypes
 
+myappid = 'sw-lnk.einsatzleiter.v0.1' # arbitrary string
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)   
 
 # Einstellung zu verwendung vom Dezimaltrennzeichen
 # original_locale = locale.getlocale(locale.LC_NUMERIC)
@@ -20,7 +23,13 @@ class App(ttk.Window):
         
         # Grundeinstellungen des Fensters
         self.title("Funktagebuch")
-        #self.geometry(f"{1000}x{600}")        
+        #self.geometry(f"{1000}x{600}")
+
+        self.main_icon_path = os.path.join('img', 'einsatzleiter.png')
+        self.main_icon = tk.PhotoImage(file=self.main_icon_path)
+        self.iconphoto(False, self.main_icon)  
+
+           
 
         self.user_system = tk.StringVar(value=os.getlogin())
         self.user_login = tk.StringVar()
