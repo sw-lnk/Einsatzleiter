@@ -27,9 +27,7 @@ class App(ttk.Window):
 
         self.main_icon_path = os.path.join('img', 'einsatzleiter.png')
         self.main_icon = tk.PhotoImage(file=self.main_icon_path)
-        self.iconphoto(False, self.main_icon)  
-
-           
+        self.iconphoto(False, self.main_icon)
 
         self.user_system = tk.StringVar(value=os.getlogin())
         self.user_login = tk.StringVar()
@@ -149,7 +147,7 @@ class Einsatztagebuch(ttk.Frame):
         funker = self.parent.parent.user_login.get()
         
         # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
-        if entry:
+        if entry and self.einsatzstelle_arbeit:
             eintrag = (
                 datetime.datetime.now(),
                 entry,
@@ -180,7 +178,7 @@ class Leiste_Kopf(ttk.Frame):
         self.login = parent.parent.login
         self.funker_name = self.parent.parent.user_login
         
-        ttk.Label(self, text='User: ').grid(row=0, column=0)
+        ttk.Label(self, text='Angemeldet: ').grid(row=0, column=0)
         ttk.Label(self, textvariable=self.funker_name).grid(row=0, column=1)
         ctk.CTkButton(self, text='Logout', command=self.logout).grid(row=1, columnspan=2, sticky='we')
 
@@ -236,7 +234,8 @@ class Einsatzliste(ttk.Frame):
             strasse = einsatz['strasse']
             status = einsatz['status']
             
-            eingabe_maske = ttk.Toplevel('Neuer Einsatz')
+            eingabe_maske = ttk.Toplevel('Einsatz aktualisieren')
+            eingabe_maske.iconphoto(False, self.parent.parent.parent.main_icon)
             einsatz_stichwort = ctk.CTkEntry(eingabe_maske)
             einsatz_stichwort.insert(0, stichwort)
             
@@ -316,6 +315,7 @@ class Einsatzliste(ttk.Frame):
     
     def einsatz_anlegen_maske(self):
         eingabe_maske = ttk.Toplevel('Neuer Einsatz')
+        eingabe_maske.iconphoto(False, self.parent.parent.parent.main_icon)
         einsatz_stichwort = ctk.CTkEntry(eingabe_maske, placeholder_text='Einsatzstichwort')
         einsatz_nummer = ctk.CTkEntry(eingabe_maske, placeholder_text='Einsatznummer')        
         einsatz_strasse = ctk.CTkEntry(eingabe_maske, placeholder_text='Straße / Hausnummer')
@@ -385,7 +385,6 @@ class Einsatzliste(ttk.Frame):
                 self.tabel_einsatz.focus(row)
                 self.tabel_einsatz.selection_set(row)
  
-    
     def item_selection(self, _):
         selection = self.tabel_einsatz.selection()        
         if selection:            
@@ -409,11 +408,12 @@ class Login(ttk.Frame):
         
         self.user_login = None
         self.user_login_entry = ctk.CTkEntry(master=self, placeholder_text='Vorname Nachname')
+        self.user_login_entry.bind('<Return>', self.login_event)
 
         self.user_login_entry.pack(padx=(5,5), pady=5)
-        self.login_btn = ctk.CTkButton(master=self, text='Login', command=self.login_event).pack(padx=5, pady=5)
+        self.login_btn = ctk.CTkButton(master=self, text='Login', command=lambda: self.login_event(tk.Event)).pack(padx=5, pady=5)
     
-    def login_event(self):
+    def login_event(self, _):
         user_login = self.user_login_entry.get()
         if user_login:
             self.grid_forget()
@@ -436,40 +436,6 @@ def connect_database():
     
     return db
     
-
-def check_database(db, last_update):
-    try:
-        update = list(db.updates.find())[-1]
-        update_date = update['date']            
-        
-        if update_date > last_update:
-            last_update = update_date                
-            return True
-        else:
-            return False
-        
-    except Exception as error:
-        print(f'check_database: {error}')
-        return False
-
-
-# def read_database(db):
-#     try:
-#         einsatzstellen = db.einsatzstellen
-#         liste_einsatz = einsatzstellen.find()
-#         einsatzstellen = liste_einsatz
-    
-#     except Exception as error:
-#         print(f'read_database: {error}')
-#         einsatzstellen = beispiel_einsatz_db
-        
-#     return einsatzstellen
-
-
-# def update_database(db):
-#     now = datetime.datetime.now()
-#     db.updates.insert_one({'date': now})
-
 
 if __name__ == "__main__":
     app = App()
