@@ -1,7 +1,6 @@
 from pymongo import MongoClient
 import tkinter as tk
 import ttkbootstrap as ttk
-import customtkinter as ctk
 import os
 import locale
 import ctypes
@@ -23,9 +22,11 @@ class App(ttk.Window):
     def __init__(self):
         super().__init__()
         
-        # Grundeinstellungen des Fensters
+        # Grundeinstellungen des Fensters        
+        self.w = self.winfo_screenwidth()
+        self.h = self.winfo_screenheight()
+        self.geometry(f'{self.w}x{self.h}')
         self.title("Funktagebuch")
-        #self.geometry(f"{1000}x{600}")
 
         self.main_icon_path = os.path.join('img', 'einsatzleiter.png')
         self.main_icon = tk.PhotoImage(file=self.main_icon_path)
@@ -37,20 +38,12 @@ class App(ttk.Window):
         # Lade Daten
         self.db = connect_database()
         
-        # Hauptfenster
-        self.main = Hauptfenster(self)
-        
         # Login Fenster
-        self.login = Login(self)
-        
-        # Kopfleiste
-        self.kopfleiste = Leiste_Kopf(self.main)
-        self.kopfleiste.grid(row=0, column=0, sticky='news')           
+        self.login = Login(self)        
         
         # Einsatztagebuch
-        self.einsatztagebuch = Einsatztagebuch(self.main)
-        self.einsatztagebuch.grid(row=1, column=0, padx=5, pady=5, sticky='news')            
-
+        self.einsatztagebuch = Einsatztagebuch(self)
+        
         # Loop-Funktion zur Aktualisierung div. Objekte
         self.loop()    
     
@@ -59,35 +52,10 @@ class App(ttk.Window):
         # Diese Schleife wird alle 5 Sekunden ausgeführt  
         self.after(5000, self.loop)
 
-        self.einsatztagebuch.update_table(self.einsatztagebuch.einsatzstelle_arbeit)
-        self.einsatztagebuch.einsatzliste.update_table()        
-                
-
-class Hauptfenster(ttk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-
-
-class Leiste_Kopf(ttk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)        
+        self.einsatztagebuch.eintragliste.update_table(self.einsatztagebuch.einsatzstelle_arbeit)
+        self.einsatztagebuch.einsatzliste.update_table()
         
-        self.parent = parent
-        self.login = parent.parent.login
-        self.funker_name = self.parent.parent.user_login
         
-        ttk.Label(self, text='Angemeldet: ').grid(row=0, column=0)
-        ttk.Label(self, textvariable=self.funker_name).grid(row=0, column=1)
-        ctk.CTkButton(self, text='Logout', command=self.logout).grid(row=1, columnspan=2, sticky='we')
-
-        
-    def logout(self):
-        self.parent.grid_forget()
-        self.login.user_login_entry.delete(0, 'end')
-        self.login.grid(pady=20, padx=20)
-
-
 def connect_database():
     user = 'user' #input('Username: ')
     pwd = 'user' #getpass('Password: ')
