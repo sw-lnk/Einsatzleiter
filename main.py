@@ -295,10 +295,10 @@ class Einsatzliste(ttk.Frame):
                 )
         
             # Elemente ausrichten
-            einsatz_stichwort.grid(row=1, column=1, pady=5, columnspan=2)
-            einsatz_nummer.grid(row=2, column=1, pady=5, columnspan=2)
-            einsatz_anschrift.grid(row=3, column=1, pady=5, columnspan=2)
-            einsatz_status.grid(row=4, column=1, pady=5, columnspan=2)
+            einsatz_stichwort.grid(row=1, column=1, pady=5, padx=5, columnspan=2, sticky='we')
+            einsatz_nummer.grid(row=2, column=1, pady=5, padx=5, columnspan=2, sticky='we')
+            einsatz_anschrift.grid(row=3, column=1, pady=5, padx=5, columnspan=2, sticky='we')
+            einsatz_status.grid(row=4, column=1, pady=5, padx=5, columnspan=2, sticky='we')
             button_abbruch.grid(row=5, column=1, pady=5, padx=5)
             button_update.grid(row=5, column=2, pady=5, padx=5)
     
@@ -344,7 +344,7 @@ class Einsatzliste(ttk.Frame):
         eingabe_maske.iconphoto(False, self.parent.parent.parent.main_icon)
         einsatz_stichwort = ctk.CTkEntry(eingabe_maske, placeholder_text='Einsatzstichwort')
         einsatz_nummer = ctk.CTkEntry(eingabe_maske, placeholder_text='Einsatznummer')        
-        einsatz_anschrift = ctk.CTkEntry(eingabe_maske, placeholder_text='Straße / Hausnummer')
+        einsatz_anschrift = ctk.CTkEntry(eingabe_maske, placeholder_text='Anschrift')
         button_abbruch = ctk.CTkButton(eingabe_maske, text="Abbrechen", command=eingabe_maske.destroy)
         button_anlegen = ctk.CTkButton(
             eingabe_maske,
@@ -353,9 +353,9 @@ class Einsatzliste(ttk.Frame):
             )
         
         # Elemente ausrichten
-        einsatz_stichwort.grid(row=1, column=1, pady=5, columnspan=2)
-        einsatz_nummer.grid(row=2, column=1, pady=5, columnspan=2)
-        einsatz_anschrift.grid(row=3, column=1, pady=5, columnspan=2)
+        einsatz_stichwort.grid(row=1, column=1, pady=5, padx=5, columnspan=2, sticky='we')
+        einsatz_nummer.grid(row=2, column=1, pady=5, padx=5, columnspan=2, sticky='we')
+        einsatz_anschrift.grid(row=3, column=1, pady=5, padx=5, columnspan=2, sticky='we')
         button_abbruch.grid(row=4, column=1, pady=5, padx=5)
         button_anlegen.grid(row=4, column=2, pady=5, padx=5)
         
