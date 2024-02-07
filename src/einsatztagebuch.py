@@ -5,6 +5,8 @@ import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
 
+import settings
+
 from menu import Hauptmenu
 
 
@@ -82,12 +84,15 @@ class Eintragliste(ttk.Frame):
         self.frame_entry.pack(pady=5, padx=5, fill='x')
 
         # Eingabeelemente anzeigen / ausrichten        
-        #ttk.Label(self.frame_entry, text='Eintrag').grid(row=0, column=0, pady=(5, 0))
-        #ttk.Label(self.frame_entry, text='Absender').grid(row=0, column=1, pady=(5, 0))
-        #ttk.Label(self.frame_entry, text='Empfänger').grid(row=0, column=2, pady=(5, 0))      
+        if settings.absender or settings.empfaenger:
+            ttk.Label(self.frame_entry, text='Eintrag').grid(row=0, column=0, pady=(5, 0))
+        if settings.absender:
+            ttk.Label(self.frame_entry, text='Absender').grid(row=0, column=1, pady=(5, 0))
+            self.entry_absender.grid(row=1, column=1, padx=(5,0), sticky='ew')
+        if settings.empfaenger:
+            ttk.Label(self.frame_entry, text='Empfänger').grid(row=0, column=2, pady=(5, 0))
+            self.entry_empfang.grid(row=1, column=2, padx=(5,0), sticky='ew')      
         self.entry_funk.grid(row=1, column=0, padx=(5,0), sticky='ew')        
-        #self.entry_absender.grid(row=1, column=1, padx=(5,0), sticky='ew')
-        #self.entry_empfang.grid(row=1, column=2, padx=(5,0), sticky='ew')
         self.button_absenden.grid(row=1, column=3, padx=(5,5), sticky='ew')
                 
               
@@ -374,7 +379,7 @@ class Einsatzliste(ttk.Frame):
             status = einsatz['status']
             datum = einsatz['datum']
             letztes_update = einsatz['letztes_update']
-            datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=10)
+            datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=settings.zeitschwelle_einsatz_ohne_bearbeitung)
 
             tag_row = 'even' if (i%2==0) else 'odd'
             tag_update = 'onTime'

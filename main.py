@@ -5,6 +5,8 @@ import os
 import locale
 import ctypes
 
+import settings
+
 from einsatztagebuch import Einsatztagebuch
 from menu import Login
 
@@ -50,19 +52,18 @@ class App(ttk.Window):
     
         
     def loop(self):
-        # Diese Schleife wird alle 5 Sekunden ausgeführt  
-        self.after(5000, self.loop)
+        # Diese Schleife wird alle X Sekunden ausgeführt  
+        self.after(settings.update_intervall, self.loop)
 
         self.einsatztagebuch.eintragliste.update_table(self.einsatztagebuch.einsatzstelle_arbeit)
-        self.einsatztagebuch.einsatzliste.update_table()
-        
-        
+        self.einsatztagebuch.einsatzliste.update_table()        
+      
 def connect_database():
-    user = 'user' #input('Username: ')
-    pwd = 'user' #getpass('Password: ')
-    ip = '192.168.178.41'
-    port = '27017'
-    db = 'einsatztagebuch'
+    user = settings.db_user
+    pwd = settings.db_user_password
+    ip = settings.db_ip
+    port = settings.db_port
+    db = settings.db_name
     
     client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
     db = client.einsatztagebuch
