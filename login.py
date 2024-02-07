@@ -8,7 +8,8 @@ class Login(ttk.Frame):
         super().__init__(parent)        
         
         self.parent = parent
-        self.pack(expand=True)
+        self.login_pack()
+        
 
         ttk.Label(master=self, text='Benutzeranmeldung', style='info', font='bold').pack()
         
@@ -25,7 +26,9 @@ class Login(ttk.Frame):
             self.pack_forget()
             self.user_login = user_login
             self.parent.user_login.set(user_login)
-            #self.parent.kopfleiste.pack(pady=10, padx=10)
             self.parent.einsatztagebuch.pack(pady=(0,10), padx=10, expand=True, fill='both')
         else:
             ttk.Label(self, text='enter a valid name', style='warning').pack(pady=(0, 5), padx=20)
+    
+    def login_pack(self) -> None:
+        self.pack(pady=20, padx=20, expand=True)

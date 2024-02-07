@@ -23,8 +23,9 @@ class App(ttk.Window):
         super().__init__()
         
         # Grundeinstellungen des Fensters        
-        self.w = self.winfo_screenwidth()
-        self.h = self.winfo_screenheight()
+        self.screen_factor = 0.9
+        self.w = int(self.winfo_screenwidth()*self.screen_factor)
+        self.h = int(self.winfo_screenheight()*self.screen_factor)
         self.geometry(f'{self.w}x{self.h}')
         self.title("Funktagebuch")
 
@@ -42,7 +43,7 @@ class App(ttk.Window):
         self.login = Login(self)        
         
         # Einsatztagebuch
-        self.einsatztagebuch = Einsatztagebuch(self)
+        self.einsatztagebuch = Einsatztagebuch(self, self.user_login, self.db)
         
         # Loop-Funktion zur Aktualisierung div. Objekte
         self.loop()    

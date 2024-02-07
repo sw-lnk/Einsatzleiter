@@ -34,7 +34,8 @@ stichwort = random.choice(
 )
 einsatzstellen.insert_one(
     {'nr_lst': no, 'stichwort': stichwort, 'anschrift': anschrift, 'status': 'unbearbeitet', 'datum': jetzt,
-     'liste_eintrag': [[jetzt, f'Einsatz angelegt: Einsatznummer [{no}], Stichwort [{stichwort}], Anschrift [{anschrift}], Status [unbearbeitet]', '', '', 'Max Mustermann']]})
+     'liste_eintrag': [[jetzt, f'Einsatz angelegt: Einsatznummer [{no}], Stichwort [{stichwort}], Anschrift [{anschrift}], Status [unbearbeitet]', '', '', 'Max Mustermann']],
+     'letztes_update': jetzt})
 
 # for i in range(20):
 #     einsatzstellen.insert_one(
