@@ -84,7 +84,7 @@ pip install -r requirements.txt
 #### Einsatzleiter starten
 Durch den Befehl
 ```cmd
-python main.py
+python einsatzleiter.py
 ```
 wird das Programm gestartet.
 

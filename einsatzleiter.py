@@ -7,8 +7,8 @@ import ctypes
 
 import settings
 
-from src.einsatztagebuch import Einsatztagebuch
-from src.menu import Login
+from lib.einsatztagebuch import Einsatztagebuch
+from lib.menu import Login
 
 
 if os.name == 'nt':
@@ -63,11 +63,9 @@ def connect_database():
     pwd = settings.db_user_password
     ip = settings.db_ip
     port = settings.db_port
-    db = settings.db_name
-    
+    db = settings.db_name    
     client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-    db = client.einsatztagebuch
-    
+    db = client.einsatztagebuch    
     return db
     
 
