@@ -15,18 +15,18 @@ class Einsatztagebuch(ttk.Frame):
         self.parent = parent
         self.einsatzstelle_arbeit = None
         
+        # Hauptmenü
+        self.hauptmenu = Hauptmenu(self, user)
+        
         # Einsatzübersicht
         self.einsatzliste = Einsatzliste(self, db)
-        
-        # Kopfleiste
-        self.hauptmenu = Hauptmenu(self, user)
         
         # Tagebuch je Einsatz
         self.eintragliste = Eintragliste(self, user, db)
         
         #Elemente ausrichten
-        self.hauptmenu.pack(pady=5, padx=5, fill='y', anchor='e')
-        self.einsatzliste.pack(pady=0, padx=5, fill='y')
+        self.hauptmenu.pack(pady=5, padx=5, anchor='e')
+        self.einsatzliste.pack(pady=0, padx=5, fill='x')
         self.eintragliste.pack(pady=5, padx=5, fill='both')
         
 
@@ -74,7 +74,7 @@ class Eintragliste(ttk.Frame):
         self.entry_empfang.bind('<Return>', self.add_entry)  
         
         # Button zur Erstellung eines neuen Eintrags
-        self.button_absenden = ctk.CTkButton(self.frame_entry, text='Absenden', command=lambda: self.add_entry(tk.Event()))
+        self.button_absenden = ctk.CTkButton(self.frame_entry, text='Eintragen', command=lambda: self.add_entry(tk.Event()))
         
         # Elemente ausrichten        
         self.label_einsatz.pack(pady=5, padx=5)
@@ -164,43 +164,51 @@ class Einsatzliste(ttk.Frame):
         self.tabel_einsatz = ttk.Treeview(master=self, columns=self.headings, displaycolumns=self.headings[1:], show='headings')
         self.tabel_einsatz.heading('id', text='Nr.')
         self.tabel_einsatz.heading('datum', text='Einsatzbeginn', anchor='w')
-        self.tabel_einsatz.column('datum', width=100)
+        self.tabel_einsatz.column('datum', width=100, minwidth=100, stretch=False)
         self.tabel_einsatz.heading('stichwort', text='Stichwort', anchor='w')
-        self.tabel_einsatz.column('stichwort', width=300)
+        self.tabel_einsatz.column('stichwort')
         self.tabel_einsatz.heading('anschrift', text='Anschrift', anchor='w')
         self.tabel_einsatz.column('anschrift', width=200)
         self.tabel_einsatz.heading('status', text='Status', anchor='w')
-        self.tabel_einsatz.column('status', width=100)
+        self.tabel_einsatz.column('status', width=100, minwidth=50, stretch=False)
         self.tabel_einsatz.tag_configure('late', background='red')
         self.tabel_einsatz.tag_configure('unbearbeitet', background='#ffcccb')
         self.tabel_einsatz.tag_configure('in Arbeit', background='#ffffe0')
-        self.tabel_einsatz.tag_configure('abgeschlossen', background='#90ee90')
-        
+        self.tabel_einsatz.tag_configure('abgeschlossen', background='#90ee90')       
 
         self.tabel_einsatz.bind('<<TreeviewSelect>>', self.item_selection)
+
+        self.frame_optionen = ttk.Frame(self)
         
         # Button zur Bearbeitung und Anlage eines Einsatzes
-        self.button_neuer_einsatz = ctk.CTkButton(self, text='Neuer Einsatz', command=self.einsatz_anlegen_maske)
-        self.button_update_einsatz = ctk.CTkButton(self, text='Einsatz aktualisieren', command=self.einsatz_update_maske)
+        self.button_neuer_einsatz = ctk.CTkButton(self.frame_optionen, text='Neuer Einsatz', command=self.einsatz_anlegen_maske)
+        self.button_update_einsatz = ctk.CTkButton(self.frame_optionen, text='Einsatz aktualisieren', command=self.einsatz_update_maske)
         
-        # Filter Optionen
-        self.check_arbeit_value = tk.IntVar(self, 0)        
-        self.check_arbeit = ttk.Checkbutton(self, text='Abgeschlossene Einsätze ausblenden', variable=self.check_arbeit_value, command=self.update_table)
+        # Filter Optionen        
+        self.check_arbeit_value = tk.IntVar(self.frame_optionen, 1)        
+        self.check_arbeit = ttk.Checkbutton(self.frame_optionen, text='Abgeschlossene Einsätze', variable=self.check_arbeit_value, command=self.update_table)
         
-        self.check_date_value = tk.IntVar(self, 1)
-        self.check_date = ttk.Checkbutton(self, text='Zeige nur Einsätze nach', variable=self.check_date_value, command=self.update_table)
+        self.check_date_value = tk.IntVar(self.frame_optionen, 1)
+        self.check_date = ttk.Checkbutton(self.frame_optionen, text='Zeige nur Einsätze nach', variable=self.check_date_value, command=self.update_table)
         
         self.yesterday = datetime.date.today() - datetime.timedelta(days=7)
-        self.date_filter = ttk.DateEntry(self, firstweekday=7, startdate=self.yesterday, dateformat='%d.%m.%Y')
-
+        self.date_filter = ttk.DateEntry(self.frame_optionen, firstweekday=7, startdate=self.yesterday, dateformat='%d.%m.%Y')
+        
         # Elemente ausrichten
-        ttk.Label(self, text='Einsatzübersicht', font='bolt').grid(row=0, column=0)
-        self.button_update_einsatz.grid(row=0, column=1, sticky='e')
-        self.button_neuer_einsatz.grid(row=0, column=2, padx=5, sticky='e')
-        self.tabel_einsatz.grid(row=1, column=0, columnspan=5, pady=5, sticky='news')
-        self.check_arbeit.grid(row=2, column=0, pady=(0,20))
-        self.check_date.grid(row=2, column=1, sticky='e', pady=(0,20))
-        self.date_filter.grid(row=2, column=2, sticky='e', padx=(0,5), pady=(0,20))
+        self.button_neuer_einsatz.pack(padx=5, pady=(5,0), anchor='w')
+        self.button_update_einsatz.pack(padx=5, pady=(5,0), anchor='w')        
+        
+        self.check_date.pack(padx=5, pady=(20,0), anchor='w')
+        self.date_filter.pack(padx=5, pady=(5,0), anchor='w')
+
+        self.check_arbeit.pack(padx=5, pady=(20,5), anchor='w')
+        
+
+        self.columnconfigure(0, weight=1)
+        ttk.Label(self, text='Einsatzübersicht', font='bold').grid(row=0, column=0)
+        self.tabel_einsatz.grid(row=1, column=0, padx=5, pady=5, sticky='news')
+        self.frame_optionen.grid(row=1, column=1, sticky='news')
+        
     
     def einsatz_update_maske(self):
         db = self.db
@@ -343,7 +351,7 @@ class Einsatzliste(ttk.Frame):
     
     def update_table(self,):
         db = self.db
-        abgeschlossen = self.check_arbeit_value.get()
+        abgeschlossen = not self.check_arbeit_value.get()
         check_datum = self.check_date_value.get()
         datum = datetime.datetime.strptime(self.date_filter.entry.get(), '%d.%m.%Y')    
 

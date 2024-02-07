@@ -6,7 +6,7 @@ import locale
 import ctypes
 
 from einsatztagebuch import Einsatztagebuch
-from login import Login
+from menu import Login
 
 
 if os.name == 'nt':
