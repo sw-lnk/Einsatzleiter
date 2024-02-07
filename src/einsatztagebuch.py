@@ -7,7 +7,7 @@ import datetime
 
 import settings
 
-from menu import Hauptmenu
+from src.menu import Hauptmenu
 
 
 class Einsatztagebuch(ttk.Frame):
