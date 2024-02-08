@@ -102,7 +102,7 @@ class Eintragliste(ttk.Frame):
         
         if id:
             self.einsatzstelle_arbeit = id
-            einsatzstelle = db.einsatzstellen.find_one(id)
+            einsatzstelle = lese_einsatzstellen(db, id, einzelplatz=settings.einzelplatznutzung) #db.einsatzstellen.find_one(id)
             
             stichwort = einsatzstelle['stichwort']
             anschrift = einsatzstelle['anschrift']
@@ -130,13 +130,13 @@ class Eintragliste(ttk.Frame):
         
         # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
         if entry and self.einsatzstelle_arbeit:           
+            schreibe_einsatzstelle(
+                db=db,
+                einsatz_id=self.einsatzstelle_arbeit,
+                einsatz_update=True,
+                bearbeiter=funker,
+                einzelplatz=settings.einzelplatznutzung)
             
-            db.einsatzstellen.find_one_and_update(
-                {'_id': self.einsatzstelle_arbeit},
-                { '$set': {'letztes_update': now} }, 
-                return_document = ReturnDocument.AFTER
-            )
-
             eintrag = {
                 'einsatz': self.einsatzstelle_arbeit,
                 'zeitstempel': now,
@@ -219,8 +219,9 @@ class Einsatzliste(ttk.Frame):
         
         selection = self.tabel_einsatz.selection()
         if selection:
-            id = self.tabel_einsatz.item(selection[0])['values'][0]        
-            einsatz = db.einsatzstellen.find_one(ObjectId(id))
+            id = ObjectId(self.tabel_einsatz.item(selection[0])['values'][0])       
+            # einsatz = db.einsatzstellen.find_one(ObjectId(id))
+            einsatz = lese_einsatzstellen(db, id, einzelplatz=settings.einzelplatznutzung)
             
             stichwort = einsatz['stichwort']
             nummer = einsatz['nr_lst']     
@@ -274,17 +275,17 @@ class Einsatzliste(ttk.Frame):
         user = self.user
         now = datetime.datetime.now()
         
-        if stichwort and anschrift:           
-            db.einsatzstellen.find_one_and_update(
-                    {'_id': id},
-                    { '$set': {
-                        'nr_lst': nr,
-                        'stichwort': stichwort,
-                        'anschrift': anschrift,
-                        'status': status,
-                        'letztes_update': now} }, 
-                    return_document = ReturnDocument.AFTER
-                )
+        if stichwort and anschrift:
+            schreibe_einsatzstelle(
+                db=db,
+                einsatz_id=id,
+                nr_lst=nr,
+                stichwort=stichwort,
+                anschrift=anschrift,
+                status=status,
+                bearbeiter=user.get(),
+                einsatz_update=True,
+                einzelplatz=settings.einzelplatznutzung)
             
             db.eintrage.insert_one({
                 'einsatz': id,
@@ -332,24 +333,7 @@ class Einsatzliste(ttk.Frame):
             no = int(no)
         
         if stichwort and anschrift:
-            einsatz = db.einsatzstellen.insert_one({
-                'nr_lst': no,
-                'stichwort': stichwort,
-                'anschrift': anschrift,
-                'status': 'unbearbeitet',
-                'datum': now,
-                'letztes_update': now,
-                'archiv': False
-            })
-
-            db.eintrage.insert_one({
-                'einsatz': ObjectId(einsatz.inserted_id),
-                'zeitstempel': now,
-                'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
-                'absender': '',
-                'empfanger': '',
-                'bearbeiter': user.get()
-            })
+            schreibe_einsatzstelle(db=db, stichwort=stichwort, anschrift=anschrift, nr_lst=no, bearbeiter=user.get(), einzelplatz=settings.einzelplatznutzung)
             self.update_table()
             fenster.destroy()
         else:
@@ -374,7 +358,7 @@ class Einsatzliste(ttk.Frame):
         else:
             query = {}
         
-        einsatzstellen = db.einsatzstellen.find(query)
+        einsatzstellen = lese_einsatzstellen(db, filter=query, einzelplatz=settings.einzelplatznutzung) #db.einsatzstellen.find(query)
 
         for element in self.tabel_einsatz.get_children():
             self.tabel_einsatz.delete(element)
@@ -418,3 +402,85 @@ class Einsatzliste(ttk.Frame):
         
         else:
             self.einsatzstelle_focus = None
+
+
+def schreibe_einsatzstelle(
+    db,
+    einsatz_id=None,    
+    stichwort=None,
+    anschrift=None,
+    nr_lst=None,
+    status=None,
+    bearbeiter=None,
+    einsatz_update=False,
+    einsatz_archiviere=False,
+    einzelplatz=False):
+    
+    jetzt = datetime.datetime.now()
+    
+    einsatzdetails = {'letztes_update': jetzt}
+    if nr_lst: einsatzdetails['nr_lst'] = nr_lst
+    if stichwort: einsatzdetails['stichwort'] = stichwort
+    if anschrift: einsatzdetails['anschrift'] = anschrift
+    if status: einsatzdetails['status'] = status
+    if einsatz_archiviere: einsatzdetails['archiv'] = einsatz_archiviere
+    
+    if einzelplatz:
+        return None
+    else:
+        if einsatz_update:
+            db.einsatzstellen.find_one_and_update(
+                {'_id': einsatz_id},
+                { '$set': einsatzdetails }, 
+                return_document = ReturnDocument.AFTER
+            )
+        else:
+            einsatzdetails['datum'] = jetzt
+            einsatz = db.einsatzstellen.insert_one(einsatzdetails)
+            schreibe_eintrag(
+                db=db,
+                eintrag=f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {nr_lst}',
+                einsatz=ObjectId(einsatz.inserted_id),
+                bearbeiter=bearbeiter,
+                einsatz_neu_update=True,
+                einzelplatz=settings.einzelplatznutzung)
+
+
+def lese_einsatzstellen(
+    db,
+    einsatz_id=None,
+    filter=None,
+    einzelplatz=False):
+    if einzelplatz:
+        return None
+    else:
+        if einsatz_id:
+            return db.einsatzstellen.find_one(einsatz_id)
+        elif filter:
+            return db.einsatzstellen.find(filter)
+        else:
+            return db.einsatzstellen.find({})
+        
+
+def schreibe_eintrag(
+    db,
+    eintrag,
+    einsatz,
+    bearbeiter,
+    absender='',
+    empanger='',
+    einzelplatz=False):
+    
+    jetzt = datetime.datetime.now()
+    
+    if einzelplatz:
+        pass
+    else:
+        db.eintrage.insert_one({
+            'einsatz': einsatz,
+            'zeitstempel': jetzt,
+            'eintrag': eintrag,
+            'absender': absender,
+            'empfanger': empanger,
+            'bearbeiter': bearbeiter
+        })
