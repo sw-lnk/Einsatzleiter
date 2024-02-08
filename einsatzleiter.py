@@ -7,8 +7,8 @@ import ctypes
 
 import settings
 
-from lib.einsatztagebuch import Einsatztagebuch
-from lib.menu import Login
+from src.einsatztagebuch import Einsatztagebuch
+from src.menu import Login
 
 
 if os.name == 'nt':
