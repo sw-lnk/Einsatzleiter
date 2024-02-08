@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from datetime import datetime
 import random
+from bson import ObjectId
 
 user = 'user' #input('Username: ')
 pwd = 'user' #getpass('Password: ')
@@ -13,6 +14,7 @@ client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
 db = client.einsatztagebuch
 
 einsatzstellen = db.einsatzstellen
+eintrage = db.eintrage
 
 # Zufällige Einsatznummer
 no = random.randint(1, 123456789)
@@ -30,18 +32,56 @@ stichwort = random.choice(
     ['TH0 - Baum auf Straße', 'B0 - Gelöschtes Feuer', 'TH1 - Baum auf PKW', 'CBRN1 - Ölspur', 'TH1 - Laufen Betriebsmittel', 'B1 - Brennt Mülleimer']
 )
 
+
+# Zeige alle Einträge
+# for einsatz in einsatzstellen.find():
+#     print(einsatz)
+
+# Zeige alle Einträge
+# for eintrag in eintrage.find():
+#     print(eintrag)
+
+
 # Einen Einsatz anlegen
-einsatzstellen.insert_one(
-    {'nr_lst': no, 'stichwort': stichwort, 'anschrift': anschrift, 'status': 'unbearbeitet', 'datum': jetzt,
-     'liste_eintrag': [[jetzt, f'Einsatz angelegt: Einsatznummer [{no}], Stichwort [{stichwort}], Anschrift [{anschrift}], Status [unbearbeitet]', '', '', 'Max Mustermann']],
-     'letztes_update': jetzt})
+einsatz = einsatzstellen.insert_one({
+    'nr_lst': no,
+    'stichwort': stichwort,
+    'anschrift': anschrift,
+    'status': 'unbearbeitet',
+    'datum': jetzt,
+    'letztes_update': jetzt,
+    'archiv': False
+})
+
+eintrage.insert_one({
+    'einsatz': ObjectId(einsatz.inserted_id),
+    'zeitstempel': jetzt,
+    'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
+    'absender': '',
+    'empfanger': '',
+    'bearbeiter': 'Max Mustermann'
+})
 
 # Mehrer Beispiel Einsätze anlegen
-# for i in range(20):
-#     einsatzstellen.insert_one(
-#         {'nr_lst': i, 'stichwort': 'TH 0', 'anschrift': 'Neustr.', 'status': 'offen', 'datum': datetime.now(), 'liste_eintrag': [
-#             [datetime.now(), 'Einsatz angelegt', '', '', 'Max Mustermann']
-#             ]})
+# for i in range(5):
+#     einsatz = einsatzstellen.insert_one({
+#         'nr_lst': no,
+#         'stichwort': stichwort,
+#         'anschrift': anschrift,
+#         'status': 'unbearbeitet',
+#         'datum': jetzt,
+#         'archiv': False
+#     })
+    
+#     eintrage.insert_one({
+#     'einsatz': einsatz,
+#     'zeitstempel': jetzt,
+#     'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
+#     'absender': '',
+#     'empfanger': '',
+#     'bearbeiter': 'Max Mustermann'
+#     })
 
-# Alle Einsatzstellen aus Datenban löschen
+# Alle Einsatzstellen aus Datenbank löschen
 # einsatzstellen.delete_many({})
+# eintrage.delete_many({})

@@ -21,7 +21,7 @@ class Einsatztagebuch(ttk.Frame):
         self.hauptmenu = Hauptmenu(self, user)
         
         # Einsatzübersicht
-        self.einsatzliste = Einsatzliste(self, db)
+        self.einsatzliste = Einsatzliste(self, user, db)
         
         # Tagebuch je Einsatz
         self.eintragliste = Eintragliste(self, user, db)
@@ -36,9 +36,8 @@ class Eintragliste(ttk.Frame):
     def __init__(self, parent, user, db):
         super().__init__(parent)
         self.parent = parent
-        self.user = user.get()
-        self.db = db
-        
+        self.user = user
+        self.db = db        
                 
         # Anzeige ausgewählter Einsatz
         self.label_einsatz_text = tk.StringVar(self, '- Einsatz -')
@@ -93,8 +92,7 @@ class Eintragliste(ttk.Frame):
             ttk.Label(self.frame_entry, text='Empfänger').grid(row=0, column=2, pady=(5, 0))
             self.entry_empfang.grid(row=1, column=2, padx=(5,0), sticky='ew')      
         self.entry_funk.grid(row=1, column=0, padx=(5,0), sticky='ew')        
-        self.button_absenden.grid(row=1, column=3, padx=(5,5), sticky='ew')
-                
+        self.button_absenden.grid(row=1, column=3, padx=(5,5), sticky='ew')                
               
 
     def update_table(self, id):
@@ -112,12 +110,12 @@ class Eintragliste(ttk.Frame):
             text = f'{stichwort}: {anschrift} ({status})'
             self.label_einsatz_text.set(text)
             
-            
-            for i, eintrag in enumerate(einsatzstelle['liste_eintrag']):
-                zeile = eintrag
-                zeile[0] = zeile[0].strftime('%d.%m.%Y %H:%M')
-
+            eintrage = db.eintrage.find({'einsatz': id})
+            for i, eintrag in enumerate(eintrage):
                 row_tag = 'even' if (i%2==0) else 'odd'
+
+                zeile=list(eintrag.values())[2:]
+                zeile[0] = zeile[0].strftime('%d.%m.%Y %H:%M')
 
                 self.tabel.insert(parent='', index='end', values=zeile, tags=(row_tag,))
         
@@ -127,42 +125,43 @@ class Eintragliste(ttk.Frame):
     def add_entry(self, _):
         db = self.db
         entry = self.entry_funk.get()
-        funker = self.user
+        funker = self.user.get()
         now = datetime.datetime.now()
         
         # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
-        if entry and self.einsatzstelle_arbeit:
-            eintrag = (
-                now,
-                entry,
-                self.entry_absender.get(),
-                self.entry_empfang.get(),
-                funker                   
-            )
-            
-            est = db.einsatzstellen.find_one(self.einsatzstelle_arbeit)
-            liste_eintrag = est['liste_eintrag']
-            liste_eintrag.append(list(eintrag))
+        if entry and self.einsatzstelle_arbeit:           
             
             db.einsatzstellen.find_one_and_update(
                 {'_id': self.einsatzstelle_arbeit},
-                { '$set': { 'liste_eintrag' : liste_eintrag,
-                           'letztes_update': now} }, 
+                { '$set': {'letztes_update': now} }, 
                 return_document = ReturnDocument.AFTER
             )
+
+            eintrag = {
+                'einsatz': self.einsatzstelle_arbeit,
+                'zeitstempel': now,
+                'eintrag': entry,
+                'absender': self.entry_absender.get(),
+                'empfanger': self.entry_empfang.get(),
+                'bearbeiter': funker
+            }
+            db.eintrage.insert_one(eintrag)
             
-            self.tabel.insert(parent='', index='end', values=eintrag)
+            zeile = list(eintrag.values())[1:]
+            self.tabel.insert(parent='', index='end', values=zeile)
             self.entry_funk.delete(0, 'end')            
 
 
 class Einsatzliste(ttk.Frame):
-    def __init__(self, parent, db):
+    def __init__(self, parent, user, db):
         super().__init__(parent)
 
         self.parent = parent
         self.db = db
-        self.user = self.parent.parent.user_login.get()
+        self.user = user
         self.einsatzstelle_focus = None
+
+        self.letzte_aktualisierung = None
         
         # Tabelle aller Einsätze
         self.headings = ['id', 'datum', 'stichwort', 'anschrift', 'status']
@@ -275,19 +274,7 @@ class Einsatzliste(ttk.Frame):
         user = self.user
         now = datetime.datetime.now()
         
-        if stichwort and anschrift:
-            eintrag = (
-                now,
-                f'Einsatzdaten aktualisiert: Einsatznummer [{nr}], Stichwort [{stichwort}], Anschrift [{anschrift}] Status [{status}]',
-                '',
-                '',
-                user                  
-            )
-            
-            est = db.einsatzstellen.find_one(id)
-            liste_eintrag = est['liste_eintrag']
-            liste_eintrag.append(list(eintrag))
-            
+        if stichwort and anschrift:           
             db.einsatzstellen.find_one_and_update(
                     {'_id': id},
                     { '$set': {
@@ -295,10 +282,18 @@ class Einsatzliste(ttk.Frame):
                         'stichwort': stichwort,
                         'anschrift': anschrift,
                         'status': status,
-                        'liste_eintrag': liste_eintrag,
                         'letztes_update': now} }, 
                     return_document = ReturnDocument.AFTER
                 )
+            
+            db.eintrage.insert_one({
+                'einsatz': id,
+                'zeitstempel': now,
+                'eintrag': f'Einsatz update: {stichwort}, {anschrift} ({status}) - {nr}',
+                'absender': '',
+                'empfanger': '',
+                'bearbeiter': user.get()
+            })
             
             self.update_table()
             fenster.destroy()
@@ -337,14 +332,23 @@ class Einsatzliste(ttk.Frame):
             no = int(no)
         
         if stichwort and anschrift:
-            db.einsatzstellen.insert_one({
+            einsatz = db.einsatzstellen.insert_one({
                 'nr_lst': no,
                 'stichwort': stichwort,
                 'anschrift': anschrift,
                 'status': 'unbearbeitet',
                 'datum': now,
-                'liste_eintrag': [[now, f'Einsatz angelegt: Einsatznummer [{no}], Stichwort [{stichwort}], Anschrift [{anschrift}], Status [unbearbeitet]', '', '', user]],
-                'letztes_update': now
+                'letztes_update': now,
+                'archiv': False
+            })
+
+            db.eintrage.insert_one({
+                'einsatz': ObjectId(einsatz.inserted_id),
+                'zeitstempel': now,
+                'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
+                'absender': '',
+                'empfanger': '',
+                'bearbeiter': user.get()
             })
             self.update_table()
             fenster.destroy()
@@ -414,4 +418,3 @@ class Einsatzliste(ttk.Frame):
         
         else:
             self.einsatzstelle_focus = None
-
