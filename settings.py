@@ -1,5 +1,5 @@
 # Einzelplatznutzung (ohne Netzwerkanbindung)
-einzelplatznutzung = False
+einzelplatznutzung = True
 
 # Einstellungen zur Nutzung der MongoDB
 # Neuer Nutzer

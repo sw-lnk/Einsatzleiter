@@ -346,51 +346,63 @@ class Einsatzliste(ttk.Frame):
         db = self.db
         abgeschlossen = not self.check_arbeit_value.get()
         check_datum = self.check_date_value.get()
-        datum = datetime.datetime.strptime(self.date_filter.entry.get(), '%d.%m.%Y')    
+        datum = datetime.datetime.strptime(self.date_filter.entry.get(), '%d.%m.%Y')
+        
+        for element in self.tabel_einsatz.get_children():
+                self.tabel_einsatz.delete(element)    
 
         if abgeschlossen and check_datum:
-            query = {'status': {'$nin': ['abgeschlossen']},
-                     'datum': {'$gte': datum}}
+            query = {'status': {'$nin': ['abgeschlossen']}, 'datum': {'$gte': datum}}
+            query_sql = "SELECT * FROM einsatzstellen WHERE status!=? AND datum > ?"
+            dict_sql = ('abgeschlossen', datum,)
         elif abgeschlossen:
             query = {'status': {'$nin': ['abgeschlossen']}}
+            query_sql = "SELECT * FROM einsatzstellen WHERE status!=?"
+            dict_sql = ('abgeschlossen',)
         elif check_datum:
             query = {'datum': {'$gte': datum}}
+            query_sql = "SELECT * FROM einsatzstellen WHERE datum > ?"
+            dict_sql = (datum,)
         else:
             query = {}
+            query_sql = "SELECT * FROM einsatzstellen"
+            dict_sql=()
         
-        einsatzstellen = lese_einsatzstellen(db, filter=query, einzelplatz=settings.einzelplatznutzung) #db.einsatzstellen.find(query)
-
-        for element in self.tabel_einsatz.get_children():
-            self.tabel_einsatz.delete(element)
-        
-        for i, einsatz in enumerate(einsatzstellen):            
-            status = einsatz['status']
-            datum = einsatz['datum']
-            letztes_update = einsatz['letztes_update']
-            datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=settings.zeitschwelle_einsatz_ohne_bearbeitung)
-
-            tag_row = 'even' if (i%2==0) else 'odd'
-            tag_update = 'onTime'
-            if (datum_schwelle>letztes_update) and (status != 'abgeschlossen'):
-                tag_update = 'late'
-            
-            self.tabel_einsatz.insert(parent='', index=0, values=(
-                einsatz['_id'],
-                datum.strftime('%d.%m.%Y %H:%M'),
-                einsatz['stichwort'],
-                einsatz['anschrift'],
-                status                 
-            ), tags=(tag_row, status, tag_update))
-
-        for row in self.tabel_einsatz.get_children():
-            id = ObjectId(self.tabel_einsatz.item(row)['values'][0])
-            if self.einsatzstelle_focus == id:
-                self.tabel_einsatz.focus(row)
-                self.tabel_einsatz.selection_set(row)
-                break
+        if settings.einzelplatznutzung:
+            einsatzstellen = db.cursor().execute(query_sql, dict_sql).fetchall()
         else:
-            self.einsatzstelle_focus = None
-            self.parent.eintragliste.update_table(None)
+            einsatzstellen = lese_einsatzstellen(db, filter=query, einzelplatz=settings.einzelplatznutzung) #db.einsatzstellen.find(query)
+
+            # ToDo: Zeile je nach Datenbank zusammensetzen.
+            
+            for i, einsatz in enumerate(einsatzstellen):            
+                status = einsatz['status']
+                datum = einsatz['datum']
+                letztes_update = einsatz['letztes_update']
+                datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=settings.zeitschwelle_einsatz_ohne_bearbeitung)
+
+                tag_row = 'even' if (i%2==0) else 'odd'
+                tag_update = 'onTime'
+                if (datum_schwelle>letztes_update) and (status != 'abgeschlossen'):
+                    tag_update = 'late'
+                
+                self.tabel_einsatz.insert(parent='', index=0, values=(
+                    einsatz['_id'],
+                    datum.strftime('%d.%m.%Y %H:%M'),
+                    einsatz['stichwort'],
+                    einsatz['anschrift'],
+                    status                 
+                ), tags=(tag_row, status, tag_update))
+
+            for row in self.tabel_einsatz.get_children():
+                id = ObjectId(self.tabel_einsatz.item(row)['values'][0])
+                if self.einsatzstelle_focus == id:
+                    self.tabel_einsatz.focus(row)
+                    self.tabel_einsatz.selection_set(row)
+                    break
+            else:
+                self.einsatzstelle_focus = None
+                self.parent.eintragliste.update_table(None)
  
     def item_selection(self, _):
         selection = self.tabel_einsatz.selection()        

@@ -5,6 +5,7 @@ import os
 import locale
 import ctypes
 import datetime
+import sqlite3
 
 import settings
 
@@ -54,24 +55,71 @@ class App(ttk.Window):
             self.einsatztagebuch.einsatzliste.update_table()        
       
     def connect_database(self):
-        user = settings.db_user
-        pwd = settings.db_user_password
-        ip = settings.db_ip
-        port = settings.db_port
-        db = settings.db_name    
-        client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-        db = client.einsatztagebuch    
-        return db
+        if settings.einzelplatznutzung:
+            # create database into directory
+            db_path = os.path.join('data', 'db.sqlite3')
+            db = sqlite3.connect(db_path)
+
+            # get a cursor object
+            cursor = db.cursor()
+            
+            # CREATE TABLE
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS einsatzstellen(
+                                nr_lst INTEGER,
+                                stichwort TEXT,
+                                anschrift TEXT,
+                                status TEXT,
+                                datum TEXT,
+                                letztes_update TEXT,
+                                archiv INTEGER
+                        )"""
+            )
+            
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS eintrage(
+                                einsatz INTEGER,
+                                zeitstempel TEXT,
+                                eintrag TEXT,
+                                absender TEXT,
+                                empfanger TEXT,
+                                bearbeiter TEXT
+                        )"""
+            )
+            db.commit()
+            
+            return db
+        
+        else:
+            user = settings.db_user
+            pwd = settings.db_user_password
+            ip = settings.db_ip
+            port = settings.db_port
+            db = settings.db_name    
+            client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
+            db = client.einsatztagebuch    
+            return db
     
     def check_aktualisierung(self, db, letzte_aktualisierung) -> bool:
-        einsatzstellen = db.einsatzstellen.find()
-        for einsatz in einsatzstellen:
-            letztes_update = einsatz['letztes_update']
+        if settings.einzelplatznutzung:
+            einsatzstellen = db.cursor().execute("""SELECT letztes_update FROM einsatzstellen""").fetchall()
+            for einsatz in einsatzstellen:
+                letztes_update = datetime.datetime.strptime(einsatz[0], '%Y-%m-%d %H:%M:%S.%f')
 
-            if letzte_aktualisierung == None:
-                return True
-            elif (letztes_update > letzte_aktualisierung):                
-                return True
+                if letzte_aktualisierung == None:
+                    return True
+                elif (letztes_update > letzte_aktualisierung):                
+                    return True
+                
+        else:
+            einsatzstellen = db.einsatzstellen.find()
+            for einsatz in einsatzstellen:
+                letztes_update = einsatz['letztes_update']
+
+                if letzte_aktualisierung == None:
+                    return True
+                elif (letztes_update > letzte_aktualisierung):                
+                    return True
     
         return False
 

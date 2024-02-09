@@ -17,7 +17,7 @@ einsatzstellen = db.einsatzstellen
 eintrage = db.eintrage
 
 # Zufällige Einsatznummer
-no = random.randint(1, 123456789)
+nr_lst = random.randint(1, 123456789)
 
 # Aktueller Zeitpunkt
 jetzt = datetime.now()
@@ -44,7 +44,7 @@ stichwort = random.choice(
 
 # Einen Einsatz anlegen
 einsatz = einsatzstellen.insert_one({
-    'nr_lst': no,
+    'nr_lst': nr_lst,
     'stichwort': stichwort,
     'anschrift': anschrift,
     'status': 'unbearbeitet',
@@ -56,7 +56,7 @@ einsatz = einsatzstellen.insert_one({
 eintrage.insert_one({
     'einsatz': ObjectId(einsatz.inserted_id),
     'zeitstempel': jetzt,
-    'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
+    'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {nr_lst}',
     'absender': '',
     'empfanger': '',
     'bearbeiter': 'Max Mustermann'
@@ -65,7 +65,7 @@ eintrage.insert_one({
 # Mehrer Beispiel Einsätze anlegen
 # for i in range(5):
 #     einsatz = einsatzstellen.insert_one({
-#         'nr_lst': no,
+#         'nr_lst': nr_lst,
 #         'stichwort': stichwort,
 #         'anschrift': anschrift,
 #         'status': 'unbearbeitet',
@@ -76,7 +76,7 @@ eintrage.insert_one({
 #     eintrage.insert_one({
 #     'einsatz': einsatz,
 #     'zeitstempel': jetzt,
-#     'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
+#     'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {nr_lst}',
 #     'absender': '',
 #     'empfanger': '',
 #     'bearbeiter': 'Max Mustermann'
