@@ -1,9 +1,11 @@
+import os
 from pymongo import ReturnDocument
 from bson import ObjectId
 import tkinter as tk
 import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
+import fpdf
 
 import settings
 
@@ -187,6 +189,7 @@ class Einsatzliste(ttk.Frame):
         # Button zur Bearbeitung und Anlage eines Einsatzes
         self.button_neuer_einsatz = ctk.CTkButton(self.frame_optionen, text='Neuer Einsatz', command=self.einsatz_anlegen_maske)
         self.button_update_einsatz = ctk.CTkButton(self.frame_optionen, text='Einsatz aktualisieren', command=self.einsatz_update_maske)
+        self.button_einsatz_ausgabe = ctk.CTkButton(self.frame_optionen, text='Protokoll ausleiten', command=self.protokoll_ausleiten)
         
         # Filter Optionen        
         self.check_arbeit_value = tk.IntVar(self.frame_optionen, 1)        
@@ -200,7 +203,8 @@ class Einsatzliste(ttk.Frame):
         
         # Elemente ausrichten
         self.button_neuer_einsatz.pack(padx=5, pady=(5,0), anchor='w')
-        self.button_update_einsatz.pack(padx=5, pady=(5,0), anchor='w')        
+        self.button_update_einsatz.pack(padx=5, pady=(5,0), anchor='w')
+        self.button_einsatz_ausgabe.pack(padx=5, pady=(5,0), anchor='w')        
         
         self.check_date.pack(padx=5, pady=(20,0), anchor='w')
         self.date_filter.pack(padx=5, pady=(5,0), anchor='w')
@@ -213,6 +217,72 @@ class Einsatzliste(ttk.Frame):
         self.tabel_einsatz.grid(row=1, column=0, padx=5, pady=5, sticky='news')
         self.frame_optionen.grid(row=1, column=1, sticky='news')
         
+    
+    def protokoll_ausleiten(self):
+        db = self.db
+        
+        selection = self.tabel_einsatz.selection()
+        if selection:
+            id = ObjectId(self.tabel_einsatz.item(selection[0])['values'][0])     
+            einsatzstelle = db.einsatzstellen.find_one(id)            
+            stichwort = einsatzstelle['stichwort']
+            nr_lst = einsatzstelle['nr_lst']
+            anschrift = einsatzstelle['anschrift']
+            status = einsatzstelle['status']
+            
+            eintrage = db.eintrage.find({'einsatz': id})         
+
+            jetzt = datetime.datetime.now()
+            jetzt_einfach = jetzt.strftime('%d.%m.%Y %H:%M')
+            jetzt_einsatz = jetzt.strftime('%d%H%M%b%y')
+            
+            path = os.path.join('protokolle', f'{stichwort}.pdf')            
+
+            pdf = MyFPDF(orientation='landscape')
+            pdf.add_page()
+
+            # Name der Organisation einfügen
+            pdf.set_font(family="helvetica", style="B", size=16)
+            pdf.write(10, settings.name_organisation)
+
+            # Erstelldatum oben rechts einfügen
+            pdf.set_font(style="", size=10)
+            pdf.set_x(250)
+            pdf.write(8, f'{jetzt_einfach}')
+            pdf.set_x(250)
+            pdf.write(18, f'{jetzt_einsatz}')
+
+            # Einsatzdaten
+            pdf.set_font(size=14)
+            pdf.ln()
+            pdf.set_y(20)
+            pdf.write(text='Funkprotokoll')
+            pdf.ln()
+            pdf.set_x(15)
+            pdf.write(text=f'{stichwort} - {nr_lst} ({status})')
+            pdf.ln()
+            pdf.set_x(15)
+            pdf.write(text=anschrift)
+
+            pdf.set_y(40)
+            pdf.set_font(size=10)
+            # Protokolldaten einfügen
+            with pdf.table(col_widths=(20,100,15)) as table:
+                row = table.row()
+                for cell in ['Zeitstempel', 'Eintrag', 'Bearbeiter']:
+                    row.cell(cell)
+                for eintrag in eintrage:
+                    zeit = eintrag['zeitstempel'].strftime('%d.%m.%Y %H:%M')
+                    text = eintrag['eintrag']
+                    bearbeiter = eintrag['bearbeiter']
+                    
+                    row = table.row()
+                    for cell in [zeit, text, bearbeiter]:
+                        row.cell(cell)
+                        
+            # Save pdf
+            pdf.output(path)
+    
     
     def einsatz_update_maske(self):
         db = self.db
@@ -418,3 +488,15 @@ class Einsatzliste(ttk.Frame):
         
         else:
             self.einsatzstelle_focus = None
+
+
+class MyFPDF(fpdf.FPDF):
+    def footer(self):
+        # Position cursor at 1.5 cm from bottom:
+        self.set_y(-15)
+        # Setting font: helvetica italic 8
+        self.set_font("helvetica", "", 8)
+        # Printing page number:
+        self.cell(0, 10, f"Funkprotokoll: TH0, Große Straße 1, 12345 Musterstadt", align=fpdf.Align.L)
+        self.set_y(-15)
+        self.cell(0, 10, f"Page {self.page_no()}/{{nb}}", align=fpdf.Align.R)
