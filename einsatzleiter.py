@@ -41,9 +41,8 @@ class App(ttk.Window):
         self.einsatztagebuch = Einsatztagebuch(self, self.user_login, self.db)
         
         # Loop-Funktion zur Aktualisierung div. Objekte
-        self.loop()    
+        self.loop()
     
-        
     def loop(self):
         # Diese Schleife wird alle X Sekunden ausgeführt  
         self.after(settings.update_intervall, self.loop)
