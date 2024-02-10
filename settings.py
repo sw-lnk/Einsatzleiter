@@ -1,6 +1,3 @@
-# Einzelplatznutzung (ohne Netzwerkanbindung)
-einzelplatznutzung = True
-
 # Einstellungen zur Nutzung der MongoDB
 # Neuer Nutzer
 db_user = 'user'
