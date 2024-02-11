@@ -9,6 +9,7 @@ import fpdf
 
 import settings
 
+from src.protokoll import Protokoll
 from src.menu import Hauptmenu
 
 
@@ -223,65 +224,11 @@ class Einsatzliste(ttk.Frame):
         
         selection = self.tabel_einsatz.selection()
         if selection:
-            id = ObjectId(self.tabel_einsatz.item(selection[0])['values'][0])     
-            einsatzstelle = db.einsatzstellen.find_one(id)            
-            stichwort = einsatzstelle['stichwort']
-            nr_lst = einsatzstelle['nr_lst']
-            anschrift = einsatzstelle['anschrift']
-            status = einsatzstelle['status']
-            
-            eintrage = db.eintrage.find({'einsatz': id})         
-
-            jetzt = datetime.datetime.now()
-            jetzt_einfach = jetzt.strftime('%d.%m.%Y %H:%M')
-            jetzt_einsatz = jetzt.strftime('%d%H%M%b%y')
-            
-            path = os.path.join('protokolle', f'{stichwort}.pdf')            
-
-            pdf = MyFPDF(orientation='landscape')
-            pdf.add_page()
-
-            # Name der Organisation einfügen
-            pdf.set_font(family="helvetica", style="B", size=16)
-            pdf.write(10, settings.name_organisation)
-
-            # Erstelldatum oben rechts einfügen
-            pdf.set_font(style="", size=10)
-            pdf.set_x(250)
-            pdf.write(8, f'{jetzt_einfach}')
-            pdf.set_x(250)
-            pdf.write(18, f'{jetzt_einsatz}')
-
-            # Einsatzdaten
-            pdf.set_font(size=14)
-            pdf.ln()
-            pdf.set_y(20)
-            pdf.write(text='Funkprotokoll')
-            pdf.ln()
-            pdf.set_x(15)
-            pdf.write(text=f'{stichwort} - {nr_lst} ({status})')
-            pdf.ln()
-            pdf.set_x(15)
-            pdf.write(text=anschrift)
-
-            pdf.set_y(40)
-            pdf.set_font(size=10)
-            # Protokolldaten einfügen
-            with pdf.table(col_widths=(20,100,15)) as table:
-                row = table.row()
-                for cell in ['Zeitstempel', 'Eintrag', 'Bearbeiter']:
-                    row.cell(cell)
-                for eintrag in eintrage:
-                    zeit = eintrag['zeitstempel'].strftime('%d.%m.%Y %H:%M')
-                    text = eintrag['eintrag']
-                    bearbeiter = eintrag['bearbeiter']
-                    
-                    row = table.row()
-                    for cell in [zeit, text, bearbeiter]:
-                        row.cell(cell)
-                        
-            # Save pdf
-            pdf.output(path)
+            for sel in selection:
+                id = ObjectId(self.tabel_einsatz.item(sel)['values'][0])     
+                einsatzstelle = db.einsatzstellen.find_one(id)                
+                eintrage = db.eintrage.find({'einsatz': id})         
+                Protokoll(einsatzstelle, eintrage, settings.name_organisation)
     
     
     def einsatz_update_maske(self):
