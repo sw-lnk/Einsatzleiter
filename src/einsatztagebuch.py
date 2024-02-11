@@ -5,7 +5,6 @@ import tkinter as tk
 import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
-import fpdf
 
 import settings
 
@@ -20,9 +19,6 @@ class Einsatztagebuch(ttk.Frame):
         self.parent = parent
         self.einsatzstelle_arbeit = None
         
-        # Hauptmenü
-        self.hauptmenu = Hauptmenu(self, user)
-        
         # Einsatzübersicht
         self.einsatzliste = Einsatzliste(self, user, db)
         
@@ -30,9 +26,11 @@ class Einsatztagebuch(ttk.Frame):
         self.eintragliste = Eintragliste(self, user, db)
         
         #Elemente ausrichten
-        self.hauptmenu.pack(pady=5, padx=5, anchor='e')
-        self.einsatzliste.pack(pady=0, padx=5, fill='x')
-        self.eintragliste.pack(pady=5, padx=5, fill='both')
+        self.einsatzliste.pack_me()
+        self.eintragliste.pack_me()
+
+    def pack_me(self):
+        self.pack(pady=(0,10), padx=10, expand=True, fill='both')
         
 
 class Eintragliste(ttk.Frame):
@@ -158,6 +156,9 @@ class Eintragliste(ttk.Frame):
                     zeile = list(eintrag.values())[1:]
                     self.table.insert(parent='', index='end', values=zeile)
                     self.entry_funk.delete(0, 'end')            
+
+    def pack_me(self):
+        self.pack(pady=5, padx=5, fill='both')
 
 
 class Einsatzliste(ttk.Frame):
@@ -441,14 +442,5 @@ class Einsatzliste(ttk.Frame):
         else:
             self.einsatzstelle_focus = None
 
-
-class MyFPDF(fpdf.FPDF):
-    def footer(self):
-        # Position cursor at 1.5 cm from bottom:
-        self.set_y(-15)
-        # Setting font: helvetica italic 8
-        self.set_font("helvetica", "", 8)
-        # Printing page number:
-        self.cell(0, 10, f"Funkprotokoll: TH0, Große Straße 1, 12345 Musterstadt", align=fpdf.Align.L)
-        self.set_y(-15)
-        self.cell(0, 10, f"Page {self.page_no()}/{{nb}}", align=fpdf.Align.R)
+    def pack_me(self):
+        self.pack(pady=0, padx=5, fill='x')

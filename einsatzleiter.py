@@ -9,7 +9,8 @@ import datetime
 import settings
 
 from src.einsatztagebuch import Einsatztagebuch
-from src.menu import Login
+from src.menu import Login, Hauptmenu
+from src.fahrzeuge import Fahrzeuge
 
 
 class App(ttk.Window):
@@ -32,13 +33,22 @@ class App(ttk.Window):
 
         # Lade Daten
         self.db = self.connect_database()
-        self.letzte_aktualisierung = None
-        
+        self.letzte_aktualisierung = None        
+
         # Login Fenster
         self.login = Login(self)        
         
+        # Hauptmenü
+        self.hauptmenu = Hauptmenu(self)
+
         # Einsatztagebuch
         self.einsatztagebuch = Einsatztagebuch(self, self.user_login, self.db)
+
+        # Fahrzeugübersicht
+        self.fahrzeuge = Fahrzeuge(self)
+
+        # Aktive Anwendung
+        self.aktuelle_anwendung = self.einsatztagebuch
         
         # Loop-Funktion zur Aktualisierung div. Objekte
         self.loop()
