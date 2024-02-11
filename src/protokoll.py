@@ -4,7 +4,7 @@ import datetime
 
             
 class Protokoll(fpdf.FPDF):
-    def __init__(self, einsatz, eintrage, organisation = 'Feuerwehr Musterstadt', orientation = "landscape", unit = "mm", format = "A4", font_cache_dir = "DEPRECATED") -> None:
+    def __init__(self, einsatz, eintrage, absender=False, empfanger=False, organisation = 'Feuerwehr Musterstadt', orientation = "landscape", unit = "mm", format = "A4", font_cache_dir = "DEPRECATED") -> None:
         super().__init__(orientation, unit, format, font_cache_dir)
    
         self.stichwort = einsatz['stichwort']
@@ -21,19 +21,36 @@ class Protokoll(fpdf.FPDF):
         self.set_margin(15)
         self.add_page()
           
-        with self.table(col_widths=(20,100,15)) as table:
+        self.spalten = ['Zeitstempel', 'Eintrag', 'Bearbeiter']
+        self.spalten_breite = [20,100,15]
+        if absender:
+            self.spalten.insert(-1, 'Absender')
+            self.spalten_breite.append(15)
+        if empfanger:
+            self.spalten.insert(-1, 'Empfänger')
+            self.spalten_breite.append(15)
+        
+        with self.table(col_widths=tuple(self.spalten_breite)) as table:
             self.row = table.row()
-            for cell in ['Zeitstempel', 'Eintrag', 'Bearbeiter']:
+            for cell in self.spalten:
                 self.row.cell(cell)
             for eintrag in eintrage:
                 zeit = eintrag['zeitstempel'].strftime('%d.%m.%Y %H:%M')
                 text = eintrag['eintrag']
-                absender = eintrag['absender']
-                empfanger = eintrag['empfanger']
+                absender_val = eintrag['absender']
+                empfanger_val = eintrag['empfanger']
                 bearbeiter = eintrag['bearbeiter']
                 
                 row = table.row()
-                for cell in [zeit, text, bearbeiter]:
+                
+                cols = [zeit, text, bearbeiter]
+                if absender:
+                    cols.insert(-1, absender_val)
+                if empfanger:
+                    cols.insert(-1, empfanger_val)
+                
+                
+                for cell in cols:
                     row.cell(cell)
                     
         # Save pdf

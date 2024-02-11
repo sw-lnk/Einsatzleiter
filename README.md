@@ -111,7 +111,13 @@ Zusätzlich lassen sich folgende Daten erfassen:
 - Absender der Nachricht
 - Empfänger der Nachricht
 
-Die optionalen Eingabe felder lassen sich über die *settings.py* (de-)aktivieren.
+Die optionalen Eingabe felder lassen sich über die *settings.json* oder über den Bereich *Einstellungen* (de-)aktivieren.
+
+Sind mehrere Einsätze in der Einsatzübersicht angewählt, werden alle diesen Einsätzen ein Eintrag ergänzt.
+
+#### Protokoll ausleitung
+Für alle markierte Einsätze in der Einsatzübersicht lassen sich per Knopfdruck die Funkprotokolle als PDF ausleiten.
+Der angezeigte Name der Organistion lässt sich über die *settings.json* Datei oder über den Bereich *Einstellungen* anpassen.
 
 
 

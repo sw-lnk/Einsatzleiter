@@ -6,10 +6,8 @@ import locale
 import ctypes
 import datetime
 
-import settings
-
 from src.einsatztagebuch import Einsatztagebuch
-from src.menu import Login, Hauptmenu
+from src.menu import Login, Hauptmenu, Einstellungen
 from src.fahrzeuge import Fahrzeuge
 
 
@@ -29,18 +27,21 @@ class App(ttk.Window):
         self.iconphoto(False, self.main_icon)
 
         self.user_system = tk.StringVar(value=os.getlogin())
-        self.user_login = tk.StringVar()
-
-        # Lade Daten
-        self.db = self.connect_database()
-        self.letzte_aktualisierung = None        
+        self.user_login = tk.StringVar()                
 
         # Login Fenster
         self.login = Login(self)        
         
         # Hauptmenü
         self.hauptmenu = Hauptmenu(self)
+        
+        # Einstellungsmenü
+        self.einstellungen = Einstellungen(self)
 
+        # Lade Daten
+        self.db = self.connect_database()
+        self.letzte_aktualisierung = None
+        
         # Einsatztagebuch
         self.einsatztagebuch = Einsatztagebuch(self, self.user_login, self.db)
 
@@ -55,19 +56,19 @@ class App(ttk.Window):
     
     def loop(self):
         # Diese Schleife wird alle X Sekunden ausgeführt  
-        self.after(settings.update_intervall, self.loop)
+        self.after(self.einstellungen.update_intervall.get(), self.loop)
         
         if self.check_aktualisierung(self.db, self.letzte_aktualisierung):
             self.letzte_aktualisierung = datetime.datetime.now()
             self.einsatztagebuch.eintragliste.update_table(self.einsatztagebuch.einsatzstelle_arbeit)
-            self.einsatztagebuch.einsatzliste.update_table()        
-      
+            self.einsatztagebuch.einsatzliste.update_table()
+
     def connect_database(self):
-        user = settings.db_user
-        pwd = settings.db_user_password
-        ip = settings.db_ip
-        port = settings.db_port
-        db = settings.db_name    
+        user = self.einstellungen.db_user.get()
+        pwd = self.einstellungen.db_user_password.get()
+        ip = self.einstellungen.db_ip.get()
+        port = self.einstellungen.db_port.get()
+        db = self.einstellungen.db_name.get()    
         client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
         db = client.einsatztagebuch    
         return db

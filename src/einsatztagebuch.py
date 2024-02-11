@@ -1,4 +1,3 @@
-import os
 from pymongo import ReturnDocument
 from bson import ObjectId
 import tkinter as tk
@@ -6,10 +5,7 @@ import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
 
-import settings
-
 from src.protokoll import Protokoll
-from src.menu import Hauptmenu
 
 
 class Einsatztagebuch(ttk.Frame):
@@ -38,7 +34,8 @@ class Eintragliste(ttk.Frame):
         super().__init__(parent)
         self.parent = parent
         self.user = user
-        self.db = db        
+        self.db = db
+        self.einstellungen = parent.parent.einstellungen       
                 
         # Anzeige ausgewählter Einsatz
         self.label_einsatz_text = tk.StringVar(self, '- Einsatz -')
@@ -46,15 +43,22 @@ class Eintragliste(ttk.Frame):
         
         # tablele zur Anzeige alle Einträge zum ausgewähltem Einsatz
         self.headings = ['datum', 'eintrag', 'von', 'an', 'funker']
-        self.table = ttk.Treeview(master=self, columns=self.headings, displaycolumns=['datum', 'eintrag', 'funker'], show='headings', height=15)        
+        self.headings_show = ['datum', 'eintrag', 'funker']
+        
+        if self.einstellungen.absender.get():
+            self.headings_show.insert(-1, 'von')
+        if self.einstellungen.empfanger.get():
+            self.headings_show.insert(-1, 'an')
+        
+        self.table = ttk.Treeview(master=self, columns=self.headings, displaycolumns=self.headings_show, show='headings', height=15)        
         self.table.heading('datum', text='Zeitstempel', anchor='w')
         self.table.column('datum', width=120, minwidth=100, stretch=False)
         self.table.heading('eintrag', text='Eintrag', anchor='w')
         self.table.column('eintrag', minwidth=100)
         self.table.heading('von', text='Absender', anchor='w')
-        self.table.column('von', minwidth=10)
+        self.table.column('von',  width=150, minwidth=100, stretch=False)
         self.table.heading('an', text='Empfänger', anchor='w')
-        self.table.column('an', minwidth=10)
+        self.table.column('an',  width=150, minwidth=100, stretch=False)
         self.table.heading('funker', text='Bearbeiter', anchor='w')
         self.table.column('funker', width=150, minwidth=100, stretch=False)
         #self.table.tag_configure('odd', background='lightblue')
@@ -84,14 +88,15 @@ class Eintragliste(ttk.Frame):
         self.frame_entry.pack(pady=5, padx=5, fill='x')
 
         # Eingabeelemente anzeigen / ausrichten        
-        if settings.absender or settings.empfaenger:
+        if self.einstellungen.absender.get() or self.einstellungen.empfanger.get():
             ttk.Label(self.frame_entry, text='Eintrag').grid(row=0, column=0, pady=(5, 0))
-        if settings.absender:
+        if self.einstellungen.absender.get():
             ttk.Label(self.frame_entry, text='Absender').grid(row=0, column=1, pady=(5, 0))
             self.entry_absender.grid(row=1, column=1, padx=(5,0), sticky='ew')
-        if settings.empfaenger:
+        if self.einstellungen.empfanger.get():
             ttk.Label(self.frame_entry, text='Empfänger').grid(row=0, column=2, pady=(5, 0))
             self.entry_empfang.grid(row=1, column=2, padx=(5,0), sticky='ew')      
+        
         self.entry_funk.grid(row=1, column=0, padx=(5,0), sticky='ew')        
         self.button_absenden.grid(row=1, column=3, padx=(5,5), sticky='ew')                
               
@@ -166,6 +171,7 @@ class Einsatzliste(ttk.Frame):
         super().__init__(parent)
 
         self.parent = parent
+        self.einstellungen = parent.parent.einstellungen
         self.db = db
         self.user = user
         self.einsatzstelle_focus = None
@@ -234,7 +240,7 @@ class Einsatzliste(ttk.Frame):
                 id = ObjectId(self.table_einsatz.item(sel)['values'][0])     
                 einsatzstelle = db.einsatzstellen.find_one(id)                
                 eintrage = db.eintrage.find({'einsatz': id})         
-                Protokoll(einsatzstelle, eintrage, settings.name_organisation)
+                Protokoll(einsatzstelle, eintrage, self.einstellungen.absender.get(), self.einstellungen.empfanger.get(), self.einstellungen.orga_name.get())
     
     
     def einsatz_update_maske(self):
@@ -406,7 +412,7 @@ class Einsatzliste(ttk.Frame):
             status = einsatz['status']
             datum = einsatz['datum']
             letztes_update = einsatz['letztes_update']
-            datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=settings.zeitschwelle_einsatz_ohne_bearbeitung)
+            datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=self.einstellungen.zeitschwelle_einsatz_ohne_bearbeitung.get())
 
             tag_row = 'even' if (i%2==0) else 'odd'
             tag_update = 'onTime'
