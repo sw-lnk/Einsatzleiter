@@ -4,7 +4,7 @@ import ttkbootstrap as ttk
 import customtkinter as ctk
 import json
 
-from src.einsatztagebuch import Einsatztagebuch
+from scripts.einsatztagebuch import Einsatztagebuch
 
 class Hauptmenu(ttk.Frame):
     def __init__(self, parent):
@@ -26,11 +26,11 @@ class Hauptmenu(ttk.Frame):
         self.anwendungen = ttk.Frame(self)
         self.btn_settings = ctk.CTkButton(self.anwendungen, text='Einstellungen', command=lambda: self.switch_anwendung(self.parent.einstellungen, self.btn_settings))
         self.btn_funktagebuch = ctk.CTkButton(self.anwendungen, text='Funktagebuch', command=lambda: self.switch_anwendung(self.parent.einsatztagebuch, self.btn_funktagebuch))
-        self.btn_fahrzeuge = ctk.CTkButton(self.anwendungen, text='Fahrzeuge', command=lambda: self.switch_anwendung(self.parent.fahrzeuge, self.btn_fahrzeuge))
+        self.btn_kraefteuebersicht = ctk.CTkButton(self.anwendungen, text='Kräfteübersicht', command=lambda: self.switch_anwendung(self.parent.kraefteuebersicht, self.btn_kraefteuebersicht))
         
         self.btn_settings.grid(row=0, column=0, sticky='w', padx=(5,0))
         self.btn_funktagebuch.grid(row=0, column=1, sticky='w', padx=(5,0))
-        #self.btn_fahrzeuge.grid(row=0, column=2, sticky='w', padx=(5,0))
+        self.btn_kraefteuebersicht.grid(row=0, column=2, sticky='w', padx=(5,0))
         self.anwendungen.grid(row=0, column=0, sticky='w')
         
         

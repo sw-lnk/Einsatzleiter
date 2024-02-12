@@ -15,6 +15,7 @@ db = client.einsatztagebuch
 
 einsatzstellen = db.einsatzstellen
 eintrage = db.eintrage
+krafte = db.krafte
 
 # Zufällige Einsatznummer
 no = random.randint(1, 123456789)
@@ -60,6 +61,16 @@ eintrage.insert_one({
     'absender': '',
     'empfanger': '',
     'bearbeiter': 'Max Mustermann'
+})
+
+krafte.insert_one({
+    'funkrufname': '1 HLF20 1',
+    'vb': 0,
+    'zf': 1,
+    'gf': 1,
+    'ms': 6,
+    'anmerkung': '',
+    'datum': jetzt
 })
 
 # Mehrer Beispiel Einsätze anlegen

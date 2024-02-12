@@ -6,9 +6,9 @@ import locale
 import ctypes
 import datetime
 
-from src.einsatztagebuch import Einsatztagebuch
-from src.menu import Login, Hauptmenu, Einstellungen
-from src.fahrzeuge import Fahrzeuge
+from scripts.einsatztagebuch import Einsatztagebuch
+from scripts.menu import Login, Hauptmenu, Einstellungen
+from scripts.kraefteuebersicht import Kraefteuebersicht
 
 
 class App(ttk.Window):
@@ -46,7 +46,7 @@ class App(ttk.Window):
         self.einsatztagebuch = Einsatztagebuch(self, self.user_login, self.db)
 
         # Fahrzeugübersicht
-        self.fahrzeuge = Fahrzeuge(self)
+        self.kraefteuebersicht = Kraefteuebersicht(self)
 
         # Aktive Anwendung
         self.aktuelle_anwendung = self.einsatztagebuch

@@ -5,7 +5,7 @@ import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
 
-from src.protokoll import Protokoll
+from scripts.protokoll import Protokoll
 
 
 class Einsatztagebuch(ttk.Frame):
