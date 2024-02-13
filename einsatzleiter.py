@@ -20,7 +20,7 @@ class App(ttk.Window):
         self.w = int(self.winfo_screenwidth()*self.screen_factor)
         self.h = int(self.winfo_screenheight()*self.screen_factor)
         self.geometry(f'{self.w}x{self.h}')
-        self.title("Funktagebuch")
+        self.title("Einsatzleiter")
 
         self.main_icon_path = os.path.join('img', 'einsatzleiter.png')
         self.main_icon = tk.PhotoImage(file=self.main_icon_path)

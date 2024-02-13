@@ -64,12 +64,12 @@ eintrage.insert_one({
 })
 
 krafte.insert_one({
-    'funkrufname': '1 HLF20 1',
-    'vb': 0,
-    'zf': 1,
-    'gf': 1,
+    'funkrufname': '2 HLF20 1',
+    'vb': 1,
+    'zf': 2,
+    'gf': 0,
     'ms': 6,
-    'anmerkung': '',
+    'anmerkung': 'Einsatzbereit Feuerwehrhaus LE2',
     'datum': jetzt
 })
 
