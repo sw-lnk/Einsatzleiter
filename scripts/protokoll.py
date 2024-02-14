@@ -15,7 +15,12 @@ class Protokoll(fpdf.FPDF):
         self.jetzt = datetime.datetime.now()
         self.jetzt_einfach = self.jetzt.strftime('%d.%m.%Y %H:%M')
         self.jetzt_einsatz = self.jetzt.strftime('%d%H%M%b%y')
-        self.path = os.path.join('protokolle', f'{self.stichwort}.pdf')
+        
+        self.ordner_name = 'protokolle'
+        if not os.path.exists(self.ordner_name):
+            os.mkdir(self.ordner_name)
+        self.path = os.path.join(self.ordner_name, f'{self.stichwort}.pdf')
+        
         self.organisation = organisation
 
         self.set_margin(15)
@@ -86,9 +91,9 @@ class Protokoll(fpdf.FPDF):
         # Setting font: helvetica italic 8
         self.set_font("helvetica", "", 8)
         # Printing page number:
-        self.cell(0, 10, f"Funkprotokoll: TH0, Große Straße 1, 12345 Musterstadt", align=fpdf.Align.L)
+        self.cell(0, 10, f"Funkprotokoll: {self.stichwort}, {self.anschrift}", align=fpdf.Align.L)
         self.set_y(-15)
-        self.cell(0, 10, f"Page {self.page_no()}/{{nb}}", align=fpdf.Align.R)
+        self.cell(0, 10, f"Seite {self.page_no()}/{{nb}}", align=fpdf.Align.R)
 
 
 if __name__ == '__main__':
