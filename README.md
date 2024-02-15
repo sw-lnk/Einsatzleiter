@@ -120,7 +120,7 @@ Für alle markierte Einsätze in der Einsatzübersicht lassen sich per Knopfdruc
 Der angezeigte Name der Organistion lässt sich über die *settings.json* Datei oder über den Bereich *Einstellungen* anpassen.
 
 ### Kräfteübersicht
-Simple Übersicht der vorhandenen Einheiten. Eingabe von Funkrufname und Stärke, zusätzlich kann eine Anmerkung hinterlegt werden. Gesamtstärke wird automatisch ermittelt. Alle Daten werde im festgelegten Aktualisierungintervall an allen Arbeitsplätzen aktualisiert.
+Simple Übersicht der vorhandenen Einheiten. Eingabe von Funkrufname und Stärke, zusätzlich kann eine Anmerkung hinterlegt werden. Gesamtstärke wird automatisch ermittelt. Alle Daten werde im festgelegten Aktualisierungintervall an allen Arbeitsplätzen aktualisiert. Die Übersicht kann per Klick als PDF ausgeleitet werden.
 
 
 

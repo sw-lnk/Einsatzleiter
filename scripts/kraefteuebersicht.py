@@ -218,11 +218,11 @@ class Bearbeitungsmaske(ttk.Frame):
                     {'funkrufname': funk},
                     { '$set': {
                         'funkrufname': funk,
-                        'vf': vf,
-                        'zf': zf,
-                        'gf': gf,
-                        'ms': ms,
-                        'agt': agt,
+                        'vf': int(vf),
+                        'zf': int(zf),
+                        'gf': int(gf),
+                        'ms': int(ms),
+                        'agt': int(agt),
                         'anmerkung': anmerkung,
                         'datum': datetime.datetime.now()
                     }}, 
@@ -231,11 +231,11 @@ class Bearbeitungsmaske(ttk.Frame):
         else:
             self.db.krafte.insert_one({
                 'funkrufname': funk,
-                'vf': vf,
-                'zf': zf,
-                'gf': gf,
-                'ms': ms,
-                'agt': agt,
+                'vf': int(vf),
+                'zf': int(zf),
+                'gf': int(gf),
+                'ms': int(ms),
+                'agt': int(agt),
                 'anmerkung': anmerkung,
                 'datum': datetime.datetime.now()
             })
@@ -267,6 +267,12 @@ class Bericht(fpdf.FPDF):
         
         self.organisation = organisation
         
+        self.vf_ges = 0
+        self.zf_ges = 0
+        self.gf_ges = 0
+        self.ms_ges = 0
+        self.agt_ges = 0
+        
         self.add_page()
         
         # Tabelle
@@ -277,15 +283,35 @@ class Bericht(fpdf.FPDF):
             for cell in self.spalten:
                 self.row.cell(cell)
             for eintrag in eintrage:
-                row = table.row()
+                self.row = table.row()
                 
-                vf, zf, gf, ms = int(eintrag['vf']), int(eintrag['zf']), int(eintrag['gf']), int(eintrag['ms'])
-                agt = int(eintrag['agt'])
+                vf, zf, gf, ms = eintrag['vf'], eintrag['zf'], eintrag['gf'], eintrag['ms']
+                agt = eintrag['agt']
                 ges = vf+zf+gf+ms
-                for cell in [eintrag['funkrufname'], eintrag['anmerkung'], eintrag['vf'], eintrag['zf'], eintrag['gf'], eintrag['ms'], str(ges), str(agt)]:
-                    row.cell(cell, align=fpdf.Align.L)
+                
+                self.vf_ges += vf
+                self.zf_ges += zf
+                self.gf_ges += gf
+                self.ms_ges += ms
+                self.agt_ges += agt
+                
+                for cell in [eintrag['funkrufname'], eintrag['anmerkung'], eintrag['vf'], eintrag['zf'], eintrag['gf'], eintrag['ms'], ges, agt]:
+                    self.row.cell(str(cell), align=fpdf.Align.L)
+                
+            self.gesamt = self.vf_ges + self.zf_ges + self.gf_ges + self.ms_ges
+            self.row = table.row()
+            for cell in ['Gesamt', '', self.vf_ges, self.zf_ges, self.gf_ges, self.ms_ges, self.gesamt, self.agt_ges]:
+                self.row.cell(str(cell), align=fpdf.Align.L)
         
-        #ToDo: Gesamtzahlen drucken
+        
+        self.set_font(family="helvetica", style='', size=16)
+        self.ln(5)
+        self.cell(0, h=10, text=f'{self.vf_ges} / {self.zf_ges} / {self.gf_ges} / {self.ms_ges} / {self.gesamt}', align=fpdf.Align.R)
+        self.set_font(style='U')
+        self.cell(0, h=10, ln=1, text=str(self.gesamt), align=fpdf.Align.R)
+        
+        self.set_font(style='', size=12)
+        self.cell(0, 10, text=f'Atemschutzgeräteträger: {self.agt_ges}', align=fpdf.Align.R)
         
         # Save pdf
         self.output(self.path)

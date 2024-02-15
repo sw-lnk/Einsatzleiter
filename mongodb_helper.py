@@ -65,7 +65,7 @@ eintrage.insert_one({
 
 krafte.insert_one({
     'funkrufname': '2 HLF20 1',
-    'vb': 1,
+    'vf': 1,
     'zf': 2,
     'gf': 0,
     'ms': 6,
@@ -96,3 +96,4 @@ krafte.insert_one({
 # Alle Einsatzstellen aus Datenbank löschen
 # einsatzstellen.delete_many({})
 # eintrage.delete_many({})
+# krafte.delete_many({})
