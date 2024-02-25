@@ -1,14 +1,15 @@
 from pymongo import MongoClient
 import tkinter as tk
 import ttkbootstrap as ttk
+import customtkinter as ctk
 import os
 import locale
 import ctypes
 import datetime
+import json
 
 from scripts.einsatztagebuch import Einsatztagebuch
-from scripts.menu import Login, Hauptmenu, Einstellungen
-from scripts.kraefteuebersicht import Kraefteuebersicht
+from kraefteuebersicht import Kraefteuebersicht
 
 
 class App(ttk.Window):
@@ -22,72 +23,101 @@ class App(ttk.Window):
         self.geometry(f'{self.w}x{self.h}')
         self.title("Einsatzleiter")
 
+        # Icon der Anwendung
         self.main_icon_path = os.path.join('img', 'einsatzleiter.png')
         self.main_icon = tk.PhotoImage(file=self.main_icon_path)
         self.iconphoto(False, self.main_icon)
 
-        self.user_system = tk.StringVar(value=os.getlogin())
-        self.user_login = tk.StringVar()                
-
-        # Login Fenster
-        self.login = Login(self)        
+        # Nutzername: angemeldeten Nutzer des Computers / Eingabe am Arbeitsplatz
+        self.user_system = tk.StringVar(self, os.getlogin())
+        self.user_login = tk.StringVar(self, 'Benutzername')
         
-        # Hauptmenü
-        self.hauptmenu = Hauptmenu(self)
+        # Farben
+        self.btn_color_disable = 'grey'
         
-        # Einstellungsmenü
-        self.einstellungen = Einstellungen(self)
+        # Einstellungen laden
+        with open('settings.json', 'r') as f:
+            self.settings = json.load(f)
+            
+        # Hauptfenster
+        self.hauptfenster = ctk.CTkFrame(self)
+        #self.einsatztagebuch = Einsatztagebuch(self.hauptfenster)
+        #self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
 
-        # Lade Daten
-        self.db = self.connect_database()
-        self.letzte_aktualisierung = None
+        # Login-Bereich
+        self.loginfenster = ttk.Frame(self.hauptfenster)
+        ttk.Label(self.loginfenster, text='Benutzeranmeldung', style='info', font='bold').pack()
+        self.user_login_entry = ctk.CTkEntry(self.loginfenster, placeholder_text='Vorname Nachname')
+        self.user_login_entry.bind('<Return>', self.login)
+        self.user_login_entry.pack(padx=(5,5), pady=5, expand=True, fill='both')
+        self.login_btn = ctk.CTkButton(self.loginfenster, text='Login', command=lambda: self.login(tk.Event)).pack(padx=5, pady=5, expand=True, fill='both')
+        self.loginfenster.pack()
         
-        # Einsatztagebuch
-        self.einsatztagebuch = Einsatztagebuch(self, self.user_login, self.db)
-
-        # Fahrzeugübersicht
-        self.kraefteuebersicht = Kraefteuebersicht(self)
-
-        # Aktive Anwendung
-        self.aktuelle_anwendung = self.einsatztagebuch
+        # Kopfleiste
+        self.kopfleiste = ttk.Frame(self)
+        ttk.Label(self.kopfleiste, textvariable=self.user_login).grid(row=0, column=0, padx=5, pady=2)
+        self.btn_logout = ctk.CTkButton(self.kopfleiste, text='Logout', command=self.logout, state='disable', fg_color=self.btn_color_disable)
+        self.btn_logout.grid(row=1, column=0, sticky='we', padx=5, pady=(0, 5))
+        
+        # Seitenleiste
+        self.seitenleiste = ttk.Frame(self)
+        self.btn_settings = ctk.CTkButton(self.seitenleiste, text='Einstellungen')
+        self.btn_funktagebuch = ctk.CTkButton(self.seitenleiste, text='Funktagebuch')
+        self.btn_kraefteuebersicht = ctk.CTkButton(self.seitenleiste, text='Kräfteübersicht')
+        self.btn_list: list[ctk.CTkButton] = [
+            self.btn_settings,
+            self.btn_funktagebuch,
+            self.btn_kraefteuebersicht,
+        ]
+        
+        self.btn_color = self.btn_settings.cget('fg_color')
+        
+        for btn in self.btn_list:
+            btn.pack(fill='x', padx=5, pady=5)
+            btn.configure(state='disable', fg_color=self.btn_color_disable)
+        
+        # Hauptelemente platzieren
+        self.columnconfigure(20, weight=1)
+        self.rowconfigure(20, weight=1)        
+        self.kopfleiste.grid(row=10, column=20, sticky='ne')
+        self.seitenleiste.grid(row=20, column=10, sticky='nw')
+        self.hauptfenster.grid(row=20, column=20, sticky='news')
         
         # Loop-Funktion zur Aktualisierung div. Objekte
         self.loop()
     
     def loop(self):
         # Diese Schleife wird alle X Sekunden ausgeführt  
-        self.after(self.einstellungen.update_intervall.get(), self.loop)
+        self.after(10_000, self.loop)
+
+    def login(self, _):
+        user_entry = self.user_login_entry.get()        
+        if user_entry:
+            self.user_login.set(user_entry)
+            self.loginfenster.pack_forget()
+            
+            self.btn_logout.configure(state='normal', fg_color=self.btn_color)
+            for btn in self.btn_list:
+                btn.configure(state='normal', fg_color=self.btn_color)
         
-        if self.check_aktualisierung(self.db, self.letzte_aktualisierung):
-            self.letzte_aktualisierung = datetime.datetime.now()
-            self.einsatztagebuch.eintragliste.update_table(self.einsatztagebuch.einsatzstelle_arbeit)
-            self.einsatztagebuch.einsatzliste.update_table()
-
+    def logout(self):
+        self.user_login_entry.delete(0, 'end')
+        self.user_login.set('Benutzername')
+        self.loginfenster.pack()
+        
+        self.btn_logout.configure(state='disable', fg_color=self.btn_color_disable)
+        for btn in self.btn_list:
+            btn.configure(state='disable', fg_color=self.btn_color_disable)
+    
     def connect_database(self):
-        user = self.einstellungen.db_user.get()
-        pwd = self.einstellungen.db_user_password.get()
-        ip = self.einstellungen.db_ip.get()
-        port = self.einstellungen.db_port.get()
-        db = self.einstellungen.db_name.get()    
-        client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-        db = client.einsatztagebuch    
-        return db
+        pass
     
-    def check_aktualisierung(self, db, letzte_aktualisierung) -> bool:
-        einsatzstellen = db.einsatzstellen.find()
-        for einsatz in einsatzstellen:
-            letztes_update = einsatz['letztes_update']
-
-            if letzte_aktualisierung == None:
-                return True
-            elif (letztes_update > letzte_aktualisierung):                
-                return True
-    
-        return False
+    def check_aktualisierung(self):
+        pass
 
 
 if os.name == 'nt':
-    myappid = 'sw-lnk.einsatzleiter.v0.1' # arbitrary string
+    myappid = 'sw-lnk.einsatzleiter.v1.0' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)   
 
     # Einstellung zu verwendung vom Dezimaltrennzeichen
@@ -95,7 +125,9 @@ if os.name == 'nt':
     locale.setlocale(locale.LC_NUMERIC, "C")
     # locale.setlocale(locale.LC_NUMERIC, original_locale)
 
-
-if __name__ == "__main__":
+def main():
     app = App()
     app.mainloop()
+
+if __name__ == "__main__":
+    main()
