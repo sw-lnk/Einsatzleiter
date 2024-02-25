@@ -6,13 +6,18 @@ import customtkinter as ctk
 import datetime
 import fpdf
 from pymongo import ReturnDocument
+import json
+import sqlite3
 
 class Kraefteuebersicht(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.db = parent.db
+        
         self.parent = parent
-        self.einstellungen = parent.einstellungen
+        self.db = self.verbinde_datenbank()
+        
+        # Alle Kräfte
+        self.kraefte: list[dict] = None
 
         self.label = ttk.Label(self, text='Kräfteübersicht', style='bolt')
         
@@ -27,7 +32,50 @@ class Kraefteuebersicht(ttk.Frame):
         self.table.column('anmerkung', minwidth=10)
         self.table.bind('<<TreeviewSelect>>', self.item_selection)
         
-        self.bearbeitungsmakse = Bearbeitungsmaske(self)
+        # Bearbeitungsmaske
+        self.bearbeitungsmaske = ttk.Frame(self)
+        self.funkrufname_entry = ctk.CTkEntry(self.bearbeitungsmaske, placeholder_text='Funkrufname')
+        
+        self.verbandsfuhrer = ttk.Combobox(self.bearbeitungsmaske, values=list(range(100)), width=8)
+        self.verbandsfuhrer.current(0)
+        
+        self.zugfuhrer = ttk.Combobox(self.bearbeitungsmaske, values=list(range(100)), width=8)
+        self.zugfuhrer.current(0)
+        
+        self.gruppenfuhrer = ttk.Combobox(self.bearbeitungsmaske, values=list(range(100)), width=8)
+        self.gruppenfuhrer.current(0)
+        
+        self.mannschaft = ttk.Combobox(self.bearbeitungsmaske, values=list(range(1000)), width=8)
+        self.mannschaft.current(0)
+        
+        self.agt = ttk.Combobox(self.bearbeitungsmaske, values=list(range(1000)), width=8)
+        self.agt.current(0)
+        
+        self.anmerkung_entry = ctk.CTkEntry(self.bearbeitungsmaske, placeholder_text='Anmerkung')
+        
+        self.btn_leiste = ttk.Frame(self.bearbeitungsmaske)        
+        self.btn_save = ctk.CTkButton(self.btn_leiste, text='Speichern', command=self.speicher_eintrag)
+        self.btn_delete = ctk.CTkButton(self.btn_leiste, text='Löschen', command=self.entferne_eintrag)
+        
+        ttk.Label(self.bearbeitungsmaske, text='Funkrufname').grid(row=1, column=1, columnspan=7, sticky='w')
+        self.funkrufname_entry.grid(row=2, column=1, columnspan=7, sticky='we')
+        ttk.Label(self.bearbeitungsmaske, text='Kräftaufstellung').grid(row=3, column=1, columnspan=7, sticky='w')
+        self.verbandsfuhrer.grid(row=4, column=1)
+        ttk.Label(self.bearbeitungsmaske, text='/').grid(row=4, column=2)
+        self.zugfuhrer.grid(row=4, column=3)
+        ttk.Label(self.bearbeitungsmaske, text='/').grid(row=4, column=4)
+        self.gruppenfuhrer.grid(row=4, column=5)
+        ttk.Label(self.bearbeitungsmaske, text='/').grid(row=4, column=6)
+        self.mannschaft.grid(row=4, column=7)
+        ttk.Label(self.bearbeitungsmaske, text='Anzahl Atemschutzgeräteträger').grid(row=5, column=1, columnspan=7, sticky='w')
+        self.agt.grid(row=6, column=1)
+        ttk.Label(self.bearbeitungsmaske, text='Anmerkung').grid(row=7, column=1, columnspan=7, sticky='w')
+        self.anmerkung_entry.grid(row=8, column=1, columnspan=7, sticky='we')        
+        self.btn_leiste.grid(row=9, column=1, columnspan=7, sticky='news')
+        
+        self.btn_leiste.columnconfigure(1, weight=1)
+        self.btn_delete.grid(row=1, column=1, sticky='e', pady=5)
+        self.btn_save.grid(row=1, column=2, sticky='e', pady=5, padx=5)        
         
         # Gesamtübersicht
         self.vf_ges = tk.IntVar(self, 0)
@@ -52,7 +100,7 @@ class Kraefteuebersicht(ttk.Frame):
         self.columnconfigure(1, weight=1)
         self.label.grid(row=1, column=1, columnspan=2, padx=5, pady=5, sticky='n')
         self.table.grid(row=2, column=1, padx=5, pady=5, sticky='news')
-        self.bearbeitungsmakse.grid(row=2, column=2, padx=5, pady=5, sticky='news')
+        self.bearbeitungsmaske.grid(row=2, column=2, padx=5, pady=5, sticky='news')
         self.label_frame.grid(row=3, column=1, sticky='n')
         
         self.label_ges1.grid(row=1, column=1, sticky='ne', pady=10, padx=(5,0))
@@ -61,23 +109,18 @@ class Kraefteuebersicht(ttk.Frame):
         
         ctk.CTkButton(self.label_frame, text='Kräftübersicht ausleiten', command=self.create_report).grid(row=2, column=1, columnspan=3, sticky='n', pady=10, padx=(5,5))
         
-        self.loop()      
+        #self.loop()      
         
 
     def loop(self):
-        self.after(self.einstellungen.update_intervall.get(), self.loop)
+        self.after(10_000, self.loop)
         self.fill_table()
     
     def pack_me(self):
         self.pack(pady=5, padx=5, fill='both', expand=True)
     
-    def create_report(self):        
-        report = Bericht(self.db.krafte.find(), self.einstellungen.orga_name.get())
-            
     def fill_table(self):
         self.clear_table()
-        
-        krafte = self.db.krafte.find()
         
         vf_ges = 0
         zf_ges = 0
@@ -86,17 +129,17 @@ class Kraefteuebersicht(ttk.Frame):
         agt_ges = 0
         fzg_ges = 0
         
-        for i, kraft in enumerate(krafte):
+        for i, kraft in enumerate(self.kraefte):
             row_tag = 'even' if (i%2==0) else 'odd'
-            values = list(kraft.values())
-            #print(values)
-            funk = values[1]
-            vf = values[2]
-            zf = values[3]
-            gf = values[4]
-            ms = values[5]
-            agt = values[6]
-            anmerkung = values[7]
+            
+            funk = kraft['funkrufname']
+            vf = kraft['vf']
+            zf = kraft['zf']
+            gf = kraft['gf']
+            ms = kraft['ms']
+            agt = kraft['agt']
+            anmerkung = kraft['anmerkung']
+            
             zeile = (funk, f'{vf}/{zf}/{gf}/{ms}', agt, anmerkung)
             self.table.insert(parent='', index='end', values=zeile, tags=(row_tag,))
             
@@ -122,75 +165,56 @@ class Kraefteuebersicht(ttk.Frame):
         for element in self.table.get_children():
             self.table.delete(element)
             
+    def verbinde_datenbank(self, einzelplatznutzung:bool=True):
+        if einzelplatznutzung:
+            db = sqlite3.connect(os.path.join('data', 'db.sqlite3'))
+            cursor = db.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS einheiten(
+                    funkrufname TEXT PRIMARY KEY,
+                    vf INTEGER,
+                    zf INTEGER,
+                    gf INTEGER,
+                    ms INTEGER,
+                    agt INTEGER,
+                    anmerkung TEXT,
+                    datum TEXT
+                )
+            ''')
+            db.commit()
+            return db
+        
+    def lese_datenbank(self):
+        db = self.db
+        einzelplatznutzung:bool=True
+        
+        if einzelplatznutzung:
+            cursor = db.cursor.execute('''SELECT * FROM einheiten''')
+            alle_einheiten = cursor.fetchall()
+            
+    
     def item_selection(self, _):
         selection = self.table.selection()        
         if selection:            
             values = self.table.item(selection[0])['values']
             kraft = [int(x) for x in values[1].split('/')]
             
-            self.bearbeitungsmakse.anmerkung_entry.delete(0, 'end')
-            self.bearbeitungsmakse.anmerkung_entry.insert(0, values[3])
+            self.anmerkung_entry.delete(0, 'end')
+            self.anmerkung_entry.insert(0, values[3])
             
-            self.bearbeitungsmakse.funkrufname_entry.delete(0, 'end')
-            self.bearbeitungsmakse.funkrufname_entry.insert(0, values[0])
+            self.funkrufname_entry.delete(0, 'end')
+            self.funkrufname_entry.insert(0, values[0])
             
-            self.bearbeitungsmakse.verbandsfuhrer.current(kraft[0])
-            self.bearbeitungsmakse.zugfuhrer.current(kraft[1])
-            self.bearbeitungsmakse.gruppenfuhrer.current(kraft[2])
-            self.bearbeitungsmakse.mannschaft.current(kraft[3])
-            self.bearbeitungsmakse.agt.current(int(values[2]))
-        
-
-class Bearbeitungsmaske(ttk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.db = parent.db
-        self.parent = parent
-
-        # Eingabe Elemente
-        self.funkrufname_entry = ctk.CTkEntry(self, placeholder_text='Funkrufname')
-        
-        self.verbandsfuhrer = ttk.Combobox(self, values=list(range(100)), width=8)
-        self.verbandsfuhrer.current(0)
-        
-        self.zugfuhrer = ttk.Combobox(self, values=list(range(100)), width=8)
-        self.zugfuhrer.current(0)
-        
-        self.gruppenfuhrer = ttk.Combobox(self, values=list(range(100)), width=8)
-        self.gruppenfuhrer.current(0)
-        
-        self.mannschaft = ttk.Combobox(self, values=list(range(1000)), width=8)
-        self.mannschaft.current(0)
-        
-        self.agt = ttk.Combobox(self, values=list(range(1000)), width=8)
-        self.agt.current(0)
-        
-        self.anmerkung_entry = ctk.CTkEntry(self, placeholder_text='Anmerkung')
-        
-        self.btn_save = ctk.CTkButton(self, text='Speichern', command=self.speicher_eintrag)
-        self.btn_delete = ctk.CTkButton(self, text='Löschen', command=self.entferne_eintrag)
-        
-        # Elemente ausrichten
-        ttk.Label(self, text='Funkrufname').grid(row=1, column=1, columnspan=7, sticky='w')
-        self.funkrufname_entry.grid(row=2, column=1, columnspan=7, sticky='we')
-        ttk.Label(self, text='Kräftaufstellung').grid(row=3, column=1, columnspan=7, sticky='w')
-        self.verbandsfuhrer.grid(row=4, column=1)
-        ttk.Label(self, text='/').grid(row=4, column=2)
-        self.zugfuhrer.grid(row=4, column=3)
-        ttk.Label(self, text='/').grid(row=4, column=4)
-        self.gruppenfuhrer.grid(row=4, column=5)
-        ttk.Label(self, text='/').grid(row=4, column=6)
-        self.mannschaft.grid(row=4, column=7)
-        ttk.Label(self, text='Anzahl Atemschutzgeräteträger').grid(row=5, column=1, columnspan=7, sticky='w')
-        self.agt.grid(row=6, column=1)
-        ttk.Label(self, text='Anmerkung').grid(row=7, column=1, columnspan=7, sticky='w')
-        self.anmerkung_entry.grid(row=8, column=1, columnspan=7, sticky='we')
-        
-        self.btn_save.grid(row=9, column=3, pady=20)
-        self.btn_delete.grid(row=9, column=5, pady=20)
-        
+            self.verbandsfuhrer.current(kraft[0])
+            self.zugfuhrer.current(kraft[1])
+            self.gruppenfuhrer.current(kraft[2])
+            self.mannschaft.current(kraft[3])
+            self.agt.current(int(values[2]))   
     
     def speicher_eintrag(self):
+        db = self.db
+        einzelplatznutzung:bool=True
+        
         funk = self.funkrufname_entry.get()
         self.funkrufname_entry.delete(0, 'end')
         
@@ -212,46 +236,41 @@ class Bearbeitungsmaske(ttk.Frame):
         agt = self.agt.get()
         self.agt.current(0)
         
-        cnt = self.db.krafte.count_documents({"funkrufname": funk})
-        if cnt>0:
-            self.db.krafte.find_one_and_update(
-                    {'funkrufname': funk},
-                    { '$set': {
-                        'funkrufname': funk,
-                        'vf': int(vf),
-                        'zf': int(zf),
-                        'gf': int(gf),
-                        'ms': int(ms),
-                        'agt': int(agt),
-                        'anmerkung': anmerkung,
-                        'datum': datetime.datetime.now()
-                    }}, 
-                    return_document = ReturnDocument.AFTER
-                )
-        else:
-            self.db.krafte.insert_one({
-                'funkrufname': funk,
-                'vf': int(vf),
-                'zf': int(zf),
-                'gf': int(gf),
-                'ms': int(ms),
-                'agt': int(agt),
-                'anmerkung': anmerkung,
-                'datum': datetime.datetime.now()
-            })
+        einheit = {
+            'funkrufname': funk,
+            'vf': int(vf),
+            'zf': int(zf),
+            'gf': int(gf),
+            'ms': int(ms),
+            'agt': int(agt),
+            'anmerkung': anmerkung,
+            'datum': datetime.datetime.now()
+        }
         
-        self.parent.fill_table()
+        if einzelplatznutzung:
+            cursor = db.cursor()
+            cnt = cursor.execute('''SELECT COUNT(funkrufname) FROM einheiten WHERE funkrufname=?''', (funk,))
+            cnt = cnt.fetchone
+            if cnt is None:
+                cursor.execute('''INSERT INTO einheiten(funkrufname, vf, zf, gf, ms, agt, anmerkung, datum)
+                  VALUES(?,?,?,?,?,?,?,?)''', tuple(list(einheit.values())))
+                db.commit()
+            else:
+                pass
+                # Todo: Datensatz aktualisieren, wenn bereits vorhanden.
         
     def entferne_eintrag(self):
-        funk = self.funkrufname_entry.get()
-        
-        res = tk.messagebox.askquestion('Löschne', 'Wirklich löschen?')
-        
+        funk = self.funkrufname_entry.get()        
+        res = tk.messagebox.askquestion('Löschen', 'Wirklich löschen?')        
         if res == 'yes':
-            self.db.krafte.delete_one({'funkrufname': funk})
-            self.parent.fill_table()
+            print({'funkrufname': funk})
+            self.fill_table()
 
-
+    def create_report(self):        
+        pass
+        #report = Bericht(self.db.krafte.find(), self.einstellungen.orga_name.get())
+            
+    
 class Bericht(fpdf.FPDF):
     def __init__(self, eintrage, organisation = 'Feuerwehr Musterstadt', orientation = "portrait", unit = "mm", format = "A4", font_cache_dir = "DEPRECATED") -> None:
         super().__init__(orientation, unit, format, font_cache_dir)

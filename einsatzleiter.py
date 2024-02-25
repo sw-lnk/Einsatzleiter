@@ -7,9 +7,10 @@ import locale
 import ctypes
 import datetime
 import json
+import sqlite3
 
 from scripts.einsatztagebuch import Einsatztagebuch
-from kraefteuebersicht import Kraefteuebersicht
+from scripts.kraefteuebersicht import Kraefteuebersicht
 
 
 class App(ttk.Window):
@@ -39,10 +40,14 @@ class App(ttk.Window):
         with open('settings.json', 'r') as f:
             self.settings = json.load(f)
             
-        # Hauptfenster
+        # Hauptfenster        
         self.hauptfenster = ctk.CTkFrame(self)
         #self.einsatztagebuch = Einsatztagebuch(self.hauptfenster)
-        #self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
+        self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
+        self.list_anwendungen: list[ttk.Frame] = [
+            self.kraefteuebersicht,
+        ]
+        
 
         # Login-Bereich
         self.loginfenster = ttk.Frame(self.hauptfenster)
@@ -63,7 +68,7 @@ class App(ttk.Window):
         self.seitenleiste = ttk.Frame(self)
         self.btn_settings = ctk.CTkButton(self.seitenleiste, text='Einstellungen')
         self.btn_funktagebuch = ctk.CTkButton(self.seitenleiste, text='Funktagebuch')
-        self.btn_kraefteuebersicht = ctk.CTkButton(self.seitenleiste, text='Kräfteübersicht')
+        self.btn_kraefteuebersicht = ctk.CTkButton(self.seitenleiste, text='Kräfteübersicht', command=self.kraefteuebersicht.pack_me)
         self.btn_list: list[ctk.CTkButton] = [
             self.btn_settings,
             self.btn_funktagebuch,
@@ -84,7 +89,7 @@ class App(ttk.Window):
         self.hauptfenster.grid(row=20, column=20, sticky='news')
         
         # Loop-Funktion zur Aktualisierung div. Objekte
-        self.loop()
+        #self.loop()
     
     def loop(self):
         # Diese Schleife wird alle X Sekunden ausgeführt  
@@ -101,19 +106,21 @@ class App(ttk.Window):
                 btn.configure(state='normal', fg_color=self.btn_color)
         
     def logout(self):
+        # Login-Maske zurücksetzen
         self.user_login_entry.delete(0, 'end')
         self.user_login.set('Benutzername')
+        
+        # Alle Anwendungen schließen
+        for anwendung in self.list_anwendungen:
+            anwendung.pack_forget()
+        
+        # Login-Maske einblenden
         self.loginfenster.pack()
         
+        # Alle Button deaktivieren
         self.btn_logout.configure(state='disable', fg_color=self.btn_color_disable)
         for btn in self.btn_list:
             btn.configure(state='disable', fg_color=self.btn_color_disable)
-    
-    def connect_database(self):
-        pass
-    
-    def check_aktualisierung(self):
-        pass
 
 
 if os.name == 'nt':
