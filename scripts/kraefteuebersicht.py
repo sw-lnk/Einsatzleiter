@@ -5,16 +5,18 @@ import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
 import fpdf
-from pymongo import ReturnDocument
+from pymongo import ReturnDocument, MongoClient
 import json
 import sqlite3
 
 class Kraefteuebersicht(ttk.Frame):
-    def __init__(self, parent, einstellungen:dict):
+    def __init__(self, parent):
         super().__init__(parent)
         
         self.parent = parent
-        self.einstellungen = einstellungen
+        
+        self.einstellungen = self.lese_einstellungen()
+        
         self.db = self.verbinde_datenbank()
         
         # Alle Kräfte
@@ -29,7 +31,9 @@ class Kraefteuebersicht(ttk.Frame):
             self.table.heading(head, text=head.capitalize(), anchor='w')
         self.table.column('funkrufname', width=140, minwidth=10, stretch=False)
         self.table.column('kraft', width=80, minwidth=10, stretch=False)
+        self.table.heading('kraft', text='Stärke', anchor='w')
         self.table.column('agt', width=40, minwidth=10, stretch=False)
+        self.table.heading('agt', text='AGT', anchor='w')
         self.table.column('anmerkung', minwidth=10)
         self.table.bind('<<TreeviewSelect>>', self.item_selection)
         
@@ -58,9 +62,18 @@ class Kraefteuebersicht(ttk.Frame):
         self.btn_save = ctk.CTkButton(self.btn_leiste, text='Speichern', command=self.speicher_eintrag)
         self.btn_delete = ctk.CTkButton(self.btn_leiste, text='Löschen', command=self.entferne_eintrag)
         
-        ttk.Label(self.bearbeitungsmaske, text='Funkrufname').grid(row=1, column=1, columnspan=7, sticky='w')
-        self.funkrufname_entry.grid(row=2, column=1, columnspan=7, sticky='we')
-        ttk.Label(self.bearbeitungsmaske, text='Kräftaufstellung').grid(row=3, column=1, columnspan=7, sticky='w')
+        ttk.Label(self.bearbeitungsmaske, text='Funkrufname').grid(row=0, column=1, columnspan=7, sticky='w')
+        self.funkrufname_entry.grid(row=1, column=1, columnspan=7, sticky='we')
+        ttk.Label(self.bearbeitungsmaske, text='Kräftaufstellung').grid(row=2, column=1, columnspan=7, sticky='w', pady=(10,0))
+        
+        ttk.Label(self.bearbeitungsmaske, text='VF').grid(row=3, column=1)
+        ttk.Label(self.bearbeitungsmaske, text='/').grid(row=3, column=2)
+        ttk.Label(self.bearbeitungsmaske, text='ZF').grid(row=3, column=3)
+        ttk.Label(self.bearbeitungsmaske, text='/').grid(row=3, column=4)
+        ttk.Label(self.bearbeitungsmaske, text='GF').grid(row=3, column=5)
+        ttk.Label(self.bearbeitungsmaske, text='/').grid(row=3, column=6)
+        ttk.Label(self.bearbeitungsmaske, text='MS').grid(row=3, column=7)
+        
         self.verbandsfuhrer.grid(row=4, column=1)
         ttk.Label(self.bearbeitungsmaske, text='/').grid(row=4, column=2)
         self.zugfuhrer.grid(row=4, column=3)
@@ -68,9 +81,11 @@ class Kraefteuebersicht(ttk.Frame):
         self.gruppenfuhrer.grid(row=4, column=5)
         ttk.Label(self.bearbeitungsmaske, text='/').grid(row=4, column=6)
         self.mannschaft.grid(row=4, column=7)
-        ttk.Label(self.bearbeitungsmaske, text='Anzahl Atemschutzgeräteträger').grid(row=5, column=1, columnspan=7, sticky='w')
+        
+        ttk.Label(self.bearbeitungsmaske, text='Anzahl Atemschutzgeräteträger').grid(row=5, column=1, columnspan=7, sticky='w', pady=(10,0))
         self.agt.grid(row=6, column=1)
-        ttk.Label(self.bearbeitungsmaske, text='Anmerkung').grid(row=7, column=1, columnspan=7, sticky='w')
+        
+        ttk.Label(self.bearbeitungsmaske, text='Anmerkung').grid(row=7, column=1, columnspan=7, sticky='w', pady=(10,0))
         self.anmerkung_entry.grid(row=8, column=1, columnspan=7, sticky='we')        
         self.btn_leiste.grid(row=9, column=1, columnspan=7, sticky='news')
         
@@ -110,17 +125,28 @@ class Kraefteuebersicht(ttk.Frame):
         
         ctk.CTkButton(self.label_frame, text='Kräftübersicht ausleiten', command=self.create_report).grid(row=2, column=1, columnspan=3, sticky='n', pady=10, padx=(5,5))
         
-        # self.loop()
-        self.fill_table()   
+        if self.einstellungen['einzelplatznutzung']:
+            self.fill_table()
+        else:
+            self.loop()
+           
         
-
     def loop(self):
-        self.after(10_000, self.loop)
+        self.after(self.einstellungen['update_intervall'], self.loop)
         self.kraefte = self.lese_datenbank()
         self.fill_table()
     
     def pack_me(self):
+        self.einstellungen = self.lese_einstellungen()
+        self.db = self.verbinde_datenbank()
+        self.kraefte = None
+        self.fill_table()
         self.pack(pady=5, padx=5, fill='both', expand=True)
+    
+    def lese_einstellungen(self) -> dict:
+        with open('settings.json', 'r') as f:
+            einstellungen = json.load(f)
+        return einstellungen
     
     def fill_table(self):
         self.kraefte = self.lese_datenbank()
@@ -187,6 +213,15 @@ class Kraefteuebersicht(ttk.Frame):
             ''')
             db.commit()
             return db
+        else:
+            user = self.einstellungen['db_user']
+            pwd = self.einstellungen['db_user_password']
+            ip = self.einstellungen['db_ip']
+            port = self.einstellungen['db_port']
+            db = self.einstellungen['db_name']   
+            client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
+            db = client.einsatzleiter
+            return db
         
     def lese_datenbank(self):
         db = self.db
@@ -203,7 +238,9 @@ class Kraefteuebersicht(ttk.Frame):
                     'agt',
                     'anmerkung',
                     'datum'), einheit)) for einheit in alle_einheiten_tuple
-            ]    
+            ]
+        else:
+            alle_einheiten = self.db.krafte.find()
         
         return alle_einheiten
              
@@ -249,7 +286,7 @@ class Kraefteuebersicht(ttk.Frame):
         agt = self.agt.get()
         self.agt.current(0)
         
-        einheit = {
+        einheit: dict = {
             'funkrufname': funk,
             'vf': int(vf),
             'zf': int(zf),
@@ -264,6 +301,15 @@ class Kraefteuebersicht(ttk.Frame):
             cursor = db.cursor()
             cursor.execute('''INSERT OR REPLACE INTO einheiten(funkrufname, vf, zf, gf, ms, agt, anmerkung, datum) VALUES(?,?,?,?,?,?,?,?)''', tuple(list(einheit.values())))
             db.commit()
+        else:
+            cnt = self.db.krafte.count_documents({"funkrufname": funk})
+            if cnt>0:
+                self.db.krafte.find_one_and_update(
+                        {'funkrufname': funk}, {'$set': einheit}, 
+                        return_document = ReturnDocument.AFTER
+                    )
+            else:
+                self.db.krafte.insert_one(einheit)
             
         self.fill_table()
         
@@ -280,8 +326,7 @@ class Kraefteuebersicht(ttk.Frame):
         self.fill_table()
 
     def create_report(self):        
-        pass
-        #report = Bericht(self.db.krafte.find(), self.einstellungen.orga_name.get())
+        report = Bericht(self.kraefte, self.einstellungen['name_organisation'])
             
     
 class Bericht(fpdf.FPDF):

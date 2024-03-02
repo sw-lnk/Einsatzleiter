@@ -4,72 +4,6 @@ import ttkbootstrap as ttk
 import customtkinter as ctk
 import json
 
-from scripts.einsatztagebuch import Einsatztagebuch
-
-class Hauptmenu(ttk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)        
-        
-        self.parent = parent        
-        self.funker_name = parent.user_login
-        self.login = parent.login
-        
-        self.icon_power_path = os.path.join('img','IconPower.png')
-        self.icon_power = ttk.PhotoImage(file=self.icon_power_path, width=28, height=28) 
-        
-        self.disabled_btn = None
-        self.disabled_btn_color = None
-        self.disabled_btn_hover_color = None
-        
-        self.columnconfigure(0, weight=1)
-
-        self.anwendungen = ttk.Frame(self)
-        self.btn_settings = ctk.CTkButton(self.anwendungen, text='Einstellungen', command=lambda: self.switch_anwendung(self.parent.einstellungen, self.btn_settings))
-        self.btn_funktagebuch = ctk.CTkButton(self.anwendungen, text='Funktagebuch', command=lambda: self.switch_anwendung(self.parent.einsatztagebuch, self.btn_funktagebuch))
-        self.btn_kraefteuebersicht = ctk.CTkButton(self.anwendungen, text='Kräfteübersicht', command=lambda: self.switch_anwendung(self.parent.kraefteuebersicht, self.btn_kraefteuebersicht))
-        
-        self.btn_settings.grid(row=0, column=0, sticky='w', padx=(5,0))
-        self.btn_funktagebuch.grid(row=0, column=1, sticky='w', padx=(5,0))
-        self.btn_kraefteuebersicht.grid(row=0, column=2, sticky='w', padx=(5,0))
-        self.anwendungen.grid(row=0, column=0, sticky='w')
-        
-        
-        self.logout_frame = ttk.Frame(self)
-        ttk.Label(self.logout_frame, text='Angemeldet: ').grid(row=0, column=0, sticky='e')
-        ttk.Label(self.logout_frame, textvariable=self.funker_name).grid(row=0, column=1, sticky='e')
-        ctk.CTkButton(self.logout_frame, text='Logout', command=self.logout).grid(row=0, column=3, sticky='e', padx=5)
-        self.logout_frame.grid(row=0, column=1, sticky='ne')
-        
-    def logout(self):
-        aktuelle_anwendung=self.parent.aktuelle_anwendung
-        self.pack_forget()
-        if aktuelle_anwendung:
-            aktuelle_anwendung.pack_forget()
-        self.login.user_login_entry.delete(0, 'end')
-        self.login.pack_me()
-
-    def pack_me(self):
-        self.pack(pady=5, padx=5, fill='x')
-
-    def switch_anwendung(self, anwendung, btn):
-        self.enable_btn()                
-        self.disable_btn(btn)
-
-        self.parent.aktuelle_anwendung.pack_forget()
-
-        self.parent.aktuelle_anwendung = anwendung
-        
-        self.parent.aktuelle_anwendung.pack_me()
-
-    def disable_btn(self, btn):
-        self.disabled_btn = btn
-        self.disabled_btn_color = btn.cget('fg_color')
-        self.disabled_btn.configure(state='disable', fg_color='grey')
-    
-    def enable_btn(self):
-        if self.disabled_btn:
-            self.disabled_btn.configure(state='normal', fg_color=self.disabled_btn_color)
-
 
 class Login(ttk.Frame):
     def __init__(self, parent):
@@ -122,30 +56,36 @@ class Einstellungen(ttk.Frame):
         self.orga_name = tk.StringVar(self, self.settings['name_organisation'])
         self.entry_name_orga = ctk.CTkEntry(self, textvariable=self.orga_name, width=self.entry_width)
         
+        # Name der Organisation
+        self.label_einzelplatznutzung = ttk.Label(self, text='Einzelplatznutzung')
+        self.einzelplatznutzung = tk.BooleanVar(self, self.settings['einzelplatznutzung'])
+        self.switch_einzelplatznutzung = ctk.CTkSwitch(self, text='', variable=self.einzelplatznutzung, onvalue=True, offvalue=False, command=self.update_view)
+        
         # Datenbankangaben
-        self.label_db_user = ttk.Label(self, text='Nutzer MongoDB')
-        self.db_user = tk.StringVar(self, self.settings['db_user'])
-        self.entry_db_user = ctk.CTkEntry(self, textvariable=self.db_user, width=self.entry_width)
+        self.db_frame = ttk.Frame(self)
+        self.label_db_user = ttk.Label(self.db_frame, text='Nutzer MongoDB')
+        self.db_user = tk.StringVar(self.db_frame, self.settings['db_user'])
+        self.entry_db_user = ctk.CTkEntry(self.db_frame, textvariable=self.db_user, width=self.entry_width)
         
-        self.label_db_user_password = ttk.Label(self, text='Nutzer MongoDB')
-        self.db_user_password = tk.StringVar(self, self.settings['db_user_password'])
-        self.entry_db_user_password = ctk.CTkEntry(self, textvariable=self.db_user_password, width=self.entry_width)
+        self.label_db_user_password = ttk.Label(self.db_frame, text='Nutzer MongoDB')
+        self.db_user_password = tk.StringVar(self.db_frame, self.settings['db_user_password'])
+        self.entry_db_user_password = ctk.CTkEntry(self.db_frame, textvariable=self.db_user_password, width=self.entry_width)
         
-        self.label_db_ip = ttk.Label(self, text='MongoDB IP')
-        self.db_ip = tk.StringVar(self, self.settings['db_ip'])
-        self.entry_db_ip = ctk.CTkEntry(self, textvariable=self.db_ip, width=self.entry_width)
+        self.label_db_ip = ttk.Label(self.db_frame, text='MongoDB IP')
+        self.db_ip = tk.StringVar(self.db_frame, self.settings['db_ip'])
+        self.entry_db_ip = ctk.CTkEntry(self.db_frame, textvariable=self.db_ip, width=self.entry_width)
         
-        self.label_db_port = ttk.Label(self, text='MongoDB Port')
-        self.db_port = tk.StringVar(self, self.settings['db_port'])
-        self.entry_db_port = ctk.CTkEntry(self, textvariable=self.db_port, width=self.entry_width)
+        self.label_db_port = ttk.Label(self.db_frame, text='MongoDB Port')
+        self.db_port = tk.StringVar(self.db_frame, self.settings['db_port'])
+        self.entry_db_port = ctk.CTkEntry(self.db_frame, textvariable=self.db_port, width=self.entry_width)
         
-        self.label_db_name = ttk.Label(self, text='Datenbankname')
-        self.db_name = tk.StringVar(self, self.settings['db_name'])
-        self.entry_db_name = ctk.CTkEntry(self, textvariable=self.db_name, width=self.entry_width)
+        self.label_db_name = ttk.Label(self.db_frame, text='Datenbankname')
+        self.db_name = tk.StringVar(self.db_frame, self.settings['db_name'])
+        self.entry_db_name = ctk.CTkEntry(self.db_frame, textvariable=self.db_name, width=self.entry_width)
         
-        self.label_update_intervall = ttk.Label(self, text='Aktualisierungsintervall [ms]')
-        self.update_intervall = tk.IntVar(self, self.settings['update_intervall'])
-        self.entry_update_intervall = ctk.CTkEntry(self, textvariable=self.update_intervall, width=self.entry_width)
+        self.label_update_intervall = ttk.Label(self.db_frame, text='Aktualisierungsintervall [ms]')
+        self.update_intervall = tk.IntVar(self.db_frame, self.settings['update_intervall'])
+        self.entry_update_intervall = ctk.CTkEntry(self.db_frame, textvariable=self.update_intervall, width=self.entry_width)
                 
         self.label_zeitschwelle_einsatz_ohne_bearbeitung = ttk.Label(self, text='Zeitschwelle Einsatzliste [Min]')
         self.zeitschwelle_einsatz_ohne_bearbeitung = tk.IntVar(self, self.settings['zeitschwelle_einsatz_ohne_bearbeitung'])
@@ -160,37 +100,45 @@ class Einstellungen(ttk.Frame):
         # Elemente ausrichten
         #self.columnconfigure(1, weight=1)
         
-        self.label_orga.grid(row=1, column=0, padx=5,  pady=(5,0),sticky='w')
-        self.entry_name_orga.grid(row=1, column=1, padx=5, pady=(5,0),sticky='w')
+        self.label_orga.grid(row=11, column=0, padx=5,  pady=(5,0),sticky='w')
+        self.entry_name_orga.grid(row=11, column=1, padx=5, pady=(5,0),sticky='w')
         
-        ttk.Separator(self, orient='horizontal').grid(row=2, columnspan=2, sticky='we', pady=20)
+        ttk.Separator(self, orient='horizontal').grid(row=20, columnspan=2, sticky='we', pady=20)
         
-        self.label_db_user.grid(row=3, column=0, padx=5, sticky='w')
-        self.entry_db_user.grid(row=3, column=1, padx=5, sticky='w')
-        self.label_db_user_password.grid(row=4, column=0, padx=5,  pady=(5,0), sticky='w')
-        self.entry_db_user_password.grid(row=4, column=1, padx=5,  pady=(5,0), sticky='w')
-        self.label_db_ip.grid(row=5, column=0, padx=5,  pady=(5,0), sticky='w')
-        self.entry_db_ip.grid(row=5, column=1, padx=5,  pady=(5,0), sticky='w')
-        self.label_db_port.grid(row=6, column=0, padx=5,  pady=(5,0), sticky='w')
-        self.entry_db_port.grid(row=6, column=1, padx=5,  pady=(5,0), sticky='w')
-        self.label_db_name.grid(row=7, column=0, padx=5,  pady=(5,0), sticky='w')
-        self.entry_db_name.grid(row=7, column=1, padx=5,  pady=(5,0), sticky='w')
-        self.label_update_intervall.grid(row=8, column=0, padx=5,  pady=(5,0), sticky='w')
-        self.entry_update_intervall.grid(row=8, column=1, padx=5,  pady=(5,0), sticky='w')
+        self.label_einzelplatznutzung.grid(row=21, column=0, padx=5, sticky='w')
+        self.switch_einzelplatznutzung.grid(row=21, column=1, padx=5, sticky='w')
         
-        ttk.Separator(self, orient='horizontal').grid(row=9, columnspan=2, sticky='we', pady=20)
         
-        self.label_zeitschwelle_einsatz_ohne_bearbeitung.grid(row=10, column=0, padx=5, sticky='w')
-        self.entry_zeitschwelle_einsatz_ohne_bearbeitung.grid(row=10, column=1, padx=5, sticky='w')
+        ttk.Separator(self, orient='horizontal').grid(row=30, columnspan=2, sticky='we', pady=20)
         
-        ttk.Separator(self, orient='horizontal').grid(row=11, columnspan=2, sticky='we', pady=20)
+        self.update_view()
         
-        self.check_absender.grid(row=12, column=1, sticky='w')
-        self.check_empfanger.grid(row=13, column=1, pady=(5,0), sticky='w')
+        self.label_db_user.grid(row=31, column=0, padx=5, sticky='w')
+        self.entry_db_user.grid(row=31, column=1, padx=5, sticky='w')
+        self.label_db_user_password.grid(row=32, column=0, padx=5,  pady=(5,0), sticky='w')
+        self.entry_db_user_password.grid(row=32, column=1, padx=5,  pady=(5,0), sticky='w')
+        self.label_db_ip.grid(row=33, column=0, padx=5,  pady=(5,0), sticky='w')
+        self.entry_db_ip.grid(row=33, column=1, padx=5,  pady=(5,0), sticky='w')
+        self.label_db_port.grid(row=34, column=0, padx=5,  pady=(5,0), sticky='w')
+        self.entry_db_port.grid(row=34, column=1, padx=5,  pady=(5,0), sticky='w')
+        self.label_db_name.grid(row=35, column=0, padx=5,  pady=(5,0), sticky='w')
+        self.entry_db_name.grid(row=35, column=1, padx=5,  pady=(5,0), sticky='w')
+        self.label_update_intervall.grid(row=36, column=0, padx=5,  pady=(5,0), sticky='w')
+        self.entry_update_intervall.grid(row=36, column=1, padx=5,  pady=(5,0), sticky='w')
         
-        ttk.Separator(self, orient='horizontal').grid(row=14, columnspan=2, sticky='we', pady=20)
+        ttk.Separator(self, orient='horizontal').grid(row=40, columnspan=2, sticky='we', pady=20)
         
-        self.btn_save.grid(row=99, column=0, padx=5, pady=10, sticky='e')
+        self.label_zeitschwelle_einsatz_ohne_bearbeitung.grid(row=41, column=0, padx=5, sticky='w')
+        self.entry_zeitschwelle_einsatz_ohne_bearbeitung.grid(row=41, column=1, padx=5, sticky='w')
+        
+        ttk.Separator(self, orient='horizontal').grid(row=50, columnspan=2, sticky='we', pady=20)
+        
+        self.check_absender.grid(row=51, column=1, sticky='w')
+        self.check_empfanger.grid(row=52, column=1, pady=(5,0), sticky='w')
+        
+        ttk.Separator(self, orient='horizontal').grid(row=100, columnspan=2, sticky='we', pady=20)
+        
+        self.btn_save.grid(row=101, column=0, padx=5, pady=10, sticky='e')
         
     def save_settings(self):
         self.settings['name_organisation'] = self.orga_name.get()
@@ -203,14 +151,16 @@ class Einstellungen(ttk.Frame):
         self.settings['zeitschwelle_einsatz_ohne_bearbeitung'] = self.zeitschwelle_einsatz_ohne_bearbeitung.get()
         self.settings['absender'] = self.absender.get()
         self.settings['empfaenger'] = self.empfanger.get()
+        self.settings['einzelplatznutzung'] = self.einzelplatznutzung.get()
         
         with open('settings.json', 'w') as f:
             json.dump(self.settings, f, indent=4)
-        
-        self.parent.einsatztagebuch.destroy()
-        self.parent.einsatztagebuch = Einsatztagebuch(self.parent, self.parent.user_login, self.parent.db)
-        self.parent.einsatztagebuch.einsatzliste.update_table()
-        self.parent.einsatztagebuch.eintragliste.update_table()
     
-    def pack_me(self) -> None:
-        self.pack(pady=20, padx=20, fill='both')
+    def pack_me(self):
+        self.pack(pady=5, padx=5, fill='both', expand=True)
+    
+    def update_view(self):
+        if self.einzelplatznutzung.get():
+            self.db_frame.grid_forget()
+        else:
+            self.db_frame.grid(row=31, column=0, columnspan=2, padx=5, sticky='news')

@@ -11,6 +11,7 @@ import sqlite3
 
 from scripts.einsatztagebuch import Einsatztagebuch
 from scripts.kraefteuebersicht import Kraefteuebersicht
+from scripts.menu import Einstellungen
 
 
 class App(ttk.Window):
@@ -42,9 +43,11 @@ class App(ttk.Window):
             
         # Hauptfenster        
         self.hauptfenster = ctk.CTkFrame(self)
+        self.einstellungs_fenster = Einstellungen(self.hauptfenster)
         #self.einsatztagebuch = Einsatztagebuch(self.hauptfenster)
-        self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster, self.settings)
+        self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
         self.list_anwendungen: list[ttk.Frame] = [
+            self.einstellungs_fenster,
             self.kraefteuebersicht,
         ]
         
@@ -66,12 +69,12 @@ class App(ttk.Window):
         
         # Seitenleiste
         self.seitenleiste = ttk.Frame(self)
-        self.btn_settings = ctk.CTkButton(self.seitenleiste, text='Einstellungen')
+        self.btn_settings = ctk.CTkButton(self.seitenleiste, text='Einstellungen', command=lambda: self.wechsle_anwendung(self.einstellungs_fenster))
         self.btn_funktagebuch = ctk.CTkButton(self.seitenleiste, text='Funktagebuch')
-        self.btn_kraefteuebersicht = ctk.CTkButton(self.seitenleiste, text='Kräfteübersicht', command=self.kraefteuebersicht.pack_me)
+        self.btn_kraefteuebersicht = ctk.CTkButton(self.seitenleiste, text='Kräfteübersicht', command=lambda: self.wechsle_anwendung(self.kraefteuebersicht))
         self.btn_list: list[ctk.CTkButton] = [
             self.btn_settings,
-            self.btn_funktagebuch,
+            #self.btn_funktagebuch,
             self.btn_kraefteuebersicht,
         ]
         
@@ -95,6 +98,14 @@ class App(ttk.Window):
         # Diese Schleife wird alle X Sekunden ausgeführt  
         self.after(10_000, self.loop)
 
+    def schliesse_anwendungen(self):
+        for anwendung in self.list_anwendungen:
+            anwendung.pack_forget()
+    
+    def wechsle_anwendung(self, neue_anwendung) -> None:
+        self.schliesse_anwendungen()
+        neue_anwendung.pack_me()
+    
     def login(self, _):
         user_entry = self.user_login_entry.get()        
         if user_entry:
@@ -111,8 +122,7 @@ class App(ttk.Window):
         self.user_login.set('Benutzername')
         
         # Alle Anwendungen schließen
-        for anwendung in self.list_anwendungen:
-            anwendung.pack_forget()
+        self.schliesse_anwendungen()
         
         # Login-Maske einblenden
         self.loginfenster.pack()
