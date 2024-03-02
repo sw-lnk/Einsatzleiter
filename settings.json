@@ -8,5 +8,6 @@
     "update_intervall": 5000,
     "zeitschwelle_einsatz_ohne_bearbeitung": 10,
     "absender": false,
-    "empfaenger": false
+    "empfaenger": false,
+    "einzelplatznutzung": true
 }

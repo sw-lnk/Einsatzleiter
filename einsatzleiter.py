@@ -43,7 +43,7 @@ class App(ttk.Window):
         # Hauptfenster        
         self.hauptfenster = ctk.CTkFrame(self)
         #self.einsatztagebuch = Einsatztagebuch(self.hauptfenster)
-        self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
+        self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster, self.settings)
         self.list_anwendungen: list[ttk.Frame] = [
             self.kraefteuebersicht,
         ]

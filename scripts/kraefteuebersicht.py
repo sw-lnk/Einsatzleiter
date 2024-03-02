@@ -10,14 +10,15 @@ import json
 import sqlite3
 
 class Kraefteuebersicht(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, einstellungen:dict):
         super().__init__(parent)
         
         self.parent = parent
+        self.einstellungen = einstellungen
         self.db = self.verbinde_datenbank()
         
         # Alle Kräfte
-        self.kraefte: list[dict] = None
+        self.kraefte: list[dict] = self.lese_datenbank()
 
         self.label = ttk.Label(self, text='Kräfteübersicht', style='bolt')
         
@@ -109,17 +110,20 @@ class Kraefteuebersicht(ttk.Frame):
         
         ctk.CTkButton(self.label_frame, text='Kräftübersicht ausleiten', command=self.create_report).grid(row=2, column=1, columnspan=3, sticky='n', pady=10, padx=(5,5))
         
-        #self.loop()      
+        # self.loop()
+        self.fill_table()   
         
 
     def loop(self):
         self.after(10_000, self.loop)
+        self.kraefte = self.lese_datenbank()
         self.fill_table()
     
     def pack_me(self):
         self.pack(pady=5, padx=5, fill='both', expand=True)
     
     def fill_table(self):
+        self.kraefte = self.lese_datenbank()
         self.clear_table()
         
         vf_ges = 0
@@ -165,8 +169,8 @@ class Kraefteuebersicht(ttk.Frame):
         for element in self.table.get_children():
             self.table.delete(element)
             
-    def verbinde_datenbank(self, einzelplatznutzung:bool=True):
-        if einzelplatznutzung:
+    def verbinde_datenbank(self):
+        if self.einstellungen['einzelplatznutzung']:
             db = sqlite3.connect(os.path.join('data', 'db.sqlite3'))
             cursor = db.cursor()
             cursor.execute('''
@@ -186,13 +190,23 @@ class Kraefteuebersicht(ttk.Frame):
         
     def lese_datenbank(self):
         db = self.db
-        einzelplatznutzung:bool=True
         
-        if einzelplatznutzung:
-            cursor = db.cursor.execute('''SELECT * FROM einheiten''')
-            alle_einheiten = cursor.fetchall()
-            
-    
+        if self.einstellungen['einzelplatznutzung']:
+            alle_einheiten_tuple = db.cursor().execute('''SELECT * FROM einheiten''').fetchall()
+            alle_einheiten = [
+                dict(zip((
+                    'funkrufname',
+                    'vf',
+                    'zf',
+                    'gf',
+                    'ms',
+                    'agt',
+                    'anmerkung',
+                    'datum'), einheit)) for einheit in alle_einheiten_tuple
+            ]    
+        
+        return alle_einheiten
+             
     def item_selection(self, _):
         selection = self.table.selection()        
         if selection:            
@@ -213,7 +227,6 @@ class Kraefteuebersicht(ttk.Frame):
     
     def speicher_eintrag(self):
         db = self.db
-        einzelplatznutzung:bool=True
         
         funk = self.funkrufname_entry.get()
         self.funkrufname_entry.delete(0, 'end')
@@ -247,24 +260,24 @@ class Kraefteuebersicht(ttk.Frame):
             'datum': datetime.datetime.now()
         }
         
-        if einzelplatznutzung:
+        if self.einstellungen['einzelplatznutzung']:
             cursor = db.cursor()
-            cnt = cursor.execute('''SELECT COUNT(funkrufname) FROM einheiten WHERE funkrufname=?''', (funk,))
-            cnt = cnt.fetchone
-            if cnt is None:
-                cursor.execute('''INSERT INTO einheiten(funkrufname, vf, zf, gf, ms, agt, anmerkung, datum)
-                  VALUES(?,?,?,?,?,?,?,?)''', tuple(list(einheit.values())))
-                db.commit()
-            else:
-                pass
-                # Todo: Datensatz aktualisieren, wenn bereits vorhanden.
+            cursor.execute('''INSERT OR REPLACE INTO einheiten(funkrufname, vf, zf, gf, ms, agt, anmerkung, datum) VALUES(?,?,?,?,?,?,?,?)''', tuple(list(einheit.values())))
+            db.commit()
+            
+        self.fill_table()
         
     def entferne_eintrag(self):
+        db = self.db
         funk = self.funkrufname_entry.get()        
         res = tk.messagebox.askquestion('Löschen', 'Wirklich löschen?')        
         if res == 'yes':
-            print({'funkrufname': funk})
-            self.fill_table()
+            if self.einstellungen['einzelplatznutzung']:
+                cursor = db.cursor()
+                cursor.execute('''DELETE FROM einheiten WHERE funkrufname=(?)''', (funk,))
+                db.commit()
+            
+        self.fill_table()
 
     def create_report(self):        
         pass
