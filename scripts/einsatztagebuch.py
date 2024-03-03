@@ -1,56 +1,92 @@
-from pymongo import ReturnDocument
+from pymongo import ReturnDocument, MongoClient
 from bson import ObjectId
 import tkinter as tk
 import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
+import json
+import sqlite3
+import os
 
 from scripts.protokoll import Protokoll
 
 
 class Einsatztagebuch(ttk.Frame):
-    def __init__(self, parent, user, db):
+    def __init__(self, parent, nutzer: str= 'Nutzer'):
         super().__init__(parent)
 
         self.parent = parent
         self.einsatzstelle_arbeit = None
         
+        self.einstellungen = self.lese_einstellungen()
+        
         # Einsatzübersicht
-        self.einsatzliste = Einsatzliste(self, user, db)
+        self.einsatzliste = ttk.Frame(self)
+        # tablele aller Einsätze
+        self.headings = ['id', 'datum', 'stichwort', 'anschrift', 'status']
+        self.table_einsatz = ttk.Treeview(master=self.einsatzliste, columns=self.headings, displaycolumns=self.headings[1:], show='headings')
+        self.table_einsatz.heading('id', text='Nr.')
+        self.table_einsatz.heading('datum', text='Einsatzbeginn', anchor='w')
+        self.table_einsatz.column('datum', width=120, minwidth=100, stretch=False)
+        self.table_einsatz.heading('stichwort', text='Stichwort', anchor='w')
+        self.table_einsatz.column('stichwort')
+        self.table_einsatz.heading('anschrift', text='Anschrift', anchor='w')
+        self.table_einsatz.column('anschrift', width=200)
+        self.table_einsatz.heading('status', text='Status', anchor='w')
+        self.table_einsatz.column('status', width=120, minwidth=50, stretch=False)
+        self.table_einsatz.tag_configure('late', background='red')
+        self.table_einsatz.tag_configure('unbearbeitet', background='#ffcccb')
+        self.table_einsatz.tag_configure('in Arbeit', background='#ffffe0')
+        self.table_einsatz.tag_configure('abgeschlossen', background='#90ee90')
+        self.table_einsatz.bind('<<TreeviewSelect>>', self.item_selection)
+        
+        self.frame_optionen = ttk.Frame(self.einsatzliste)
+        
+        # Button zur Bearbeitung und Anlage eines Einsatzes
+        self.button_neuer_einsatz = ctk.CTkButton(self.frame_optionen, text='Neuer Einsatz', command=self.einsatz_anlegen_maske)
+        self.button_update_einsatz = ctk.CTkButton(self.frame_optionen, text='Einsatz aktualisieren', command=self.einsatz_update_maske)
+        self.button_einsatz_ausgabe = ctk.CTkButton(self.frame_optionen, text='Protokoll ausleiten', command=self.protokoll_ausleiten)
+        
+        # Filter Optionen        
+        self.check_arbeit_value = tk.IntVar(self.frame_optionen, 1)        
+        self.check_arbeit = ttk.Checkbutton(self.frame_optionen, text='Abgeschlossene Einsätze', variable=self.check_arbeit_value, command=self.update_table_einsatz)
+        
+        self.check_date_value = tk.IntVar(self.frame_optionen, 1)
+        self.check_date = ttk.Checkbutton(self.frame_optionen, text='Zeige nur Einsätze nach', variable=self.check_date_value, command=self.update_table_einsatz)
+        
+        self.yesterday = datetime.date.today() - datetime.timedelta(days=7)
+        self.date_filter = ttk.DateEntry(self.frame_optionen, firstweekday=7, startdate=self.yesterday, dateformat='%d.%m.%Y')
+        
+        # Elemente ausrichten
+        self.button_neuer_einsatz.pack(padx=5, pady=(5,0), anchor='w')
+        self.button_update_einsatz.pack(padx=5, pady=(5,0), anchor='w')
+        self.button_einsatz_ausgabe.pack(padx=5, pady=(5,0), anchor='w')
+        self.check_date.pack(padx=5, pady=(20,0), anchor='w')
+        self.date_filter.pack(padx=5, pady=(5,0), anchor='w')
+        self.check_arbeit.pack(padx=5, pady=(20,5), anchor='w')        
+
+        self.einsatzliste.columnconfigure(0, weight=1)
+        ttk.Label(self.einsatzliste, text='Einsatzübersicht', font='bold').grid(row=0, column=0)
+        self.table_einsatz.grid(row=1, column=0, padx=5, pady=5, sticky='news')
+        self.frame_optionen.grid(row=1, column=1, sticky='news')
         
         # Tagebuch je Einsatz
-        self.eintragliste = Eintragliste(self, user, db)
+        self.eintragliste = ttk.Frame(self)
         
-        #Elemente ausrichten
-        self.einsatzliste.pack_me()
-        self.eintragliste.pack_me()
-
-    def pack_me(self):
-        self.pack(pady=(0,10), padx=10, expand=True, fill='both')
-        
-
-class Eintragliste(ttk.Frame):
-    def __init__(self, parent, user, db):
-        super().__init__(parent)
-        self.parent = parent
-        self.user = user
-        self.db = db
-        self.einstellungen = parent.parent.einstellungen       
-                
         # Anzeige ausgewählter Einsatz
-        self.label_einsatz_text = tk.StringVar(self, '- Einsatz -')
-        self.label_einsatz = ttk.Label(master=self, textvariable=self.label_einsatz_text, style='primary', font='bold')        
+        self.label_einsatz_text = tk.StringVar(self.eintragliste, '- Einsatz -')
+        self.label_einsatz = ttk.Label(master=self.eintragliste, textvariable=self.label_einsatz_text, style='primary', font='bold')        
         
         # tablele zur Anzeige alle Einträge zum ausgewähltem Einsatz
         self.headings = ['datum', 'eintrag', 'von', 'an', 'funker']
         self.headings_show = ['datum', 'eintrag', 'funker']
         
-        if self.einstellungen.absender.get():
+        if self.einstellungen['absender']:
             self.headings_show.insert(-1, 'von')
-        if self.einstellungen.empfanger.get():
+        if self.einstellungen['empfaenger']:
             self.headings_show.insert(-1, 'an')
         
-        self.table = ttk.Treeview(master=self, columns=self.headings, displaycolumns=self.headings_show, show='headings', height=15)        
+        self.table = ttk.Treeview(master=self.eintragliste, columns=self.headings, displaycolumns=self.headings_show, show='headings', height=15)        
         self.table.heading('datum', text='Zeitstempel', anchor='w')
         self.table.column('datum', width=120, minwidth=100, stretch=False)
         self.table.heading('eintrag', text='Eintrag', anchor='w')
@@ -64,7 +100,7 @@ class Eintragliste(ttk.Frame):
         #self.table.tag_configure('odd', background='lightblue')
         
         # Rahmen für Eingaben
-        self.frame_entry = ttk.Frame(self)
+        self.frame_entry = ttk.Frame(self.eintragliste)
         self.frame_entry.columnconfigure(0, weight=1)
         
         # Eingabe für den nächsten Eintrag im Funktagebuch
@@ -88,149 +124,116 @@ class Eintragliste(ttk.Frame):
         self.frame_entry.pack(pady=5, padx=5, fill='x')
 
         # Eingabeelemente anzeigen / ausrichten        
-        if self.einstellungen.absender.get() or self.einstellungen.empfanger.get():
+        if self.einstellungen['absender'] or self.einstellungen['empfaenger']:
             ttk.Label(self.frame_entry, text='Eintrag').grid(row=0, column=0, pady=(5, 0))
-        if self.einstellungen.absender.get():
+        if self.einstellungen['absender']:
             ttk.Label(self.frame_entry, text='Absender').grid(row=0, column=1, pady=(5, 0))
             self.entry_absender.grid(row=1, column=1, padx=(5,0), sticky='ew')
-        if self.einstellungen.empfanger.get():
+        if self.einstellungen['empfaenger']:
             ttk.Label(self.frame_entry, text='Empfänger').grid(row=0, column=2, pady=(5, 0))
             self.entry_empfang.grid(row=1, column=2, padx=(5,0), sticky='ew')      
         
         self.entry_funk.grid(row=1, column=0, padx=(5,0), sticky='ew')        
-        self.button_absenden.grid(row=1, column=3, padx=(5,5), sticky='ew')                
-              
-
-    def update_table(self, id):
-        db = self.db
-        for element in self.table.get_children():
-            self.table.delete(element)
+        self.button_absenden.grid(row=1, column=3, padx=(5,5), sticky='ew')
         
-        if id:
-            self.einsatzstelle_arbeit = id
-            einsatzstelle = db.einsatzstellen.find_one(id)
-            
-            stichwort = einsatzstelle['stichwort']
-            anschrift = einsatzstelle['anschrift']
-            status = einsatzstelle['status']
-            text = f'{stichwort}: {anschrift} ({status})'
-            self.label_einsatz_text.set(text)
-            
-            eintrage = db.eintrage.find({'einsatz': id})
-            for i, eintrag in enumerate(eintrage):
-                row_tag = 'even' if (i%2==0) else 'odd'
-
-                zeile=list(eintrag.values())[2:]
-                zeile[0] = zeile[0].strftime('%d.%m.%Y %H:%M')
-
-                self.table.insert(parent='', index='end', values=zeile, tags=(row_tag,))
-        
-        else:
-            self.label_einsatz_text.set('- Einsatz -')
-
-    def add_entry(self, _):
-        db = self.db
-        entry = self.entry_funk.get()
-        funker = self.user.get()
-        now = datetime.datetime.now()
-        
-        # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
-        table_einsatz = self.parent.einsatzliste.table_einsatz
-        selection = table_einsatz.selection()
-        if entry and selection:
-            for cnt, sel in enumerate(selection):
-                id = ObjectId(table_einsatz.item(sel)['values'][0])     
-                
-                db.einsatzstellen.find_one_and_update(
-                    {'_id': id},
-                    { '$set': {'letztes_update': now} }, 
-                    return_document = ReturnDocument.AFTER
-                )
-
-                eintrag = {
-                    'einsatz': id,
-                    'zeitstempel': now,
-                    'eintrag': entry,
-                    'absender': self.entry_absender.get(),
-                    'empfanger': self.entry_empfang.get(),
-                    'bearbeiter': funker
-                }
-                db.eintrage.insert_one(eintrag)
-                
-                if cnt == 0:
-                    zeile = list(eintrag.values())[1:]
-                    self.table.insert(parent='', index='end', values=zeile)
-                    self.entry_funk.delete(0, 'end')            
+        #Elemente ausrichten
+        self.einsatzliste.pack(expand=True, fill='x')
+        self.eintragliste.pack(expand=True, fill='x')
 
     def pack_me(self):
-        self.pack(pady=5, padx=5, fill='both')
-
-
-class Einsatzliste(ttk.Frame):
-    def __init__(self, parent, user, db):
-        super().__init__(parent)
-
-        self.parent = parent
-        self.einstellungen = parent.parent.einstellungen
-        self.db = db
-        self.user = user
-        self.einsatzstelle_focus = None
-
-        self.letzte_aktualisierung = None
+        self.pack(pady=(0,10), padx=10, expand=True, fill='both')
         
-        # tablele aller Einsätze
-        self.headings = ['id', 'datum', 'stichwort', 'anschrift', 'status']
-        self.table_einsatz = ttk.Treeview(master=self, columns=self.headings, displaycolumns=self.headings[1:], show='headings')
-        self.table_einsatz.heading('id', text='Nr.')
-        self.table_einsatz.heading('datum', text='Einsatzbeginn', anchor='w')
-        self.table_einsatz.column('datum', width=120, minwidth=100, stretch=False)
-        self.table_einsatz.heading('stichwort', text='Stichwort', anchor='w')
-        self.table_einsatz.column('stichwort')
-        self.table_einsatz.heading('anschrift', text='Anschrift', anchor='w')
-        self.table_einsatz.column('anschrift', width=200)
-        self.table_einsatz.heading('status', text='Status', anchor='w')
-        self.table_einsatz.column('status', width=120, minwidth=50, stretch=False)
-        self.table_einsatz.tag_configure('late', background='red')
-        self.table_einsatz.tag_configure('unbearbeitet', background='#ffcccb')
-        self.table_einsatz.tag_configure('in Arbeit', background='#ffffe0')
-        self.table_einsatz.tag_configure('abgeschlossen', background='#90ee90')       
-
-        self.table_einsatz.bind('<<TreeviewSelect>>', self.item_selection)
-
-        self.frame_optionen = ttk.Frame(self)
-        
-        # Button zur Bearbeitung und Anlage eines Einsatzes
-        self.button_neuer_einsatz = ctk.CTkButton(self.frame_optionen, text='Neuer Einsatz', command=self.einsatz_anlegen_maske)
-        self.button_update_einsatz = ctk.CTkButton(self.frame_optionen, text='Einsatz aktualisieren', command=self.einsatz_update_maske)
-        self.button_einsatz_ausgabe = ctk.CTkButton(self.frame_optionen, text='Protokoll ausleiten', command=self.protokoll_ausleiten)
-        
-        # Filter Optionen        
-        self.check_arbeit_value = tk.IntVar(self.frame_optionen, 1)        
-        self.check_arbeit = ttk.Checkbutton(self.frame_optionen, text='Abgeschlossene Einsätze', variable=self.check_arbeit_value, command=self.update_table)
-        
-        self.check_date_value = tk.IntVar(self.frame_optionen, 1)
-        self.check_date = ttk.Checkbutton(self.frame_optionen, text='Zeige nur Einsätze nach', variable=self.check_date_value, command=self.update_table)
-        
-        self.yesterday = datetime.date.today() - datetime.timedelta(days=7)
-        self.date_filter = ttk.DateEntry(self.frame_optionen, firstweekday=7, startdate=self.yesterday, dateformat='%d.%m.%Y')
-        
-        # Elemente ausrichten
-        self.button_neuer_einsatz.pack(padx=5, pady=(5,0), anchor='w')
-        self.button_update_einsatz.pack(padx=5, pady=(5,0), anchor='w')
-        self.button_einsatz_ausgabe.pack(padx=5, pady=(5,0), anchor='w')        
-        
-        self.check_date.pack(padx=5, pady=(20,0), anchor='w')
-        self.date_filter.pack(padx=5, pady=(5,0), anchor='w')
-
-        self.check_arbeit.pack(padx=5, pady=(20,5), anchor='w')
-        
-
-        self.columnconfigure(0, weight=1)
-        ttk.Label(self, text='Einsatzübersicht', font='bold').grid(row=0, column=0)
-        self.table_einsatz.grid(row=1, column=0, padx=5, pady=5, sticky='news')
-        self.frame_optionen.grid(row=1, column=1, sticky='news')
-        
+    def lese_einstellungen(self) -> dict:
+        with open('settings.json', 'r') as f:
+            einstellungen = json.load(f)
+        return einstellungen
     
+    def verbinde_datenbank(self):
+        if self.einstellungen['einzelplatznutzung']:
+            db = sqlite3.connect(os.path.join('data', 'db.sqlite3'))
+            cursor = db.cursor()
+            # Tabelle für alle Einsätze
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS einsatzstellen(
+                    einsatznr TEXT NOT NULL,
+                    stichwort TEXT,
+                    anschrift TEXT,
+                    status TEXT,
+                    datum TEXT,
+                    letztes_update TEXT,
+                    archiv INTEGER
+                )
+            ''')
+            db.commit()
+            
+            #rowid = cursor.lastrowid()            
+            # Tabelle für alle Einträge
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS tagebuch(
+                    einsatznr INTEGER PRIMARY KEY,
+                    zeitstempel TEXT,
+                    eintrag TEXT,
+                    absender TEXT,
+                    empfaenger TEXT,
+                    bearbeiter TEXT
+                )
+            ''')
+            db.commit()
+            return db
+        else:
+            user = self.einstellungen['db_user']
+            pwd = self.einstellungen['db_user_password']
+            ip = self.einstellungen['db_ip']
+            port = self.einstellungen['db_port']
+            db = self.einstellungen['db_name']   
+            client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
+            db = client[self.einstellungen['db_name']]
+            return db
+        
+    def lese_datenbank(self):
+        db = self.db
+        
+        if self.einstellungen['einzelplatznutzung']:
+            alle_einsatzstellen_tuple = db.cursor().execute('''SELECT * FROM einsatzstellen''').fetchall()
+            alle_tagebuch_tuple = db.cursor().execute('''SELECT * FROM tagebuch''').fetchall()
+            
+            alle_einsatzstellen = [
+                dict(zip((
+                    'einsatznr',
+                    'stichwort',
+                    'anschrift',
+                    'status',
+                    'datum',
+                    'letztes_update',
+                    'archiv'), einsatz)) for einsatz in alle_einsatzstellen_tuple
+            ]
+            
+            alle_tagebuch = [
+                dict(zip((
+                    'einsatznr',
+                    'zeitstempel',
+                    'eintrag',
+                    'absender',
+                    'empfaenger',
+                    'bearbeiter'), tagebuch)) for tagebuch in alle_tagebuch_tuple
+            ]
+        else:
+            alle_einsatzstellen = self.db.einsatzstellen.find()
+            alle_tagebuch = self.db.tagebuch.find()
+        
+        return alle_einsatzstellen, alle_tagebuch
+
+    def item_selection(self, _):
+        selection = self.table_einsatz.selection()        
+        if selection:            
+            id = self.table_einsatz.item(selection[0])['values'][0]
+            id = ObjectId(id)
+            self.einsatzstelle_focus = id
+            self.parent.eintragliste.update_table(id)
+        
+        else:
+            self.einsatzstelle_focus = None
+
     def protokoll_ausleiten(self):
         db = self.db
         
@@ -240,8 +243,7 @@ class Einsatzliste(ttk.Frame):
                 id = ObjectId(self.table_einsatz.item(sel)['values'][0])     
                 einsatzstelle = db.einsatzstellen.find_one(id)                
                 eintrage = db.eintrage.find({'einsatz': id})         
-                Protokoll(einsatzstelle, eintrage, self.einstellungen.absender.get(), self.einstellungen.empfanger.get(), self.einstellungen.orga_name.get())
-    
+                Protokoll(einsatzstelle, eintrage, self.einstellungen['absender'], self.einstellungen['empfaenger'], self.einstellungen['orga_name'])
     
     def einsatz_update_maske(self):
         db = self.db
@@ -320,11 +322,11 @@ class Einsatzliste(ttk.Frame):
                 'zeitstempel': now,
                 'eintrag': f'Einsatz update: {stichwort}, {anschrift} ({status}) - {nr}',
                 'absender': '',
-                'empfanger': '',
+                'empfaenger': '',
                 'bearbeiter': user.get()
             })
             
-            self.update_table()
+            self.update_table_tagebuch()
             fenster.destroy()
         else:
             tk.messagebox.showwarning(
@@ -376,10 +378,10 @@ class Einsatzliste(ttk.Frame):
                 'zeitstempel': now,
                 'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
                 'absender': '',
-                'empfanger': '',
+                'empfaenger': '',
                 'bearbeiter': user.get()
             })
-            self.update_table()
+            self.update_table_einsatz()
             fenster.destroy()
         else:
             tk.messagebox.showwarning(
@@ -387,24 +389,29 @@ class Einsatzliste(ttk.Frame):
                 message='Einsatzstichwort und Anschrift sind Pflichangaben.'
             )
     
-    def update_table(self,):
+    def update_table_einsatz(self,):
         db = self.db
         abgeschlossen = not self.check_arbeit_value.get()
         check_datum = self.check_date_value.get()
         datum = datetime.datetime.strptime(self.date_filter.entry.get(), '%d.%m.%Y')    
 
-        if abgeschlossen and check_datum:
-            query = {'status': {'$nin': ['abgeschlossen']},
-                     'datum': {'$gte': datum}}
-        elif abgeschlossen:
-            query = {'status': {'$nin': ['abgeschlossen']}}
-        elif check_datum:
-            query = {'datum': {'$gte': datum}}
+        if self.einstellungen['einzelplatznutzung']:
+            # TODO: SQLite Abfrage einbauen
+            pass
         else:
-            query = {}
+            if abgeschlossen and check_datum:
+                query = {'status': {'$nin': ['abgeschlossen']},
+                        'datum': {'$gte': datum}}
+            elif abgeschlossen:
+                query = {'status': {'$nin': ['abgeschlossen']}}
+            elif check_datum:
+                query = {'datum': {'$gte': datum}}
+            else:
+                query = {}
         
-        einsatzstellen = db.einsatzstellen.find(query)
+            einsatzstellen = db.einsatzstellen.find(query)
 
+        
         for element in self.table_einsatz.get_children():
             self.table_einsatz.delete(element)
         
@@ -412,7 +419,7 @@ class Einsatzliste(ttk.Frame):
             status = einsatz['status']
             datum = einsatz['datum']
             letztes_update = einsatz['letztes_update']
-            datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=self.einstellungen.zeitschwelle_einsatz_ohne_bearbeitung.get())
+            datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=self.einstellungen['zeitschwelle_einsatz_ohne_bearbeitung'])
 
             tag_row = 'even' if (i%2==0) else 'odd'
             tag_update = 'onTime'
@@ -435,18 +442,65 @@ class Einsatzliste(ttk.Frame):
                 break
         else:
             self.einsatzstelle_focus = None
-            self.parent.eintragliste.update_table(None)
- 
-    def item_selection(self, _):
-        selection = self.table_einsatz.selection()        
-        if selection:            
-            id = self.table_einsatz.item(selection[0])['values'][0]
-            id = ObjectId(id)
-            self.einsatzstelle_focus = id
-            self.parent.eintragliste.update_table(id)
+            self.update_table_tagebuch(None)
+         
+    def update_table_tagebuch(self, id):
+        db = self.db
+        for element in self.table.get_children():
+            self.table.delete(element)
+        
+        if id:
+            self.einsatzstelle_arbeit = id
+            einsatzstelle = db.einsatzstellen.find_one(id)
+            
+            stichwort = einsatzstelle['stichwort']
+            anschrift = einsatzstelle['anschrift']
+            status = einsatzstelle['status']
+            text = f'{stichwort}: {anschrift} ({status})'
+            self.label_einsatz_text.set(text)
+            
+            eintrage = db.eintrage.find({'einsatz': id})
+            for i, eintrag in enumerate(eintrage):
+                row_tag = 'even' if (i%2==0) else 'odd'
+
+                zeile=list(eintrag.values())[2:]
+                zeile[0] = zeile[0].strftime('%d.%m.%Y %H:%M')
+
+                self.table.insert(parent='', index='end', values=zeile, tags=(row_tag,))
         
         else:
-            self.einsatzstelle_focus = None
+            self.label_einsatz_text.set('- Einsatz -')
 
-    def pack_me(self):
-        self.pack(pady=0, padx=5, fill='x')
+    def add_entry(self, _):
+        db = self.db
+        entry = self.entry_funk.get()
+        funker = self.user.get()
+        now = datetime.datetime.now()
+        
+        # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
+        table_einsatz = self.parent.einsatzliste.table_einsatz
+        selection = table_einsatz.selection()
+        if entry and selection:
+            for cnt, sel in enumerate(selection):
+                id = ObjectId(table_einsatz.item(sel)['values'][0])     
+                
+                db.einsatzstellen.find_one_and_update(
+                    {'_id': id},
+                    { '$set': {'letztes_update': now} }, 
+                    return_document = ReturnDocument.AFTER
+                )
+
+                eintrag = {
+                    'einsatz': id,
+                    'zeitstempel': now,
+                    'eintrag': entry,
+                    'absender': self.entry_absender.get(),
+                    'empfaenger': self.entry_empfang.get(),
+                    'bearbeiter': funker
+                }
+                db.eintrage.insert_one(eintrag)
+                
+                if cnt == 0:
+                    zeile = list(eintrag.values())[1:]
+                    self.table.insert(parent='', index='end', values=zeile)
+                    self.entry_funk.delete(0, 'end')            

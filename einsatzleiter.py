@@ -42,12 +42,13 @@ class App(ttk.Window):
             self.settings = json.load(f)
             
         # Hauptfenster        
-        self.hauptfenster = ctk.CTkFrame(self)
+        self.hauptfenster = ttk.Frame(self)
         self.einstellungs_fenster = Einstellungen(self.hauptfenster)
-        #self.einsatztagebuch = Einsatztagebuch(self.hauptfenster)
+        self.einsatztagebuch = Einsatztagebuch(self.hauptfenster)
         self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
         self.list_anwendungen: list[ttk.Frame] = [
             self.einstellungs_fenster,
+            self.einsatztagebuch,
             self.kraefteuebersicht,
         ]
         
@@ -70,11 +71,11 @@ class App(ttk.Window):
         # Seitenleiste
         self.seitenleiste = ttk.Frame(self)
         self.btn_settings = ctk.CTkButton(self.seitenleiste, text='Einstellungen', command=lambda: self.wechsle_anwendung(self.einstellungs_fenster))
-        self.btn_funktagebuch = ctk.CTkButton(self.seitenleiste, text='Funktagebuch')
+        self.btn_funktagebuch = ctk.CTkButton(self.seitenleiste, text='Funktagebuch', command=lambda: self.wechsle_anwendung(self.einsatztagebuch))
         self.btn_kraefteuebersicht = ctk.CTkButton(self.seitenleiste, text='Kräfteübersicht', command=lambda: self.wechsle_anwendung(self.kraefteuebersicht))
         self.btn_list: list[ctk.CTkButton] = [
             self.btn_settings,
-            #self.btn_funktagebuch,
+            self.btn_funktagebuch,
             self.btn_kraefteuebersicht,
         ]
         

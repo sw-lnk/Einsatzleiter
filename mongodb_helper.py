@@ -7,14 +7,14 @@ user = 'user' #input('Username: ')
 pwd = 'user' #getpass('Password: ')
 ip = '192.168.178.41'
 port = '27017'
-db = 'einsatztagebuch'
+db = 'einsatzleiter'
 
 client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
 
-db = client.einsatztagebuch
+db = client['einsatzleiter']
 
 einsatzstellen = db.einsatzstellen
-eintrage = db.eintrage
+eintrage = db.tagebuch
 krafte = db.krafte
 
 # Zufällige Einsatznummer
@@ -45,7 +45,7 @@ stichwort = random.choice(
 
 # Einen Einsatz anlegen
 einsatz = einsatzstellen.insert_one({
-    'nr_lst': no,
+    'einsatznr': no,
     'stichwort': stichwort,
     'anschrift': anschrift,
     'status': 'unbearbeitet',
@@ -59,7 +59,7 @@ eintrage.insert_one({
     'zeitstempel': jetzt,
     'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
     'absender': '',
-    'empfanger': '',
+    'empfaenger': '',
     'bearbeiter': 'Max Mustermann'
 })
 
@@ -76,7 +76,7 @@ krafte.insert_one({
 # Mehrer Beispiel Einsätze anlegen
 # for i in range(5):
 #     einsatz = einsatzstellen.insert_one({
-#         'nr_lst': no,
+#         'einsatznr': no,
 #         'stichwort': stichwort,
 #         'anschrift': anschrift,
 #         'status': 'unbearbeitet',
@@ -89,7 +89,7 @@ krafte.insert_one({
 #     'zeitstempel': jetzt,
 #     'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
 #     'absender': '',
-#     'empfanger': '',
+#     'empfaenger': '',
 #     'bearbeiter': 'Max Mustermann'
 #     })
 
