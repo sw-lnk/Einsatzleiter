@@ -220,7 +220,7 @@ class Kraefteuebersicht(ttk.Frame):
             port = self.einstellungen['db_port']
             db = self.einstellungen['db_name']   
             client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-            db = client.einsatzleiter
+            db = client[self.einstellungen['db_name']]
             return db
         
     def lese_datenbank(self):
