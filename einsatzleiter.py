@@ -50,8 +50,7 @@ class App(ttk.Window):
             self.einstellungs_fenster,
             self.einsatztagebuch,
             self.kraefteuebersicht,
-        ]
-        
+        ]        
 
         # Login-Bereich
         self.loginfenster = ttk.Frame(self.hauptfenster)

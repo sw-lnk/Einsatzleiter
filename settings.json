@@ -9,5 +9,5 @@
     "zeitschwelle_einsatz_ohne_bearbeitung": 10,
     "absender": false,
     "empfaenger": false,
-    "einzelplatznutzung": false
+    "einzelplatznutzung": true
 }
