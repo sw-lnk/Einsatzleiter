@@ -146,9 +146,19 @@ class Einsatztagebuch(ttk.Frame):
         self.einsatzliste.pack(expand=True, fill='x')
         self.eintragliste.pack(expand=True, fill='x')
 
+        
+        if self.einstellungen['einzelplatznutzung']:
+            self.update_table_einsatz()
+        else:
+            self.loop()
+           
+        
+    def loop(self):
+        self.after(self.einstellungen['update_intervall'], self.loop)
         self.update_table_einsatz()
+        print('Loop.')
 
-    def pack_me(self): # angepasst
+    def pack_me(self):  
         self.einstellungen = self.lese_einstellungen()
         self.nutzer: str = self.user_login.get()
         self.db = self.verbinde_datenbank()
@@ -156,12 +166,12 @@ class Einsatztagebuch(ttk.Frame):
         self.update_table_einsatz()
         self.pack(pady=(0,10), padx=10, expand=True, fill='both')
         
-    def lese_einstellungen(self) -> dict: # angepasst
+    def lese_einstellungen(self) -> dict:  
         with open('settings.json', 'r') as f:
             einstellungen = json.load(f)
         return einstellungen
     
-    def verbinde_datenbank(self): # angepasst
+    def verbinde_datenbank(self):  
         if self.einstellungen['einzelplatznutzung']:
             if not os.path.exists('data'):
                 os.makedirs('data')
@@ -205,7 +215,7 @@ class Einsatztagebuch(ttk.Frame):
             db = client[self.einstellungen['db_name']]
             return db
         
-    def lese_datenbank(self): # angepasst, notwendig?
+    def lese_datenbank(self):  # notwendig?
         db = self.db
         
         if self.einstellungen['einzelplatznutzung']:
@@ -238,7 +248,7 @@ class Einsatztagebuch(ttk.Frame):
         
         return alle_einsatzstellen, alle_tagebuch
 
-    def item_selection(self, _): # angepasst
+    def item_selection(self, _):  
         selection = self.table_einsatz.selection()        
         if selection:            
             id = self.table_einsatz.item(selection[0])['values'][0]
@@ -248,7 +258,7 @@ class Einsatztagebuch(ttk.Frame):
         else:
             self.einsatzstelle_focus = None
 
-    def protokoll_ausleiten(self): # angepasst
+    def protokoll_ausleiten(self):  
         db = self.db
         
         selection = self.table_einsatz.selection()
@@ -288,7 +298,7 @@ class Einsatztagebuch(ttk.Frame):
                     eintrage = db.eintrage.find({'einsatz': id})         
                 Protokoll(einsatzstelle, eintrage, self.einstellungen['absender'], self.einstellungen['empfaenger'], self.einstellungen['name_organisation'])
     
-    def einsatz_update_maske(self): # angepasst
+    def einsatz_update_maske(self):  
         db = self.db
         
         selection = self.table_einsatz.selection()
@@ -356,7 +366,7 @@ class Einsatztagebuch(ttk.Frame):
             button_abbruch.grid(row=5, column=1, pady=5, padx=5)
             button_update.grid(row=5, column=2, pady=5, padx=5)
     
-    def einsatz_update_schreiben(self, id, nr, status, stichwort, anschrift, fenster): # angepasst
+    def einsatz_update_schreiben(self, id, nr, status, stichwort, anschrift, fenster):  
         db = self.db
         user = self.nutzer
         now = datetime.datetime.now()
@@ -401,7 +411,7 @@ class Einsatztagebuch(ttk.Frame):
                 message='Einsatzstichwort und Anschrift sind Pflichangaben.'
             )
     
-    def einsatz_anlegen_maske(self): # angepasst
+    def einsatz_anlegen_maske(self):  
         eingabe_maske = ttk.Toplevel('Neuer Einsatz')
         #eingabe_maske.iconphoto(False, self.parent.parent.main_icon)
         einsatz_stichwort = ctk.CTkEntry(eingabe_maske, placeholder_text='Einsatzstichwort')
@@ -421,7 +431,7 @@ class Einsatztagebuch(ttk.Frame):
         button_abbruch.grid(row=4, column=1, pady=5, padx=5)
         button_anlegen.grid(row=4, column=2, pady=5, padx=5)
         
-    def einsatz_in_db_schreiben(self, no, stichwort, anschrift, fenster): # angepasst
+    def einsatz_in_db_schreiben(self, no, stichwort, anschrift, fenster):  
         db = self.db
         user = self.nutzer
         now = datetime.datetime.now()
@@ -471,7 +481,7 @@ class Einsatztagebuch(ttk.Frame):
         for element in self.table_einsatz.get_children():
             self.table_einsatz.delete(element)
 
-    def update_table_einsatz(self,): # angepasst
+    def update_table_einsatz(self,):  
         db = self.db
         abgeschlossen = not self.check_arbeit_value.get()
         check_datum = self.check_date_value.get()
@@ -555,7 +565,7 @@ class Einsatztagebuch(ttk.Frame):
             self.einsatzstelle_focus = None
             self.update_table_tagebuch(None)
          
-    def update_table_tagebuch(self, id=None): # angepasst
+    def update_table_tagebuch(self, id=None):  
         db = self.db
         for element in self.table.get_children():
             self.table.delete(element)
@@ -613,7 +623,7 @@ class Einsatztagebuch(ttk.Frame):
         else:
             self.label_einsatz_text.set('- Einsatz -')
 
-    def add_entry(self, _): # Funktion mit MongoDB prüfen
+    def add_entry(self, _):
         db = self.db
         entry = self.entry_funk.get()
         funker = self.nutzer

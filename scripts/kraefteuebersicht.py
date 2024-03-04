@@ -322,10 +322,14 @@ class Kraefteuebersicht(ttk.Frame):
                 cursor = db.cursor()
                 cursor.execute('''DELETE FROM einheiten WHERE funkrufname=(?)''', (funk,))
                 db.commit()
+            else:
+                # TODO: Löschen des eintrages für MongoDB einfügen.
+                pass
             
         self.fill_table()
 
     def create_report(self):        
+        self.kraefte = self.lese_datenbank()
         report = Bericht(self.kraefte, self.einstellungen['name_organisation'])
             
     

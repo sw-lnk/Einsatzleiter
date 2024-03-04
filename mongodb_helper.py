@@ -69,6 +69,7 @@ krafte.insert_one({
     'zf': 2,
     'gf': 0,
     'ms': 6,
+    'agt': 4,
     'anmerkung': 'Einsatzbereit Feuerwehrhaus LE2',
     'datum': jetzt
 })
