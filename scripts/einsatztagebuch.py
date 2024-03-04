@@ -12,11 +12,12 @@ from scripts.protokoll import Protokoll
 
 
 class Einsatztagebuch(ttk.Frame):
-    def __init__(self, parent, nutzer: str= 'Nutzer'):
+    def __init__(self, parent, nutzer: tk.StringVar):
         super().__init__(parent)
 
         self.parent = parent
-        self.nutzer = nutzer
+        self.user_login: tk.StringVar = nutzer
+        self.nutzer: str = self.user_login.get()
         
         self.einstellungen = self.lese_einstellungen()
         
@@ -148,6 +149,11 @@ class Einsatztagebuch(ttk.Frame):
         self.update_table_einsatz()
 
     def pack_me(self): # angepasst
+        self.einstellungen = self.lese_einstellungen()
+        self.nutzer: str = self.user_login.get()
+        self.db = self.verbinde_datenbank()
+        self.update_table_tagebuch()
+        self.update_table_einsatz()
         self.pack(pady=(0,10), padx=10, expand=True, fill='both')
         
     def lese_einstellungen(self) -> dict: # angepasst
@@ -179,7 +185,7 @@ class Einsatztagebuch(ttk.Frame):
             # Tabelle für alle Einträge
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS tagebuch(
-                    einsatz INTEGER PRIMARY KEY,
+                    einsatz INTEGER,
                     zeitstempel TIMESTAMP,
                     eintrag TEXT,
                     absender TEXT,
@@ -242,32 +248,74 @@ class Einsatztagebuch(ttk.Frame):
         else:
             self.einsatzstelle_focus = None
 
-    def protokoll_ausleiten(self): # ausstehend
+    def protokoll_ausleiten(self): # angepasst
         db = self.db
         
         selection = self.table_einsatz.selection()
         if selection:
             for sel in selection:
-                id = ObjectId(self.table_einsatz.item(sel)['values'][0])     
-                einsatzstelle = db.einsatzstellen.find_one(id)                
-                eintrage = db.eintrage.find({'einsatz': id})         
-                Protokoll(einsatzstelle, eintrage, self.einstellungen['absender'], self.einstellungen['empfaenger'], self.einstellungen['orga_name'])
+                id = self.table_einsatz.item(sel)['values'][0]
+                if self.einstellungen['einzelplatznutzung']:
+                    einsatzstelle = db.cursor().execute(f'''SELECT * FROM einsatzstellen WHERE _id = {id}''').fetchone()
+                    einsatzstelle = dict(zip((
+                        '_id',
+                        'einsatznr',
+                        'stichwort',
+                        'anschrift',
+                        'status',
+                        'datum',
+                        'letztes_update',
+                        'archiv'), einsatzstelle))
+                    eintrage = db.cursor().execute(f'''SELECT * FROM tagebuch WHERE einsatz={id}''')
+                    eintrage:list = [
+                        dict(zip((
+                            'einsatz',
+                            'zeitstempel',
+                            'eintrag',
+                            'absender',
+                            'empfaenger',
+                            'bearbeiter'), eintrag)) for eintrag in eintrage
+                            ]
+                    
+                    einsatzstelle['datum'] = datetime.datetime.strptime(einsatzstelle['datum'], '%Y-%m-%d %H:%M:%S.%f')
+                    einsatzstelle['letztes_update'] = datetime.datetime.strptime(einsatzstelle['letztes_update'], '%Y-%m-%d %H:%M:%S.%f')
+                    
+                    for eintrag in eintrage:
+                        eintrag['zeitstempel'] = datetime.datetime.strptime(eintrag['zeitstempel'], '%Y-%m-%d %H:%M:%S.%f')
+                else:
+                    id = ObjectId(id)
+                    einsatzstelle = db.einsatzstellen.find_one(id)                
+                    eintrage = db.eintrage.find({'einsatz': id})         
+                Protokoll(einsatzstelle, eintrage, self.einstellungen['absender'], self.einstellungen['empfaenger'], self.einstellungen['name_organisation'])
     
     def einsatz_update_maske(self): # angepasst
         db = self.db
         
         selection = self.table_einsatz.selection()
         if selection:
-            id = self.table_einsatz.item(selection[0])['values'][0]        
-            einsatz = db.einsatzstellen.find_one(ObjectId(id))
+            id = self.table_einsatz.item(selection[0])['values'][0]
+            if self.einstellungen['einzelplatznutzung']:
+                einsatzstelle = db.cursor().execute(f'''SELECT * FROM einsatzstellen WHERE _id = {id}''').fetchone()
+                einsatzstelle = dict(zip((
+                    '_id',
+                    'einsatznr',
+                    'stichwort',
+                    'anschrift',
+                    'status',
+                    'datum',
+                    'letztes_update',
+                    'archiv'), einsatzstelle))
+                einsatz = einsatzstelle
+            else:    
+                einsatz = db.einsatzstellen.find_one(ObjectId(id))
             
             stichwort = einsatz['stichwort']
-            nummer = einsatz['nr_lst']     
+            nummer = einsatz['einsatznr']     
             anschrift = einsatz['anschrift']
             status = einsatz['status']
             
             eingabe_maske = ttk.Toplevel('Einsatz aktualisieren')
-            eingabe_maske.iconphoto(False, self.parent.parent.main_icon)
+            #eingabe_maske.iconphoto(False, self.parent.parent.main_icon)
             einsatz_stichwort = ctk.CTkEntry(eingabe_maske)
             einsatz_stichwort.insert(0, stichwort)
             
@@ -291,7 +339,7 @@ class Einsatztagebuch(ttk.Frame):
                 eingabe_maske,
                 text="Einsatz aktualisieren",
                 command= lambda: self.einsatz_update_schreiben(
-                    ObjectId(id),
+                    id,
                     nr_einsatz,
                     einsatz_status.get(),
                     einsatz_stichwort.get(),
@@ -308,33 +356,44 @@ class Einsatztagebuch(ttk.Frame):
             button_abbruch.grid(row=5, column=1, pady=5, padx=5)
             button_update.grid(row=5, column=2, pady=5, padx=5)
     
-    def einsatz_update_schreiben(self, id, nr, status, stichwort, anschrift, fenster): # ausstehend
+    def einsatz_update_schreiben(self, id, nr, status, stichwort, anschrift, fenster): # angepasst
         db = self.db
         user = self.nutzer
         now = datetime.datetime.now()
         
         if stichwort and anschrift:           
-            db.einsatzstellen.find_one_and_update(
-                    {'_id': id},
-                    { '$set': {
-                        'nr_lst': nr,
-                        'stichwort': stichwort,
-                        'anschrift': anschrift,
-                        'status': status,
-                        'letztes_update': now} }, 
-                    return_document = ReturnDocument.AFTER
-                )
-            
-            db.eintrage.insert_one({
+            einsatz = {
+                'einsatznr': nr,
+                'stichwort': stichwort,
+                'anschrift': anschrift,
+                'status': status,
+                'letztes_update': now
+            }
+            neuer_eintrag = {
                 'einsatz': id,
                 'zeitstempel': now,
                 'eintrag': f'Einsatz update: {stichwort}, {anschrift} ({status}) - {nr}',
                 'absender': '',
                 'empfaenger': '',
                 'bearbeiter': user
-            })
+            }
+
+            if self.einstellungen['einzelplatznutzung']:
+                db.cursor().execute('''UPDATE einsatzstellen SET einsatznr = ?, stichwort = ?, anschrift = ?, status = ?, letztes_update = ? WHERE _id = ?''', (nr, stichwort, anschrift, status, now, id))
+                db.commit()
+                db.cursor().execute('''INSERT INTO tagebuch(einsatz, zeitstempel, eintrag, absender, empfaenger, bearbeiter) VALUES(?,?,?,?,?,?)''', tuple(list(neuer_eintrag.values())))
+                db.commit()              
+            else:
+                neuer_eintrag['einsatz'] = ObjectId(neuer_eintrag['einsatz'])
+                db.einsatzstellen.find_one_and_update(
+                        {'_id': ObjectId(id)},
+                        { '$set': einsatz }, 
+                        return_document = ReturnDocument.AFTER
+                    )                
+                db.eintrage.insert_one(neuer_eintrag)
             
-            self.update_table_tagebuch()
+            self.update_table_tagebuch(id)
+            self.update_table_einsatz()
             fenster.destroy()
         else:
             tk.messagebox.showwarning(
@@ -369,7 +428,7 @@ class Einsatztagebuch(ttk.Frame):
         
         if stichwort and anschrift:
             einsatz = {
-                    'nr_lst': no,
+                    'einsatznr': no,
                     'stichwort': stichwort,
                     'anschrift': anschrift,
                     'status': 'unbearbeitet',
@@ -396,7 +455,7 @@ class Einsatztagebuch(ttk.Frame):
                 db.commit()
             else:
                 einsatz = db.einsatzstellen.insert_one(einsatz)
-                ersten_eintrag['einsatz'] = ObjectId(einsatz.inserted_id)
+                ersten_eintrag['einsatz'] = einsatz.inserted_id
                 db.eintrage.insert_one(ersten_eintrag)
             
             fenster.destroy()
@@ -408,24 +467,19 @@ class Einsatztagebuch(ttk.Frame):
                 message='Einsatzstichwort und Anschrift sind Pflichangaben.'
             )
     
-    def update_table_einsatz(self,): # Datum-Filter-Funktionen anpassen
+    def clear_table_einsatz(self):
+        for element in self.table_einsatz.get_children():
+            self.table_einsatz.delete(element)
+
+    def update_table_einsatz(self,): # angepasst
         db = self.db
         abgeschlossen = not self.check_arbeit_value.get()
         check_datum = self.check_date_value.get()
         datum = datetime.datetime.strptime(self.date_filter.entry.get(), '%d.%m.%Y')    
 
         if self.einstellungen['einzelplatznutzung']:
-            if abgeschlossen and check_datum:
-                query = f'''SELECT * FROM einsatzstellen WHERE stichwort!="abgeschlossen" AND DATE(datum)>={datum.strftime("%Y-%m-%d")}'''
-            elif abgeschlossen:
-                query = f'''SELECT * FROM einsatzstellen WHERE stichwort!="abgeschlossen"'''
-            elif check_datum:
-                query = f'''SELECT * FROM einsatzstellen WHERE DATE(datum)>={datum.strftime("%Y-%m-%d")}'''
-            else:
-                query = f'''SELECT * FROM einsatzstellen'''
-            
-            einsatzstellen = db.cursor().execute(query).fetchall()
-            einsatzstellen = [
+            einsatzstellen_alle = db.cursor().execute('''SELECT * FROM einsatzstellen''').fetchall()
+            einsatzstellen_alle = [
                 dict(zip((
                     '_id',
                     'einsatznr',
@@ -434,8 +488,28 @@ class Einsatztagebuch(ttk.Frame):
                     'status',
                     'datum',
                     'letztes_update',
-                    'archiv'), einsatz)) for einsatz in einsatzstellen
+                    'archiv'), einsatz)) for einsatz in einsatzstellen_alle
             ]
+
+            for est in einsatzstellen_alle:
+                est['datum'] = datetime.datetime.strptime(est['datum'], '%Y-%m-%d %H:%M:%S.%f')
+                est['letztes_update'] = datetime.datetime.strptime(est['letztes_update'], '%Y-%m-%d %H:%M:%S.%f')
+            
+            einsatzstellen = []
+            for est in einsatzstellen_alle:
+                if abgeschlossen and check_datum:
+                    if (est['status'] != "abgeschlossen") and (est['datum']>=datum):
+                        einsatzstellen.append(est)
+                elif abgeschlossen:
+                    if (est['status'] != "abgeschlossen"):
+                        einsatzstellen.append(est)
+                elif check_datum:
+                    if (est['datum']>=datum):
+                        einsatzstellen.append(est)
+                else:
+                    einsatzstellen = einsatzstellen_alle
+            
+            
         else:
             if abgeschlossen and check_datum:
                 query = {'status': {'$nin': ['abgeschlossen']},
@@ -450,17 +524,12 @@ class Einsatztagebuch(ttk.Frame):
             einsatzstellen = db.einsatzstellen.find(query)
 
         
-        for element in self.table_einsatz.get_children():
-            self.table_einsatz.delete(element)
+        self.clear_table_einsatz()
         
         for i, einsatz in enumerate(einsatzstellen):            
             status = einsatz['status']
-            if self.einstellungen['einzelplatznutzung']:
-                datum = datetime.datetime.strptime(einsatz['datum'], '%Y-%m-%d %H:%M:%S.%f') 
-                letztes_update = datetime.datetime.strptime(einsatz['letztes_update'], '%Y-%m-%d %H:%M:%S.%f')
-            else:
-                datum = einsatz['datum']
-                letztes_update = einsatz['letztes_update']
+            datum = einsatz['datum']
+            letztes_update = einsatz['letztes_update']
             datum_schwelle = datetime.datetime.now() - datetime.timedelta(minutes=self.einstellungen['zeitschwelle_einsatz_ohne_bearbeitung'])
 
             tag_row = 'even' if (i%2==0) else 'odd'
@@ -477,10 +546,7 @@ class Einsatztagebuch(ttk.Frame):
             ), tags=(tag_row, status, tag_update))
 
         for row in self.table_einsatz.get_children():
-            if self.einstellungen['einzelplatznutzung']:
-                id = self.table_einsatz.item(row)['values'][0]
-            else:
-                id = ObjectId(self.table_einsatz.item(row)['values'][0])
+            id = self.table_einsatz.item(row)['values'][0]
             if self.einsatzstelle_focus == id:
                 self.table_einsatz.focus(row)
                 self.table_einsatz.selection_set(row)
@@ -489,7 +555,7 @@ class Einsatztagebuch(ttk.Frame):
             self.einsatzstelle_focus = None
             self.update_table_tagebuch(None)
          
-    def update_table_tagebuch(self, id): # angepasst
+    def update_table_tagebuch(self, id=None): # angepasst
         db = self.db
         for element in self.table.get_children():
             self.table.delete(element)
@@ -547,25 +613,18 @@ class Einsatztagebuch(ttk.Frame):
         else:
             self.label_einsatz_text.set('- Einsatz -')
 
-    def add_entry(self, _): # ausstehend
+    def add_entry(self, _): # Funktion mit MongoDB prüfen
         db = self.db
         entry = self.entry_funk.get()
         funker = self.nutzer
         now = datetime.datetime.now()
         
         # Eintrag erzeugen wenn Eingabefeld Inhalt besitzt
-        table_einsatz = self.parent.einsatzliste.table_einsatz
+        table_einsatz = self.table_einsatz
         selection = table_einsatz.selection()
         if entry and selection:
             for cnt, sel in enumerate(selection):
-                id = ObjectId(table_einsatz.item(sel)['values'][0])     
-                
-                db.einsatzstellen.find_one_and_update(
-                    {'_id': id},
-                    { '$set': {'letztes_update': now} }, 
-                    return_document = ReturnDocument.AFTER
-                )
-
+                id = table_einsatz.item(sel)['values'][0]
                 eintrag = {
                     'einsatz': id,
                     'zeitstempel': now,
@@ -573,10 +632,25 @@ class Einsatztagebuch(ttk.Frame):
                     'absender': self.entry_absender.get(),
                     'empfaenger': self.entry_empfang.get(),
                     'bearbeiter': funker
-                }
-                db.eintrage.insert_one(eintrag)
+                }  
+                
+                if self.einstellungen['einzelplatznutzung']:
+                    db.cursor().execute('''UPDATE einsatzstellen SET letztes_update = ? WHERE _id = ?''', (now, id))
+                    db.commit()
+                    db.cursor().execute('''INSERT INTO tagebuch(einsatz, zeitstempel, eintrag, absender, empfaenger, bearbeiter) VALUES(?,?,?,?,?,?)''', tuple(list(eintrag.values())))
+                    db.commit()
+                else:
+                    eintrag['einsatz'] = ObjectId(eintrag['einsatz'])
+                    db.einsatzstellen.find_one_and_update(
+                        {'_id': ObjectId(id)},
+                        { '$set': {'letztes_update': now} }, 
+                        return_document = ReturnDocument.AFTER
+                    )                
+                    db.eintrage.insert_one(eintrag)
                 
                 if cnt == 0:
                     zeile = list(eintrag.values())[1:]
                     self.table.insert(parent='', index='end', values=zeile)
-                    self.entry_funk.delete(0, 'end')            
+                    self.entry_funk.delete(0, 'end')
+
+        self.update_table_tagebuch(self.einsatzstelle_arbeit)       

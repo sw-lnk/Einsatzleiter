@@ -44,7 +44,7 @@ class App(ttk.Window):
         # Hauptfenster        
         self.hauptfenster = ttk.Frame(self)
         self.einstellungs_fenster = Einstellungen(self.hauptfenster)
-        self.einsatztagebuch = Einsatztagebuch(self.hauptfenster)
+        self.einsatztagebuch = Einsatztagebuch(self.hauptfenster, self.user_login)
         self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
         self.list_anwendungen: list[ttk.Frame] = [
             self.einstellungs_fenster,

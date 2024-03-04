@@ -9,7 +9,7 @@ class Protokoll(fpdf.FPDF):
    
         self.stichwort = einsatz['stichwort']
         self.anschrift = einsatz['anschrift']
-        self.nr_lst = einsatz['nr_lst']
+        self.nr_lst = einsatz['einsatznr']
         self.status = einsatz['status']
         
         self.jetzt = datetime.datetime.now()
@@ -19,7 +19,7 @@ class Protokoll(fpdf.FPDF):
         self.ordner_name = 'protokolle'
         if not os.path.exists(self.ordner_name):
             os.mkdir(self.ordner_name)
-        self.path = os.path.join(self.ordner_name, f'{self.stichwort}.pdf')
+        self.path = os.path.join(self.ordner_name, f'{self.stichwort}_{self.anschrift}.pdf')
         
         self.organisation = organisation
 
@@ -43,7 +43,7 @@ class Protokoll(fpdf.FPDF):
                 zeit = eintrag['zeitstempel'].strftime('%d.%m.%Y %H:%M')
                 text = eintrag['eintrag']
                 absender_val = eintrag['absender']
-                empfanger_val = eintrag['empfanger']
+                empfanger_val = eintrag['empfaenger']
                 bearbeiter = eintrag['bearbeiter']
                 
                 row = table.row()
