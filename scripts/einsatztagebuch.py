@@ -24,7 +24,8 @@ class Einsatztagebuch(ttk.Frame):
         self.db = self.verbinde_datenbank()        
         
         self.einsatzstelle_arbeit = None
-        self.einsatzstelle_focus = None  
+        self.einsatzstelle_focus = None
+        self.letztes_update: datetime.datetime = None
         
         # Einsatzübersicht
         self.einsatzliste = ttk.Frame(self)
@@ -103,7 +104,7 @@ class Einsatztagebuch(ttk.Frame):
         self.table.column('an',  width=150, minwidth=100, stretch=False)
         self.table.heading('funker', text='Bearbeiter', anchor='w')
         self.table.column('funker', width=150, minwidth=100, stretch=False)
-        #self.table.tag_configure('odd', background='lightblue')
+        self.table.tag_configure('odd', background='lightblue')
         
         # Rahmen für Eingaben
         self.frame_entry = ttk.Frame(self.eintragliste)
@@ -155,9 +156,10 @@ class Einsatztagebuch(ttk.Frame):
         
     def loop(self):
         self.after(self.einstellungen['update_intervall'], self.loop)
-        self.update_table_einsatz()
-        print('Loop.')
-
+        if self.check_for_update():
+            self.letztes_update = datetime.datetime.now()
+            self.update_table_einsatz()
+        
     def pack_me(self):  
         self.einstellungen = self.lese_einstellungen()
         self.nutzer: str = self.user_login.get()
@@ -215,39 +217,16 @@ class Einsatztagebuch(ttk.Frame):
             db = client[self.einstellungen['db_name']]
             return db
         
-    def lese_datenbank(self):  # notwendig?
-        db = self.db
+    def check_for_update(self) -> bool:
+        if self.letztes_update is None:
+            return True
+        elif not self.einstellungen['einzelplatznutzung']:
+            cnt = self.db.einsatzstellen.count_documents({'letztes_update': {'$gt': self.letztes_update}})
+            if cnt > 0:
+                return True
         
-        if self.einstellungen['einzelplatznutzung']:
-            alle_einsatzstellen_tuple = db.cursor().execute('''SELECT * FROM einsatzstellen''').fetchall()
-            alle_tagebuch_tuple = db.cursor().execute('''SELECT * FROM tagebuch''').fetchall()
-            
-            alle_einsatzstellen = [
-                dict(zip((
-                    'einsatznr',
-                    'stichwort',
-                    'anschrift',
-                    'status',
-                    'datum',
-                    'letztes_update',
-                    'archiv'), einsatz)) for einsatz in alle_einsatzstellen_tuple
-            ]
-            
-            alle_tagebuch = [
-                dict(zip((
-                    'einsatznr',
-                    'zeitstempel',
-                    'eintrag',
-                    'absender',
-                    'empfaenger',
-                    'bearbeiter'), tagebuch)) for tagebuch in alle_tagebuch_tuple
-            ]
-        else:
-            alle_einsatzstellen = self.db.einsatzstellen.find()
-            alle_tagebuch = self.db.tagebuch.find()
-        
-        return alle_einsatzstellen, alle_tagebuch
-
+        return False
+    
     def item_selection(self, _):  
         selection = self.table_einsatz.selection()        
         if selection:            

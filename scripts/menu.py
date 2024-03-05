@@ -91,11 +91,12 @@ class Einstellungen(ttk.Frame):
         self.zeitschwelle_einsatz_ohne_bearbeitung = tk.IntVar(self, self.settings['zeitschwelle_einsatz_ohne_bearbeitung'])
         self.entry_zeitschwelle_einsatz_ohne_bearbeitung = ctk.CTkEntry(self, textvariable=self.zeitschwelle_einsatz_ohne_bearbeitung, width=self.entry_width)
         
+        self.label_absender = ttk.Label(self, text='Neustart erfoerderlich.', style='danger')
         self.absender = tk.BooleanVar(self, self.settings['absender'])
-        self.check_absender = ctk.CTkCheckBox(self, text='Absender erfassen', variable=self.absender)
+        self.check_absender = ctk.CTkSwitch(self, text='Absender erfassen', variable=self.absender, onvalue=True, offvalue=False, command=self.zeige_neustart)
         
         self.empfanger = tk.BooleanVar(self, self.settings['empfaenger'])
-        self.check_empfanger = ctk.CTkCheckBox(self, text='Empfänger erfassen', variable=self.empfanger)
+        self.check_empfanger = ctk.CTkSwitch(self, text='Empfänger erfassen', variable=self.empfanger, onvalue=True, offvalue=False, command=self.zeige_neustart)
         
         # Elemente ausrichten
         #self.columnconfigure(1, weight=1)
@@ -106,8 +107,7 @@ class Einstellungen(ttk.Frame):
         ttk.Separator(self, orient='horizontal').grid(row=20, columnspan=2, sticky='we', pady=20)
         
         self.label_einzelplatznutzung.grid(row=21, column=0, padx=5, sticky='w')
-        self.switch_einzelplatznutzung.grid(row=21, column=1, padx=5, sticky='w')
-        
+        self.switch_einzelplatznutzung.grid(row=21, column=1, padx=5, sticky='w')        
         
         ttk.Separator(self, orient='horizontal').grid(row=30, columnspan=2, sticky='we', pady=20)
         
@@ -139,7 +139,10 @@ class Einstellungen(ttk.Frame):
         ttk.Separator(self, orient='horizontal').grid(row=100, columnspan=2, sticky='we', pady=20)
         
         self.btn_save.grid(row=101, column=0, padx=5, pady=10, sticky='e')
-        
+    
+    def zeige_neustart(self):
+        self.label_absender.grid(row=51, column=0, rowspan=2, sticky='w')
+    
     def save_settings(self):
         self.settings['name_organisation'] = self.orga_name.get()
         self.settings['db_user'] = self.db_user.get()

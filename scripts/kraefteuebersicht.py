@@ -15,13 +15,16 @@ class Kraefteuebersicht(ttk.Frame):
         
         self.parent = parent
         
+        self.letztes_update: datetime.datetime = None
+        
         self.einstellungen = self.lese_einstellungen()
         
         self.db = self.verbinde_datenbank()
         
         # Alle Kräfte
         self.kraefte: list[dict] = self.lese_datenbank()
-
+        
+        # Überschrift
         self.label = ttk.Label(self, text='Kräfteübersicht', style='bolt')
         
         # Übersichtstabelle
@@ -133,8 +136,10 @@ class Kraefteuebersicht(ttk.Frame):
         
     def loop(self):
         self.after(self.einstellungen['update_intervall'], self.loop)
-        self.kraefte = self.lese_datenbank()
-        self.fill_table()
+        if self.check_for_update():
+            self.letztes_update = datetime.datetime.now()
+            self.kraefte = self.lese_datenbank()
+            self.fill_table()
     
     def pack_me(self):
         self.einstellungen = self.lese_einstellungen()
@@ -147,6 +152,16 @@ class Kraefteuebersicht(ttk.Frame):
         with open('settings.json', 'r') as f:
             einstellungen = json.load(f)
         return einstellungen
+    
+    def check_for_update(self) -> bool:  # TODO
+        if self.letztes_update is None:
+            return True
+        elif not self.einstellungen['einzelplatznutzung']:
+            cnt = self.db.krafte.count_documents({'datum': {'$gt': self.letztes_update}})
+            if cnt > 0:
+                return True
+        
+        return False
     
     def fill_table(self):
         self.kraefte = self.lese_datenbank()
@@ -324,7 +339,7 @@ class Kraefteuebersicht(ttk.Frame):
                 db.commit()
             else:
                 # TODO: Löschen des eintrages für MongoDB einfügen.
-                pass
+                self.db.krafte.delete_many({'funkrufname': funk})
             
         self.fill_table()
 

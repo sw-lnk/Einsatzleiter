@@ -74,7 +74,7 @@ class Protokoll(fpdf.FPDF):
         self.set_y(17)
         self.cell(0, 10, text=f'{self.stichwort} ({self.status})', align=fpdf.Align.C)
         self.set_y(24)
-        self.cell(0, 10, text=self.anschrift, align=fpdf.Align.C)
+        self.cell(0, 10, text=f'{self.anschrift} ({self.nr_lst})', align=fpdf.Align.C)
         
         # Erstelldatum oben rechts einfügen
         self.set_font(style="", size=10)
