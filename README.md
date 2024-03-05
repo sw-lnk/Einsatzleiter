@@ -7,13 +7,17 @@ Dieses Projekt soll eine kostenlose Möglichkeit bieten die Einsatzleitung beim 
 
 
 ## Voraussetzung und Einrichtung
-Die Anwendung kann an jeden Computer verwendet werden. Als Datenbank wird ein Raspberry Pi verwendet. Auf dem Raspberry Pi wird die Datenbak MongoDB installiert und kann somit im lokalen Netzwerk der Einsatzleitung von mehreren Arbeitsplätzen erreicht werden.
+Die Anwendung kann an jeden Computer verwendet werden. Diese Anwendung kann als Einzelplatzanwendung an jedem Computer local genutzt werden oder mit einer Anbindung an eine Datenbank. Als Datenbank kann ein Raspberry Pi verwendet werden. Auf dem Raspberry Pi wird die Datenbank MongoDB installiert und kann somit im lokalen Netzwerk der Einsatzleitung von mehreren Arbeitsplätzen erreicht werden.
 
+### Nutzung als Einzelplatz
+- (Funk-)Arbeitsplatz mit Computer
+
+### Nutzung mehrere vernetzer Arbeitsplätze
 - (Funk-)Arbeitsplatz mit Computer
 - Raspberry Pi mit Ubuntu 20.04
 - MongoDB als Datenbank auf dem RaspberryPi
 
-### Einrichtung Datenbank
+#### Einrichtung Datenbank
 In der aktuellen Version wird eine [MongoDB](https://www.mongodb.com/de-de) Datenbank genutzt. Diese kann verschiedenen Geräten installiert werden.Beispielhaft wird hier die Einrichtung auf einem Raspberry Pi 3 aufgezeigt.
 
 - Installation Ubuntu 20.04 LTS: [Ubuntu](https://ubuntu.com/blog/ubuntu-20-04-lts-is-certified-for-the-raspberry-pi)
@@ -21,7 +25,7 @@ In der aktuellen Version wird eine [MongoDB](https://www.mongodb.com/de-de) Date
 
 Zusätzlich in nach oben angebener Anleitung ein weiter Nutzer in der Datenbank anzulegen der nur auf der Datenbank *Einsatzstellen* Lese- und Schreibrechte erhält. Dieser Nutzer wird im weiteren für den Zugang im Programm genutzt.
 
-### Initiale Anpassungen
+#### Initiale Anpassungen
 Mit dem zusätzlich eingerichteten Nutzer (siehe [Einrichtung Datenbak](#einrichtung-datenbank)) sind die Daten in *settings.py* zu aktualisieren.
 
 ``` python
@@ -38,7 +42,7 @@ db_ip = '192.168.178.41'
 db_port = '27017'
 
 # Name der Datenbank
-db_name = 'einsatztagebuch'
+db_name = 'einsatzleiter'
 ```
 
 Die IP des Rechners auf dem die Datenbank installiert ist muss dieser IP im Router-Menü fest zugeordnet werden.
@@ -120,7 +124,7 @@ Für alle markierte Einsätze in der Einsatzübersicht lassen sich per Knopfdruc
 Der angezeigte Name der Organistion lässt sich über die *settings.json* Datei oder über den Bereich *Einstellungen* anpassen.
 
 ### Kräfteübersicht
-Simple Übersicht der vorhandenen Einheiten. Eingabe von Funkrufname und Stärke, zusätzlich kann eine Anmerkung hinterlegt werden. Gesamtstärke wird automatisch ermittelt. Alle Daten werde im festgelegten Aktualisierungintervall an allen Arbeitsplätzen aktualisiert. Die Übersicht kann per Klick als PDF ausgeleitet werden.
+Einfache Übersicht der vorhandenen Einheiten. Eingabe von Funkrufname, Stärke und Anzahl Atemschutzgeräteträger, zusätzlich kann eine Anmerkung hinterlegt werden. Gesamtstärke wird automatisch ermittelt. Alle Daten werde im festgelegten Aktualisierungintervall an allen Arbeitsplätzen aktualisiert. Die Übersicht kann per Klick als PDF ausgeleitet werden.
 
 
 

@@ -14,7 +14,7 @@ client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
 db = client['einsatzleiter']
 
 einsatzstellen = db.einsatzstellen
-eintrage = db.tagebuch
+eintrage = db.eintrage
 krafte = db.krafte
 
 
@@ -57,7 +57,7 @@ def einen_einsatz():
     })
 
     eintrage.insert_one({
-        'einsatz': ObjectId(einsatz.inserted_id),
+        'einsatz': einsatz.inserted_id,
         'zeitstempel': jetzt,
         'eintrag': f'Einsatz neu: {stichwort}, {anschrift} (unbearbeitet) - {no}',
         'absender': '',
