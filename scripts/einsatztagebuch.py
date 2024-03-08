@@ -61,8 +61,11 @@ class Einsatztagebuch(ttk.Frame):
         self.check_date_value = tk.IntVar(self.frame_optionen, 1)
         self.check_date = ttk.Checkbutton(self.frame_optionen, text='Zeige nur Einsätze nach', variable=self.check_date_value, command=self.update_table_einsatz)
         
-        self.yesterday = datetime.date.today() - datetime.timedelta(days=7)
-        self.date_filter = ttk.DateEntry(self.frame_optionen, firstweekday=7, startdate=self.yesterday, dateformat='%d.%m.%Y')
+        self.datum_anzeige_filter = datetime.date.today() - datetime.timedelta(days=7)
+        self.date_filter = ttk.DateEntry(self.frame_optionen, firstweekday=7, startdate=self.datum_anzeige_filter, dateformat='%d.%m.%Y')
+        self.date_filter_var = tk.StringVar(self, self.datum_anzeige_filter.strftime('%d.%m.%Y'))
+        self.date_filter_var.trace_add('write', lambda *_: self.update_table_einsatz())
+        self.date_filter.entry.configure(textvariable=self.date_filter_var)
         
         # Elemente ausrichten
         self.button_neuer_einsatz.pack(padx=5, pady=(5,0), anchor='w')
@@ -464,7 +467,11 @@ class Einsatztagebuch(ttk.Frame):
         db = self.db
         abgeschlossen = not self.check_arbeit_value.get()
         check_datum = self.check_date_value.get()
-        datum = datetime.datetime.strptime(self.date_filter.entry.get(), '%d.%m.%Y')    
+
+        if d := self.date_filter_var.get():
+            datum = datetime.datetime.strptime(d, '%d.%m.%Y')
+        else:
+            return
 
         if self.einstellungen['einzelplatznutzung']:
             einsatzstellen_alle = db.cursor().execute('''SELECT * FROM einsatzstellen''').fetchall()
