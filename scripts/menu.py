@@ -63,23 +63,23 @@ class Einstellungen(ttk.Frame):
         
         # Datenbankangaben
         self.db_frame = ttk.Frame(self)
-        self.label_db_user = ttk.Label(self.db_frame, text='Nutzer MongoDB')
+        self.label_db_user = ttk.Label(self.db_frame, text='MongoDB: Nutzername')
         self.db_user = tk.StringVar(self.db_frame, self.settings['db_user'])
         self.entry_db_user = ctk.CTkEntry(self.db_frame, textvariable=self.db_user, width=self.entry_width)
         
-        self.label_db_user_password = ttk.Label(self.db_frame, text='Nutzer MongoDB')
+        self.label_db_user_password = ttk.Label(self.db_frame, text='MongoDB: Nutzerpasswort')
         self.db_user_password = tk.StringVar(self.db_frame, self.settings['db_user_password'])
         self.entry_db_user_password = ctk.CTkEntry(self.db_frame, textvariable=self.db_user_password, width=self.entry_width)
         
-        self.label_db_ip = ttk.Label(self.db_frame, text='MongoDB IP')
+        self.label_db_ip = ttk.Label(self.db_frame, text='MongoDB: IP')
         self.db_ip = tk.StringVar(self.db_frame, self.settings['db_ip'])
         self.entry_db_ip = ctk.CTkEntry(self.db_frame, textvariable=self.db_ip, width=self.entry_width)
         
-        self.label_db_port = ttk.Label(self.db_frame, text='MongoDB Port')
+        self.label_db_port = ttk.Label(self.db_frame, text='MongoDB: Port')
         self.db_port = tk.StringVar(self.db_frame, self.settings['db_port'])
         self.entry_db_port = ctk.CTkEntry(self.db_frame, textvariable=self.db_port, width=self.entry_width)
         
-        self.label_db_name = ttk.Label(self.db_frame, text='Datenbankname')
+        self.label_db_name = ttk.Label(self.db_frame, text='MongoDB: Datenbankname')
         self.db_name = tk.StringVar(self.db_frame, self.settings['db_name'])
         self.entry_db_name = ctk.CTkEntry(self.db_frame, textvariable=self.db_name, width=self.entry_width)
         
