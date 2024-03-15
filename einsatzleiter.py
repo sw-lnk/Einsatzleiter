@@ -9,6 +9,7 @@ import datetime
 import json
 import sqlite3
 
+from scripts.dashboard import Dashboard
 from scripts.einsatztagebuch import Einsatztagebuch
 from scripts.kraefteuebersicht import Kraefteuebersicht
 from scripts.menu import Einstellungen
@@ -24,6 +25,7 @@ class App(ttk.Window):
         self.h = int(self.winfo_screenheight()*self.screen_factor)
         self.geometry(f'{self.w}x{self.h}')
         self.title("Einsatzleiter")
+        self.wm_title('Einsatzleiter')
 
         # Icon der Anwendung
         self.main_icon_path = os.path.join('img', 'einsatzleiter.png')
@@ -43,10 +45,12 @@ class App(ttk.Window):
             
         # Hauptfenster        
         self.hauptfenster = ttk.Frame(self)
+        self.dashboard = Dashboard(self.hauptfenster)
         self.einstellungs_fenster = Einstellungen(self.hauptfenster)
         self.einsatztagebuch = Einsatztagebuch(self.hauptfenster, self.user_login)
         self.kraefteuebersicht = Kraefteuebersicht(self.hauptfenster)
         self.list_anwendungen: list[ttk.Frame] = [
+            self.dashboard,
             self.einstellungs_fenster,
             self.einsatztagebuch,
             self.kraefteuebersicht,
@@ -69,10 +73,12 @@ class App(ttk.Window):
         
         # Seitenleiste
         self.seitenleiste = ttk.Frame(self)
+        self.btn_dashboard = ctk.CTkButton(self.seitenleiste, text='Dashboard', command=lambda: self.wechsle_anwendung(self.dashboard))
         self.btn_settings = ctk.CTkButton(self.seitenleiste, text='Einstellungen', command=lambda: self.wechsle_anwendung(self.einstellungs_fenster))
         self.btn_funktagebuch = ctk.CTkButton(self.seitenleiste, text='Funktagebuch', command=lambda: self.wechsle_anwendung(self.einsatztagebuch))
         self.btn_kraefteuebersicht = ctk.CTkButton(self.seitenleiste, text='Kräfteübersicht', command=lambda: self.wechsle_anwendung(self.kraefteuebersicht))
         self.btn_list: list[ctk.CTkButton] = [
+            self.btn_dashboard,
             self.btn_settings,
             self.btn_funktagebuch,
             self.btn_kraefteuebersicht,
@@ -115,6 +121,8 @@ class App(ttk.Window):
             self.btn_logout.configure(state='normal', fg_color=self.btn_color)
             for btn in self.btn_list:
                 btn.configure(state='normal', fg_color=self.btn_color)
+            
+            self.dashboard.pack_me()
         
     def logout(self):
         # Login-Maske zurücksetzen

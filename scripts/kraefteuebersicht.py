@@ -153,7 +153,7 @@ class Kraefteuebersicht(ttk.Frame):
             einstellungen = json.load(f)
         return einstellungen
     
-    def check_for_update(self) -> bool:  # TODO
+    def check_for_update(self) -> bool:
         if self.letztes_update is None:
             return True
         elif not self.einstellungen['einzelplatznutzung']:

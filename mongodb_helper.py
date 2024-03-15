@@ -3,15 +3,15 @@ from datetime import datetime
 import random
 from bson import ObjectId
 
-user = 'user' #input('Username: ')
-pwd = 'user' #getpass('Password: ')
-ip = '192.168.178.41'
+user = 'arbeitsplatz1' #input('Username: ')
+pwd = 'einsatzleitung1' #getpass('Password: ')
+ip = '192.168.178.21'
 port = '27017'
-db = 'einsatzleiter'
+db = 'einsatzleitung'
 
 client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
 
-db = client['einsatzleiter']
+db = client[db]
 
 einsatzstellen = db.einsatzstellen
 eintrage = db.eintrage
