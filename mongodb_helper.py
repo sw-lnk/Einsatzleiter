@@ -1,24 +1,19 @@
-from pymongo import MongoClient
 from datetime import datetime
 import random
-from bson import ObjectId
+
+from helper.connect_database import verbinde_datenbank_mongo
 
 user = 'arbeitsplatz1' #input('Username: ')
 pwd = 'einsatzleitung1' #getpass('Password: ')
 ip = '192.168.178.21'
 port = '27017'
-db = 'einsatzleitung'
+db_name = 'einsatzleitung'
 
-client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-
-db = client[db]
+db = verbinde_datenbank_mongo(user, pwd, ip, port, db_name)
 
 einsatzstellen = db.einsatzstellen
 eintrage = db.eintrage
 krafte = db.krafte
-
-
-
 
 # Zeige alle Einträge
 # for einsatz in einsatzstellen.find():
