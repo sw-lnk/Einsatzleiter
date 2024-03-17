@@ -5,12 +5,22 @@ import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
 import fpdf
-from pymongo import ReturnDocument, MongoClient
+from pymongo.database import Database
 import json
-import sqlite3
+from sqlite3 import Connection
+
+from helper import verbinde_datenbank_sqlite_einheiten
+from helper import verbinde_datenbank_mongo
+from helper import lese_datenbank_sqlite_einheiten
+from helper import lese_datenbank_mongo_einheiten
+from helper import check_update_einheiten
+from helper import schreibe_einheit_sqlite
+from helper import schreibe_einheit_mongo
+
+from .einheit import Einheit
 
 class Kraefteuebersicht(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
         super().__init__(parent)
         
         self.parent = parent
@@ -62,7 +72,7 @@ class Kraefteuebersicht(ttk.Frame):
         self.anmerkung_entry = ctk.CTkEntry(self.bearbeitungsmaske, placeholder_text='Anmerkung')
         
         self.btn_leiste = ttk.Frame(self.bearbeitungsmaske)        
-        self.btn_save = ctk.CTkButton(self.btn_leiste, text='Speichern', command=self.speicher_eintrag)
+        self.btn_save = ctk.CTkButton(self.btn_leiste, text='Speichern', command=self.speicher_einheit)
         self.btn_delete = ctk.CTkButton(self.btn_leiste, text='Löschen', command=self.entferne_eintrag)
         
         ttk.Label(self.bearbeitungsmaske, text='Funkrufname').grid(row=0, column=1, columnspan=7, sticky='w')
@@ -133,15 +143,14 @@ class Kraefteuebersicht(ttk.Frame):
         else:
             self.loop()
            
-        
-    def loop(self):
+    def loop(self) -> None:
         self.after(self.einstellungen['update_intervall'], self.loop)
         if self.check_for_update():
             self.letztes_update = datetime.datetime.now()
             self.kraefte = self.lese_datenbank()
             self.fill_table()
     
-    def pack_me(self):
+    def pack_me(self) -> None:
         self.einstellungen = self.lese_einstellungen()
         self.db = self.verbinde_datenbank()
         self.kraefte = None
@@ -157,13 +166,10 @@ class Kraefteuebersicht(ttk.Frame):
         if self.letztes_update is None:
             return True
         elif not self.einstellungen['einzelplatznutzung']:
-            cnt = self.db.krafte.count_documents({'datum': {'$gt': self.letztes_update}})
-            if cnt > 0:
-                return True
-        
+            return check_update_einheiten(self.db, self.letztes_update)        
         return False
     
-    def fill_table(self):
+    def fill_table(self) -> None:
         self.kraefte = self.lese_datenbank()
         self.clear_table()
         
@@ -206,60 +212,29 @@ class Kraefteuebersicht(ttk.Frame):
         self.anzeige_ges2.set(gesamt)
         self.anzeige_ges3.set(f'Atemschutzgeräteträger: {agt_ges}')
     
-    def clear_table(self):
+    def clear_table(self) -> None:
         for element in self.table.get_children():
             self.table.delete(element)
             
-    def verbinde_datenbank(self):
+    def verbinde_datenbank(self) -> Connection | Database:
         if self.einstellungen['einzelplatznutzung']:
-            db = sqlite3.connect(os.path.join('data', 'db.sqlite3'))
-            cursor = db.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS einheiten(
-                    funkrufname TEXT PRIMARY KEY,
-                    vf INTEGER,
-                    zf INTEGER,
-                    gf INTEGER,
-                    ms INTEGER,
-                    agt INTEGER,
-                    anmerkung TEXT,
-                    datum TEXT
-                )
-            ''')
-            db.commit()
-            return db
+            return verbinde_datenbank_sqlite_einheiten()
         else:
-            user = self.einstellungen['db_user']
-            pwd = self.einstellungen['db_user_password']
-            ip = self.einstellungen['db_ip']
-            port = self.einstellungen['db_port']
-            db = self.einstellungen['db_name']   
-            client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-            db = client[self.einstellungen['db_name']]
-            return db
+            return verbinde_datenbank_mongo(
+                nutzername=self.einstellungen['db_user'],
+                passwort=self.einstellungen['db_user_password'],
+                ip=self.einstellungen['db_ip'],
+                port=self.einstellungen['db_port'],
+                db_name=self.einstellungen['db_name']
+            )
         
-    def lese_datenbank(self):
-        db = self.db
-        
+    def lese_datenbank(self) -> list[dict]:
         if self.einstellungen['einzelplatznutzung']:
-            alle_einheiten_tuple = db.cursor().execute('''SELECT * FROM einheiten''').fetchall()
-            alle_einheiten = [
-                dict(zip((
-                    'funkrufname',
-                    'vf',
-                    'zf',
-                    'gf',
-                    'ms',
-                    'agt',
-                    'anmerkung',
-                    'datum'), einheit)) for einheit in alle_einheiten_tuple
-            ]
+            return lese_datenbank_sqlite_einheiten(self.db)
         else:
-            alle_einheiten = self.db.krafte.find()
-        
-        return alle_einheiten
+            return lese_datenbank_mongo_einheiten(self.db)
              
-    def item_selection(self, _):
+    def item_selection(self, _) -> None:
         selection = self.table.selection()        
         if selection:            
             values = self.table.item(selection[0])['values']
@@ -277,9 +252,7 @@ class Kraefteuebersicht(ttk.Frame):
             self.mannschaft.current(kraft[3])
             self.agt.current(int(values[2]))   
     
-    def speicher_eintrag(self):
-        db = self.db
-        
+    def lese_eingabe_maske(self) -> Einheit:
         funk = self.funkrufname_entry.get()
         self.funkrufname_entry.delete(0, 'end')
         
@@ -301,53 +274,46 @@ class Kraefteuebersicht(ttk.Frame):
         agt = self.agt.get()
         self.agt.current(0)
         
-        einheit: dict = {
-            'funkrufname': funk,
-            'vf': int(vf),
-            'zf': int(zf),
-            'gf': int(gf),
-            'ms': int(ms),
-            'agt': int(agt),
-            'anmerkung': anmerkung,
-            'datum': datetime.datetime.now()
-        }
+        einheit = Einheit(
+            funkrufname=funk,
+            verbandsfuehrer=int(vf),
+            zugfuehrer=int(zf),
+            gruppenfuehrer=int(gf),
+            mannschaft=int(ms),
+            atemschutzgeraetetraeger=int(agt),
+            anmerkung=anmerkung
+        )
+        
+        return einheit
+    
+    def speicher_einheit(self) -> None:
+        einheit = self.lese_eingabe_maske()
         
         if self.einstellungen['einzelplatznutzung']:
-            cursor = db.cursor()
-            cursor.execute('''INSERT OR REPLACE INTO einheiten(funkrufname, vf, zf, gf, ms, agt, anmerkung, datum) VALUES(?,?,?,?,?,?,?,?)''', tuple(list(einheit.values())))
-            db.commit()
+            schreibe_einheit_sqlite(einheit, self.db)
         else:
-            cnt = self.db.krafte.count_documents({"funkrufname": funk})
-            if cnt>0:
-                self.db.krafte.find_one_and_update(
-                        {'funkrufname': funk}, {'$set': einheit}, 
-                        return_document = ReturnDocument.AFTER
-                    )
-            else:
-                self.db.krafte.insert_one(einheit)
+            schreibe_einheit_mongo(einheit, self.db)
             
         self.fill_table()
         
-    def entferne_eintrag(self):
-        db = self.db
+    def entferne_eintrag(self) -> None:
         funk = self.funkrufname_entry.get()        
         res = tk.messagebox.askquestion('Löschen', 'Wirklich löschen?')        
         if res == 'yes':
             if self.einstellungen['einzelplatznutzung']:
-                cursor = db.cursor()
+                cursor = self.db.cursor()
                 cursor.execute('''DELETE FROM einheiten WHERE funkrufname=(?)''', (funk,))
-                db.commit()
+                self.db.commit()
             else:
-                # TODO: Löschen des eintrages für MongoDB einfügen.
                 self.db.krafte.delete_many({'funkrufname': funk})
             
         self.fill_table()
 
-    def create_report(self):        
+    def create_report(self) -> None:        
         self.kraefte = self.lese_datenbank()
         report = Bericht(self.kraefte, self.einstellungen['name_organisation'])
             
-    
+# Bericht im PDF-Format
 class Bericht(fpdf.FPDF):
     def __init__(self, eintrage, organisation = 'Feuerwehr Musterstadt', orientation = "portrait", unit = "mm", format = "A4", font_cache_dir = "DEPRECATED") -> None:
         super().__init__(orientation, unit, format, font_cache_dir)
@@ -412,7 +378,7 @@ class Bericht(fpdf.FPDF):
         # Save pdf
         self.output(self.path)
         
-    def header(self):
+    def header(self) -> None:
         # Name der Organisation einfügen
         self.set_y(14)
         self.set_font(family="helvetica", style='B', size=16)
@@ -431,8 +397,7 @@ class Bericht(fpdf.FPDF):
         self.cell(0, 10, text=self.jetzt_einsatz, align=fpdf.Align.R)
         self.set_y(35)
 
-    
-    def footer(self):
+    def footer(self) -> None:
         # Position cursor at 1.5 cm from bottom:
         self.set_y(-15)
         # Setting font: helvetica italic 8

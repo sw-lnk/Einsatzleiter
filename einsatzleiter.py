@@ -1,13 +1,11 @@
-from pymongo import MongoClient
+import os
+
 import tkinter as tk
 import ttkbootstrap as ttk
 import customtkinter as ctk
-import os
 import locale
 import ctypes
-import datetime
 import json
-import sqlite3
 
 from scripts.dashboard import Dashboard
 from scripts.einsatztagebuch import Einsatztagebuch

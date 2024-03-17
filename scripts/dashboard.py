@@ -1,16 +1,21 @@
-import os
 import tkinter as tk
-from tkinter import font
 import ttkbootstrap as ttk
 import customtkinter as ctk
 import datetime
-import fpdf
-from pymongo import ReturnDocument, MongoClient
+from pymongo.database import Database
 import json
-import sqlite3
+from sqlite3 import Connection
+
+from helper import check_update_einheiten
+from helper import check_update_einsatzstellen
+from helper import verbinde_datenbank_sqlite_einheiten
+from helper import verbinde_datenbank_sqlite_einsatzstellen
+from helper import verbinde_datenbank_mongo
+from helper import lese_datenbank_mongo_einheiten
+from helper import lese_datenbank_sqlite_einheiten
 
 class Dashboard(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
         super().__init__(parent)
         
         self.parent = parent
@@ -35,7 +40,6 @@ class Dashboard(ttk.Frame):
         self.label_datum_einfach = ctk.CTkLabel(
             self,
             textvariable=self.var_jetzt_einfach,
-            #text_color='red',
             font=(None, 50),
         )
         
@@ -95,7 +99,7 @@ class Dashboard(ttk.Frame):
         if not self.einstellungen['einzelplatznutzung']:
             self.loop()    
     
-    def loop(self):
+    def loop(self) -> None:
         self.after(self.einstellungen['update_intervall'], self.loop)
         if self.check_for_update():
             self.letztes_update = datetime.datetime.now()
@@ -134,14 +138,14 @@ class Dashboard(ttk.Frame):
         self.var_est_unbearbeitet.set(cnt_unbearbeitet)
         self.var_est_in_arbeit.set(cnt_in_arbeit)
     
-    def time_loop(self):
+    def time_loop(self) -> None:
         self.after(5000, self.time_loop)
         jetzt = datetime.datetime.now()
         if self.var_jetzt_einfach.get() != jetzt.strftime(self.format_einfach):            
             self.var_jetzt_einfach.set(jetzt.strftime(self.format_einfach))
             self.var_jetzt_einsatz.set(jetzt.strftime(self.format_einsatz))
     
-    def pack_me(self):
+    def pack_me(self) -> None:
         self.einstellungen = self.lese_einstellungen()
         self.db = self.verbinde_datenbank()
         self.update_kraefte()
@@ -157,73 +161,27 @@ class Dashboard(ttk.Frame):
         if self.letztes_update is None:
             return True
         elif not self.einstellungen['einzelplatznutzung']:
-            cnt1 = self.db.krafte.count_documents({'datum': {'$gt': self.letztes_update}})
-            cnt2 = self.db.einsatzstellen.count_documents({'letztes_update': {'$gt': self.letztes_update}})
-            if cnt1 > 0 or cnt2 > 0:
+            if check_update_einsatzstellen(self.db, self.letztes_update) or check_update_einheiten(self.db, self.letztes_update):
                 return True
-        
         return False
     
-    def verbinde_datenbank(self):
+    def verbinde_datenbank(self) -> Connection | Database:
         if self.einstellungen['einzelplatznutzung']:
-            db = sqlite3.connect(os.path.join('data', 'db.sqlite3'))
-            cursor = db.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS einheiten(
-                    funkrufname TEXT PRIMARY KEY,
-                    vf INTEGER,
-                    zf INTEGER,
-                    gf INTEGER,
-                    ms INTEGER,
-                    agt INTEGER,
-                    anmerkung TEXT,
-                    datum TEXT
-                )
-            ''')
-            db.commit()
-            
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS einsatzstellen(
-                    _id INTEGER PRIMARY KEY NOT NULL,
-                    einsatznr TEXT NOT NULL,
-                    stichwort TEXT,
-                    anschrift TEXT,
-                    status TEXT,
-                    datum TIMESTAMP,
-                    letztes_update TIMESTAMP,
-                    archiv INTEGER
-                )
-            ''')
-            db.commit()
+            db = verbinde_datenbank_sqlite_einheiten()
+            db = verbinde_datenbank_sqlite_einsatzstellen()
             return db
         else:
-            user = self.einstellungen['db_user']
-            pwd = self.einstellungen['db_user_password']
-            ip = self.einstellungen['db_ip']
-            port = self.einstellungen['db_port']
-            db = self.einstellungen['db_name']   
-            client = MongoClient(f"mongodb://{user}:{pwd}@{ip}:{port}/{db}")
-            db = client[self.einstellungen['db_name']]
-            return db
+            return verbinde_datenbank_mongo(
+                nutzername=self.einstellungen['db_user'],
+                passwort=self.einstellungen['db_user_password'],
+                ip=self.einstellungen['db_ip'],
+                port=self.einstellungen['db_port'],
+                db_name=self.einstellungen['db_name']
+            )
  
-    def lese_datenbank(self):
-        db = self.db
-        
+    def lese_datenbank(self) -> list[dict]:
         if self.einstellungen['einzelplatznutzung']:
-            alle_einheiten_tuple = db.cursor().execute('''SELECT * FROM einheiten''').fetchall()
-            alle_einheiten = [
-                dict(zip((
-                    'funkrufname',
-                    'vf',
-                    'zf',
-                    'gf',
-                    'ms',
-                    'agt',
-                    'anmerkung',
-                    'datum'), einheit)) for einheit in alle_einheiten_tuple
-            ]
+            return lese_datenbank_sqlite_einheiten(self.db)
         else:
-            alle_einheiten = self.db.krafte.find()
-        
-        return alle_einheiten
+            return lese_datenbank_mongo_einheiten(self.db)
  

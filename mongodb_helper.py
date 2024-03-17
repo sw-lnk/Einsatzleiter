@@ -1,7 +1,7 @@
 from datetime import datetime
 import random
 
-from helper.connect_database import verbinde_datenbank_mongo
+from helper import verbinde_datenbank_mongo
 
 user = 'arbeitsplatz1' #input('Username: ')
 pwd = 'einsatzleitung1' #getpass('Password: ')
