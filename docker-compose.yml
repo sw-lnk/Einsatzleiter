@@ -1,0 +1,31 @@
+version: '3'
+
+
+services:
+  django:
+    container_name: django-mde
+    restart: unless-stopped
+    build:
+      context: ./django-mde
+    command: python manage.py runserver 0.0.0.0:8080
+    volumes:
+      - ./django-mde:/usr/src/app/
+    ports:
+      - 8040:8080
+    environment:
+#      - PIPELINE=production
+      - PIPELINE=test
+      - SECRET_KEY=django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32
+      - ALLOWED_HOSTS=localhost,0.0.0.0
+      - DB_NAME=arbeit
+      - DB_USER_NM=mitarbeiter
+      - DB_USER_PW=arbeitsplatz1
+      - DB_IP=postgres-postgres-1
+      - DB_PORT=5432
+    networks:
+      - postgres-network
+
+
+networks:
+  postgres-network:
+    external: true

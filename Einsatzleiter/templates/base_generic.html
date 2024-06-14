@@ -26,7 +26,7 @@
             {% block navbar %}
             <ul class="navbar-nav">
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'index' %}">Start</a>
+                <a class="nav-link" href="{% url 'main' %}">Start</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'mission' %}">Einsätze</a>
@@ -40,24 +40,33 @@
             </ul>
             {% endblock %}
             <ul class="navbar-nav">
+              {% if user.is_superuser %}
+                <li class="nav-item">
+                  <a class="btn btn-info me-3 py-1" href="/admin">Admin Panel</a>
+                </li>
+              {% endif %}
               {% if user.is_authenticated %}
                 <li class="nav-item">
                   <form id="logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
-                    <button type="submit" class="nav-link">Logout: {{ user.get_username }}</button>
+                    <button type="submit" class="nav-link my-1">Logout: {{ user.get_username }}</button>
                   </form>              
                 </li>
               {% else %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'login' %}?next={{ request.path }}">Login</a>
+                  <a class="nav-link" href="{% url 'login' %}">Login</a>
                 </li>
               {% endif %}
             </ul>
       </div>
     </nav>    
     
-    <div class="container-fluid min-vh-100 d-flex flex-column">
-      {% block content %}{% endblock %}
+    <div class="container-fluid min-vh-100 d-flex">
+      {% block content %}
+        <div class="container-fluid m-5 p-5 text-center">
+          <h1>Startseite</h1>
+        </div>
+      {% endblock %}
     </div>
 
     <div class="mt-4 p-3 bg-dark text-white text-center">

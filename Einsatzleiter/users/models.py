@@ -7,8 +7,8 @@ from django.utils.translation import gettext_lazy as _
 
 class CustomUser(AbstractUser):
     email = models.EmailField(_("email address"), unique=False)
-    first_name = models.CharField(_("first name"), null=False)
-    last_name = models.CharField(_("last name"), null=False)
+    first_name = models.CharField(_("first name"), max_length=50, null=False)
+    last_name = models.CharField(_("last name"), max_length=50, null=False)
 
     date_of_birth = models.DateField(_("date of birth"), null=True, blank=True)
 

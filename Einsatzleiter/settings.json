@@ -1,10 +1,5 @@
 {
     "name_organisation": "Feuerwehr Musterstadt",
-    "db_user": "arbeitsplatz",
-    "db_user_password": "eigenesPasswort",
-    "db_ip": "192.168.178.21",
-    "db_port": "5432",
-    "db_name": "einsatzleitung",
     "update_intervall": 5000,
     "zeitschwelle_einsatz_ohne_bearbeitung": 10,
     "absender": false,
