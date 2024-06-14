@@ -1,0 +1,29 @@
+{% extends "base_generic.html" %}
+
+{% block title %}
+    <title>EL - Einsätze</title>
+{% endblock %}
+
+{% block content %} 
+    <div style="margin-top: 50px;" class="ui container">
+        <h1 class="ui center aligned header">Einsätze</h1>
+        <hr>
+        {% for mission in mission_list %}
+        <div class="ui segment">
+            <p class="ui big header">{{ mission.keyword }}  {{ mission.street }} - {{ mission.status }}</p>
+
+            {% if mission.status == mission.CLOSED %}
+            <span class="ui green label">Abgeschlossen</span>
+            {% elif mission.status == mission.PROCESSING %}
+            <span class="ui yellow label">In Arbeit</span>
+            {% else %}
+            <span class="ui red label">Unbearbeitet</span>
+            {% endif %}
+
+            <a class="ui blue button" href="#">Update</a>
+            <a class="ui red button" href="#">Delete</a>
+        </div>
+        <hr>
+        {% endfor %}
+    </div>
+{% endblock %}
