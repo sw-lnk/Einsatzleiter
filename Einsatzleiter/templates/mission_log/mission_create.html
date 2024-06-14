@@ -6,13 +6,15 @@
 {% endblock %}
 
 {% block content %} 
-    <div style="margin-top: 50px;" class="ui container">
-        <h1 class="ui center aligned header">Neuer Einsatz</h1>
-
-        <form action="" method="post">
+    <div class="container mt-5">
+        <h3 class="ui center aligned header">{{ header }}</h3>
+        {% if mission %}
+            <p>{{ mission }}</p>
+        {% endif %}
+        <form method="post">
             {% csrf_token %}
             {{ form|crispy }}
-            <input type="submit" value="Submit">
+            <input type="submit" value="Speichern">
         </form>
     </div>
 {% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base_generic.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    <title>EL - Einsätze</title>
+{% endblock %}
+
+{% block content %} 
+    <div class="container mt-5 position-relative text-center">        
+        <h3>{{ mission }}</h3>
+        <h4 class="m-4">Diesen Einsatz archivieren?</h4>
+        <a class="btn btn-danger text mx-3" href="{% url 'mission_archiv_do' main_id=mission.main_id %}">Archivieren</a>
+        <a class="btn btn-secondary text mx-3" href="{% url 'mission' %}">Abbrechen</a>
+    </div>
+{% endblock %}

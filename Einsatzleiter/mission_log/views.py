@@ -1,14 +1,22 @@
-from django.shortcuts import HttpResponse, render, redirect
+from django.shortcuts import HttpResponse, render, redirect,  get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 
 from .models import Mission
-from .forms import NewMission
+from .forms import NewMission, UpdateMission
 
 # Create your views here.
+@login_required
+def all_missions(request):
+    context = {}
+    context['mission_list'] = Mission.objects.exclude(status__exact=Mission.CLOSED).order_by('prio', 'status', 'start',)
+    context['mission_list_closed'] = Mission.objects.filter(status__exact=Mission.CLOSED).exclude(archiv__exact=True)
+    return render(request, "mission_log/mission.html", context)
 
 @login_required
-def add(request):    
+def add(request):
+    context = {}
+    context['header'] = 'Neuer Einsatz'
     # check if the request is post 
     if request.method =='POST':  
         
@@ -32,22 +40,47 @@ def add(request):
             
             # redirect it to some another page indicating data
             # was inserted successfully
-            return render(request, "mission_log/mission.html", {'mission_list':missions})
+            return redirect('mission')
              
         else:
          
             # Redirect back to the same page if the data
             # was invalid
-            return render(request, "mission_log/mission_new.html", {'form':details})  
+            context['form'] = details
+            return render(request, "mission_log/mission_create.html", context)  
     else:
  
         # If the request is a GET request then,
         # create an empty form object and 
         # render it into the page
-        form = NewMission(None)   
-        return render(request, 'mission_log/mission_new.html', {'form':form})
+        context['form'] = NewMission(None)   
+        return render(request, 'mission_log/mission_create.html', context)
 
 @login_required
-def all_missions(request):
-    missions = Mission.objects.all()
-    return render(request, "mission_log/mission.html", {'mission_list':missions})
+def update(request, main_id):
+    context = {}
+    context['header'] = 'Einsatz Aktualisieren'
+    
+    mission = get_object_or_404(Mission, main_id=main_id)
+    form = UpdateMission(instance=mission)
+    if request.method == "POST":
+        form = UpdateMission(request.POST, instance=mission)
+        if form.is_valid():
+            form.save()
+            return redirect('mission')
+    
+    context['mission'] = mission
+    context['form'] = form
+    return render(request, 'mission_log/mission_create.html', context)
+
+@login_required
+def archiv_ask(request, main_id):    
+    mission = get_object_or_404(Mission, main_id=main_id)
+    return render(request, 'mission_log/mission_archiv.html', {'mission': mission})
+
+@login_required
+def archiv(request, main_id):    
+    mission = get_object_or_404(Mission, main_id=main_id)
+    mission.archiv = not mission.archiv
+    mission.save()
+    return redirect("mission")

@@ -9,6 +9,14 @@
   list-style: none;
 }
 
+.mission_card {
+  background: #c7dadd;
+}
+
+.mission_closed {
+  background: #eeeeee;
+}
+
 #logout-form {
   display: inline;
 }

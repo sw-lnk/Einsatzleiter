@@ -5,25 +5,56 @@
 {% endblock %}
 
 {% block content %} 
-    <div style="margin-top: 50px;" class="ui container">
-        <h1 class="ui center aligned header">Einsätze</h1>
+    <div class="container mt-5 text-center">
+        <h2 class="ui center aligned header">Einsatzübersicht</h2>
+        <a class="btn btn-secondary" href="{% url 'mission_new' %}" role="button">Neuer Einsatz</a>
         <hr>
         {% for mission in mission_list %}
-        <div class="ui segment">
-            <p class="ui big header">{{ mission.keyword }}  {{ mission.street }} - {{ mission.status }}</p>
+        <div class="mission_card p-4 my-2 rounded position-relative text-start">
+            <p class="fw-bold">{{ mission.keyword }}</p>
+            <p>Anschrift: {{ mission.address }}</p>
 
             {% if mission.status == mission.CLOSED %}
-            <span class="ui green label">Abgeschlossen</span>
+                <span class="badge bg-success m-3 position-absolute top-0 end-0">Abgeschlossen</span>
             {% elif mission.status == mission.PROCESSING %}
-            <span class="ui yellow label">In Arbeit</span>
+                <span class="badge bg-primary text-dark m-3 position-absolute top-0 end-0">In Arbeit</span>
             {% else %}
-            <span class="ui red label">Unbearbeitet</span>
+                <span class="badge bg-warning text-dark m-3 position-absolute top-0 end-0">Unbearbeitet</span>
             {% endif %}
 
-            <a class="ui blue button" href="#">Update</a>
-            <a class="ui red button" href="#">Delete</a>
+            {% if mission.prio == mission.HIGH %}
+                <span class="badge bg-danger m-0">Priorität: Hoch</span>
+            {% elif mission.prio == mission.MEDIUM %}
+                <span class="badge bg-warning text-dark m-0">Priorität: Mittel</span>
+            {% else %}
+                <span class="badge bg-primary m-0">Priorität: Niedrig</span>
+            {% endif %}
+
+            <a class="btn btn-light text-dark m-3 position-absolute bottom-0 end-0" href="{% url 'mission_update' main_id=mission.main_id %}">Update</a>
         </div>
-        <hr>
         {% endfor %}
+        
+        {% if mission_list_closed %}
+            <hr>
+            <h4>Abgeschlossen Einsätze</h4>
+            {% for mission in mission_list_closed %}
+            <div class="mission_closed p-4 my-2 rounded position-relative text-start">
+                <p class="fw-bold">{{ mission.keyword }}</p>
+                <p>Anschrift: {{ mission.address }}</p>
+
+                {% if mission.prio == mission.HIGH %}
+                    <span class="badge bg-light text-dark m-0">Priorität: Hoch</span>
+                {% elif mission.prio == mission.MEDIUM %}
+                    <span class="badge bg-light text-dark m-0">Priorität: Mittel</span>
+                {% else %}
+                    <span class="badge bg-light text-dark m-0">Priorität: Niedrig</span>
+                {% endif %}
+                <div class="position-absolute bottom-0 end-0">
+                    <a class="btn btn-danger my-3" href="{% url 'mission_archiv_ask' main_id=mission.main_id %}">Archivieren</a>
+                    <a class="btn btn-light text-dark m-3" href="{% url 'mission_update' main_id=mission.main_id %}">Update</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
     </div>
 {% endblock %}

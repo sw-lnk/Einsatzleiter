@@ -25,7 +25,7 @@ from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
-    path("", views.index, name="index"),
+    path("", views.index, name="main"),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("mission/", include("mission_log.urls")),
