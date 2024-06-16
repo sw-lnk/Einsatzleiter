@@ -39,29 +39,27 @@
               </li>
             </ul>
             {% endblock %}
-            <ul class="navbar-nav">
-              {% if user.is_superuser %}
-                <li class="nav-item">
-                  <a class="btn btn-info me-3 py-1" href="/admin">Admin Panel</a>
-                </li>
-              {% endif %}
+            <ul class="navbar-nav">              
               {% if user.is_authenticated %}
+                <li class="nav-item">
+                  <p class="text-white mt-2 mb-0 me-2">{{ user.name }}</p>
+                </li>
                 <li class="nav-item">
                   <form id="logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
-                    <button type="submit" class="nav-link my-1">Logout: {{ user.get_username }}</button>
+                    <button type="submit" class="btn btn-outline-warning py-1 px-2">Logout</button>
                   </form>              
                 </li>
               {% else %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'login' %}">Login</a>
+                  <a class="btn btn-outline-primary" href="{% url 'login' %}">Login</a>
                 </li>
               {% endif %}
             </ul>
       </div>
     </nav>    
     
-    <div class="container-fluid min-vh-100 d-flex">
+    <div class="container-fluid d-flex justify-content-center">
       {% block content %}
         <div class="container-fluid m-5 p-5 text-center">
           <h1>Startseite</h1>
@@ -69,8 +67,12 @@
       {% endblock %}
     </div>
 
-    <div class="mt-4 p-3 bg-dark text-white text-center">
-      {% block footer %}{% endblock %}
+    <div class="mt-4 p-2 bg-dark text-white fixed-bottom">
+      {% block footer %}
+        {% if user.is_superuser %}
+          <a class="btn btn-outline-light btn-sm m-0" href="/admin">Admin Panel</a>
+        {% endif %}
+      {% endblock %}
     </div>
   </body>
 </html>

@@ -17,5 +17,15 @@ class CustomUser(AbstractUser):
 
     # objects = CustomUserManager()
 
+    def name(self):
+        if self.first_name and self.last_name:
+            return f'{self.last_name}, {self.first_name}'
+        elif self.last_name:
+            return self.last_name
+        elif self.first_name:
+            return self.first_name
+        else:
+            return '?, ?'
+    
     def __str__(self):
-        return self.email
+        return self.username

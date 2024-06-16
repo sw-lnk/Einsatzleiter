@@ -1,6 +1,10 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-  <p>Logged out!</p>
-  <a href="{% url 'login'%}">Click here to login again.</a>
+  <div class="text-center m-3 p-3 bg-light rounded">
+    <div class="alert alert-success" role="alert">
+      Erfolgreicher Logout.
+    </div>
+    <a class="btn btn-outline-info" href="{% url 'login'%}" role="button">Zum Login</a>
+  </div>  
 {% endblock %}
