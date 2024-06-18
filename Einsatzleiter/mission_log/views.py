@@ -32,7 +32,7 @@ def add(request):
             # logic into the data if there is such a need
             # before writing to the database   
             post = details.save(commit = False)
- 
+            post.author = request.user
             # Finally write the changes into database
             post.save()  
     

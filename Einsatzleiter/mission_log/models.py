@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -40,6 +41,11 @@ class Mission(models.Model):
     update=models.DateTimeField(_('update time'), auto_now=True)
     
     archiv=models.BooleanField(_('archiv'), default=False)
+    
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.RESTRICT,
+    )
     
     def address(self) -> str:
         a = self.street
