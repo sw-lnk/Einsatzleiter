@@ -32,22 +32,24 @@
                 <a class="nav-link" href="{% url 'mission' %}">Einsätze</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#">Link</a>
-              </li>
-              <li class="nav-item">
                 <a class="nav-link disabled" href="#">Disabled</a>
               </li>
+              {% if user.is_superuser %}
+                <li class="nav-item">
+                  <a class="nav-link" href="/admin">Admin Panel</a>
+                </li>
+              {% endif %}
             </ul>
             {% endblock %}
-            <ul class="navbar-nav">              
+            <ul class="navbar-nav">                            
               {% if user.is_authenticated %}
                 <li class="nav-item">
-                  <p class="text-white mt-2 mb-0 me-2">{{ user.name }}</p>
+                  <span class="badge rounded-pill text-bg-light p-2 mx-2">{{ user.name }}</span>
                 </li>
                 <li class="nav-item">
                   <form id="logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-warning py-1 px-2">Logout</button>
+                    <button type="submit" class="btn btn-outline-warning btn-sm py-1 px-2">Logout</button>
                   </form>              
                 </li>
               {% else %}
@@ -67,12 +69,6 @@
       {% endblock %}
     </div>
 
-    <div class="mt-4 p-2 bg-dark text-white fixed-bottom">
-      {% block footer %}
-        {% if user.is_superuser %}
-          <a class="btn btn-outline-light btn-sm m-0" href="/admin">Admin Panel</a>
-        {% endif %}
-      {% endblock %}
-    </div>
+    {% block footer %}{% endblock %}
   </body>
 </html>
