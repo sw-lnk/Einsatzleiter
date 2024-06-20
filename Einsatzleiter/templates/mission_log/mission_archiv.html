@@ -10,6 +10,6 @@
         <h3>{{ mission }}</h3>
         <h4 class="m-4">Diesen Einsatz archivieren?</h4>
         <a class="btn btn-danger text mx-3" href="{% url 'mission_archiv_do' main_id=mission.main_id %}">Archivieren</a>
-        <a class="btn btn-secondary text mx-3" href="{% url 'mission' %}">Abbrechen</a>
+        <a class="btn btn-secondary text mx-3" href="{% url 'mission_all' %}">Abbrechen</a>
     </div>
 {% endblock %}

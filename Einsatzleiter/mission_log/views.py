@@ -1,11 +1,35 @@
+import datetime
+
 from django.shortcuts import HttpResponse, render, redirect,  get_object_or_404
-from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 
 from .models import Mission
-from .forms import NewMission, UpdateMission
+from .forms import NewMission, UpdateMission, Dashboard
 
 # Create your views here.
+def dashboard(request):
+    context = {}
+    
+    form = Dashboard(None)    
+    year = datetime.datetime.now().year
+    
+    if request.method =='POST':        
+        form = Dashboard(request.POST)        
+        year = int(form.data['year'])
+    
+    deadline1 = datetime.date(year, 1, 1)
+    deadline2 = datetime.date(year+1, 1, 1)
+        
+    context['form'] = form
+    context['cnt_untreaded'] = Mission.objects.filter(archiv=False, start__gte=deadline1, start__lt=deadline2, status=Mission.UNTREATED).count()
+    context['cnt_processing'] = Mission.objects.filter(archiv=False, start__gte=deadline1, start__lt=deadline2, status=Mission.PROCESSING).count()
+    context['cnt_closed'] = Mission.objects.filter(archiv=False, start__gte=deadline1, start__lt=deadline2, status=Mission.CLOSED).count()
+    
+    context['time_normal'] = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
+    context['time_tactical'] = datetime.datetime.now().strftime('%d %H %M %b %y')
+    
+    return render(request, 'mission_log/dashboard.html', context)
+
 @login_required
 def all_missions(request):
     context = {}
@@ -40,7 +64,7 @@ def add(request):
             
             # redirect it to some another page indicating data
             # was inserted successfully
-            return redirect('mission')
+            return redirect('mission_all')
              
         else:
          
@@ -67,7 +91,7 @@ def update(request, main_id):
         form = UpdateMission(request.POST, instance=mission)
         if form.is_valid():
             form.save()
-            return redirect('mission')
+            return redirect('mission_all')
     
     context['mission'] = mission
     context['form'] = form
@@ -83,4 +107,4 @@ def archiv(request, main_id):
     mission = get_object_or_404(Mission, main_id=main_id)
     mission.archiv = not mission.archiv
     mission.save()
-    return redirect("mission")
+    return redirect("mission_all")
