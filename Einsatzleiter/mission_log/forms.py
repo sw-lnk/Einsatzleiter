@@ -18,7 +18,3 @@ class UpdateMission(forms.ModelForm):
         widgets = {
             'end': DateInput(),
         }
-        
-class Dashboard(forms.Form):
-    year_now = datetime.datetime.now().year
-    year = forms.ChoiceField(choices=(("2023", 2023), ("2024", 2024)), initial=year_now)

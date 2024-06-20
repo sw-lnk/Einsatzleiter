@@ -4,26 +4,15 @@ from django.shortcuts import HttpResponse, render, redirect,  get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 from .models import Mission
-from .forms import NewMission, UpdateMission, Dashboard
+from .forms import NewMission, UpdateMission
 
 # Create your views here.
 def dashboard(request):
     context = {}
     
-    form = Dashboard(None)    
-    year = datetime.datetime.now().year
-    
-    if request.method =='POST':        
-        form = Dashboard(request.POST)        
-        year = int(form.data['year'])
-    
-    deadline1 = datetime.date(year, 1, 1)
-    deadline2 = datetime.date(year+1, 1, 1)
-        
-    context['form'] = form
-    context['cnt_untreaded'] = Mission.objects.filter(archiv=False, start__gte=deadline1, start__lt=deadline2, status=Mission.UNTREATED).count()
-    context['cnt_processing'] = Mission.objects.filter(archiv=False, start__gte=deadline1, start__lt=deadline2, status=Mission.PROCESSING).count()
-    context['cnt_closed'] = Mission.objects.filter(archiv=False, start__gte=deadline1, start__lt=deadline2, status=Mission.CLOSED).count()
+    context['cnt_untreaded'] = Mission.objects.filter(archiv=False, status=Mission.UNTREATED).count()
+    context['cnt_processing'] = Mission.objects.filter(archiv=False, status=Mission.PROCESSING).count()
+    context['cnt_closed'] = Mission.objects.filter(archiv=False, status=Mission.CLOSED).count()
     
     context['time_normal'] = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
     context['time_tactical'] = datetime.datetime.now().strftime('%d %H %M %b %y')

@@ -11,27 +11,17 @@
         <h2>{{ time_normal }}</h2>
         <h5>{{ time_tactical }}</h5>
 
-        <div class="row p-4 justify-content-between align-items-center">
+        <div class="row p-4 justify-content-center align-items-center">
             <div class="col-2 p-4 bg-danger text-center align-center rounded-3">
                 <h1>{{ cnt_untreaded }}</h1>
             </div>
 
-            <div class="col-2 p-4 bg-warning text-center align-center rounded-3">
+            <div class="col-2 p-4 mx-3 bg-warning text-center align-center rounded-3">
                 <h1>{{ cnt_processing }}</h1>
             </div>
 
             <div class="col-2 p-4 bg-success text-center align-center rounded-3">
                 <h1>{{ cnt_closed }}</h1>
-            </div>
-
-            <div class="col-2 p-4 bg-light rounded text-center">
-                {% if user.is_authenticated %}
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        <input type="submit" value="Aktualisieren">
-                    </form>
-                {% endif %}      
             </div>
         </div>
     </div>
