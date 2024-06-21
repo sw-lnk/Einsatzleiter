@@ -52,6 +52,8 @@ class Mission(models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.RESTRICT,
+        editable=False,
+        verbose_name=_("Author")
     )
     
     def address(self) -> str:
