@@ -20,12 +20,53 @@ services:
       - DB_NAME=arbeit
       - DB_USER_NM=mitarbeiter
       - DB_USER_PW=arbeitsplatz1
-      - DB_IP=postgres-postgres-1
+      - DB_IP=django-postgres
       - DB_PORT=5432
+    depends_on:
+      - db
     networks:
-      - postgres-network
+      - django-network
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.django-mde.schedule: "@every 30s"
+      ofelia.job-exec.django-mde.command: "python manage.py runscript mission"
 
+  db:
+    image: postgres:alpine
+    restart: unless-stopped
+    container_name: django-postgres
+    ports:
+      - 5432:5432
+    networks:
+      - django-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=mitarbeiter
+      - POSTGRES_PASSWORD=arbeitsplatz1
+      - POSTGRES_DB=arbeit
+
+
+  ofelia:
+    # https://github.com/mcuadros/ofelia?tab=readme-ov-file
+    image: mcuadros/ofelia:latest
+    restart: unless-stopped
+    container_name: django-ofelia
+    command: daemon --docker
+    networks:
+      - django-network
+    depends_on:
+      - django
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      ofelia.job-local.django.schedule: "@every 60s"
+      ofelia.job-local.django.command: "date"
+
+volumes:
+  postgres_data:
 
 networks:
-  postgres-network:
-    external: true
+  django-network:
+    name: django-network
+    driver: bridge

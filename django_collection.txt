@@ -1,3 +1,8 @@
 python manage.py migrate --run-syncdb
 
 {{ form.password|as_crispy_field }}
+
+docker-compose up -d --build --remove-orphans
+
+from django.core.management.utils import get_random_secret_key
+print(get_random_secret_key())
