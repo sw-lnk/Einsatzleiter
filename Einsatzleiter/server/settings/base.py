@@ -13,26 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
-LOCAL = True
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = (
-    "django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32"
-    if LOCAL
-    else os.environ.get("SECRET_KEY")
-)
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = [] if LOCAL else os.environ.get("ALLOWED_HOSTS").split(",")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Application definition
 
@@ -87,34 +69,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "server.wsgi.application"
-
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-DB_NAME = "arbeit" if LOCAL else os.environ.get("DB_NAME")
-DB_USER_NM = "mitarbeiter" if LOCAL else os.environ.get("DB_USER_NM")
-DB_USER_PW = "arbeitsplatz1" if LOCAL else os.environ.get("DB_USER_PW")
-DB_IP = "localhost" if LOCAL else os.environ.get("DB_IP")
-DB_PORT = "5432" if LOCAL else os.environ.get("DB_PORT")
-
-#DATABASES = {
-#    "default": {
-#        "ENGINE": "django.db.backends.postgresql",
-#        "NAME": DB_NAME,
-#        "USER": DB_USER_NM,
-#        "PASSWORD": DB_USER_PW,
-#        "HOST": DB_IP,
-#        "PORT": DB_PORT,
-#    }
-#}
 
 
 # Password validation

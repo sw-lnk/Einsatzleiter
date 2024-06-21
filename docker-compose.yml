@@ -13,23 +13,34 @@ services:
     ports:
       - 8040:8080
     environment:
-#      - PIPELINE=production
-      - PIPELINE=test
-      - SECRET_KEY=django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32
-      - ALLOWED_HOSTS=localhost,0.0.0.0
-      - DB_NAME=arbeit
-      - DB_USER_NM=mitarbeiter
-      - DB_USER_PW=arbeitsplatz1
-      - DB_IP=django-postgres
-      - DB_PORT=5432
+      - PIPELINE=production
+      - DB_NAME = einsatzleitung
+      - DB_USER_NM = mitarbeiter
+      - DB_USER_PW = arbeitsplatz1
+      - DB_IP = django-postgres
+      - DB_PORT = 5432
+
+      - SECRET_KEY = django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32
+      - ALLOWED_HOSTS = localhost,0.0.0.0
+
+      - EMAIL_ADRESSE = eigene.mail@adresse.de
+      - EMAIL_PASSWORD = Top@Secret1
+      - IMAP_SERVER = imap.xyz.de
+      - IMAP_PORT = 993
+      - SMTP_SERVER = smtp.xyz.de
+      - SMTP_PORT = 465
+      - EMAIL_LEITSTELLE = email@leitstelle.de
+      - TELEGRAM_TOKEN = telegram.token.from.bot
+      - GROUP_CHAT_ID = -1234567890
+      - ZIP_CODE = 12345
     depends_on:
       - db
     networks:
       - django-network
     labels:
       ofelia.enabled: "true"
-      ofelia.job-exec.django-mde.schedule: "@every 30s"
-      ofelia.job-exec.django-mde.command: "python manage.py runscript mission"
+      ofelia.job-exec.check-new-mission.schedule: "@every 30s"
+      ofelia.job-exec.check-new-mission.command: "python manage.py runscript mission"
 
   db:
     image: postgres:alpine
@@ -44,7 +55,7 @@ services:
     environment:
       - POSTGRES_USER=mitarbeiter
       - POSTGRES_PASSWORD=arbeitsplatz1
-      - POSTGRES_DB=arbeit
+      - POSTGRES_DB=einsatzleitung
 
 
   ofelia:
