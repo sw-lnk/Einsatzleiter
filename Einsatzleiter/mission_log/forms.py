@@ -1,20 +1,26 @@
 import datetime
 from django import forms
+from bootstrap_datepicker_plus.widgets import DateTimePickerInput
 
 from . import models
 
-class DateInput(forms.DateTimeInput):
-    input_type = 'datetime-local'
+class DateTimeInput(DateTimePickerInput):
+    input_type = '%d.%m.%Y %H:%M'
 
 class NewMission(forms.ModelForm):
     class Meta:
         model = models.Mission
-        exclude = ('archiv', 'start', 'end', 'status',)
+        exclude = ('archiv', 'author')
+        widgets = {
+            'start': DateTimeInput(),
+            'end': DateTimeInput(),
+        }
 
 class UpdateMission(forms.ModelForm):
     class Meta:
         model= models.Mission
-        exclude = ('archiv', 'start', 'author')
+        exclude = ('archiv', 'author')
         widgets = {
-            'end': DateInput(),
+            'start': DateTimeInput(),
+            'end': DateTimeInput(),
         }

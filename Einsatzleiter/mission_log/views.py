@@ -47,13 +47,13 @@ def add(request):
             post = details.save(commit = False)
             post.author = request.user
             # Finally write the changes into database
-            post.save()  
-    
-            missions = Mission.objects.all()
+            post.save()
             
             # redirect it to some another page indicating data
             # was inserted successfully
-            return redirect('mission_all')
+            context['form'] = details
+            context['header'] = 'Einsatz aktualisieren'
+            return render(request, "mission_log/mission_create.html", context)
              
         else:
          
@@ -80,7 +80,8 @@ def update(request, main_id):
         form = UpdateMission(request.POST, instance=mission)
         if form.is_valid():
             form.save()
-            return redirect('mission_all')
+            context['form'] = form
+            return render(request, "mission_log/mission_create.html", context)
     
     context['mission'] = mission
     context['form'] = form

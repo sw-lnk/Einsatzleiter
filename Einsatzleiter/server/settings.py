@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     
     'django_extensions',
     
+    "bootstrap_datepicker_plus",
     "crispy_forms",
     "crispy_bootstrap5",
 
@@ -150,6 +151,19 @@ USE_I18N = True
 
 USE_TZ = True
 
+BOOTSTRAP_DATEPICKER_PLUS = {
+    "options": {
+        "locale": "de",
+    },
+    "variant_options": {
+        "date": {
+            "format": "DD.MM.YYYY",
+        },
+        "datetime": {
+            "format": "DD.MM.YYYY - HH:mm",
+        },
+    }
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

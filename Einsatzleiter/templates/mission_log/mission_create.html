@@ -6,15 +6,30 @@
 {% endblock %}
 
 {% block content %} 
-    <div class="container m-5">
-        <h3 class="ui center aligned header">{{ header }}</h3>
-        {% if mission %}
-            <p>{{ mission }}</p>
-        {% endif %}
+    <div class="container m-5">        
+        {{ form.media }}
         <form method="post">
             {% csrf_token %}
-            {{ form|crispy }}
-            <input type="submit" value="Speichern">
+            <div class="row justify-content-between">
+                <div class="col"><h3 class="m-0">{{ header }}</h3></div>
+                <div class="col align-self-end text-end"><input type="submit" value="Speichern"></div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-6">{{ form.keyword | as_crispy_field }}</div>
+                <div class="col-2">{{ form.main_id | as_crispy_field }}</div>               
+                <div class="col-2">{{ form.prio | as_crispy_field }}</div>
+                <div class="col-2">{{ form.status | as_crispy_field }}</div>
+
+            </div>
+            <div class="row">
+                <div class="col-4">{{ form.street | as_crispy_field }}</div>
+                <div class="col-1">{{ form.street_no | as_crispy_field }}</div>
+                <div class="col-1">{{ form.zip_code | as_crispy_field }}</div>
+                <div class="col-3">{{ form.start | as_crispy_field }}</div>
+                <div class="col-3">{{ form.end | as_crispy_field }}</div>
+                           
+            </div>                       
         </form>
     </div>
 {% endblock %}
