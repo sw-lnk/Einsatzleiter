@@ -1,38 +1,18 @@
 version: '3'
 
-
 services:
   django:
-    container_name: einsatzleiter
+    container_name: einsatzleiter-django
     restart: unless-stopped
     build:
       context: ./Einsatzleiter
     command: python manage.py runserver 0.0.0.0:8080
     volumes:
-      - ./einsatzleiter:/usr/src/app/
+      - ./Einsatzleiter:/usr/src/app/
     ports:
       - 8040:8080
-    environment:
-      - PIPELINE=production
-      - DB_NAME=einsatzleitung
-      - DB_USER_NM=mitarbeiter
-      - DB_USER_PW=arbeitsplatz1
-      - DB_IP=django-postgres
-      - DB_PORT=5432
-
-      - SECRET_KEY=django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32
-      - ALLOWED_HOSTS=localhost,0.0.0.0
-
-      - EMAIL_ADRESSE=eigene.mail@adresse.de
-      - EMAIL_PASSWORD=Top@Secret1
-      - IMAP_SERVER=imap.xyz.de
-      - IMAP_PORT=993
-      - SMTP_SERVER=smtp.xyz.de
-      - SMTP_PORT=465
-      - EMAIL_LEITSTELLE=email@leitstelle.de
-      - TELEGRAM_TOKEN=telegram.token.from.bot
-      - GROUP_CHAT_ID=-1234567890
-      - ZIP_CODE=12345
+    env_file:
+      - .env
     depends_on:
       - db
     networks:
@@ -52,11 +32,8 @@ services:
       - einsatzleiter-network
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=mitarbeiter
-      - POSTGRES_PASSWORD=arbeitsplatz1
-      - POSTGRES_DB=einsatzleitung
-
+    env_file:
+      - .env
 
   ofelia:
     # https://github.com/mcuadros/ofelia?tab=readme-ov-file
