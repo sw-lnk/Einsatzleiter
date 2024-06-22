@@ -3,40 +3,40 @@ version: '3'
 
 services:
   django:
-    container_name: django-mde
+    container_name: einsatzleiter
     restart: unless-stopped
     build:
-      context: ./django-mde
+      context: ./Einsatzleiter
     command: python manage.py runserver 0.0.0.0:8080
     volumes:
-      - ./django-mde:/usr/src/app/
+      - ./einsatzleiter:/usr/src/app/
     ports:
       - 8040:8080
     environment:
       - PIPELINE=production
-      - DB_NAME = einsatzleitung
-      - DB_USER_NM = mitarbeiter
-      - DB_USER_PW = arbeitsplatz1
-      - DB_IP = django-postgres
-      - DB_PORT = 5432
+      - DB_NAME=einsatzleitung
+      - DB_USER_NM=mitarbeiter
+      - DB_USER_PW=arbeitsplatz1
+      - DB_IP=django-postgres
+      - DB_PORT=5432
 
-      - SECRET_KEY = django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32
-      - ALLOWED_HOSTS = localhost,0.0.0.0
+      - SECRET_KEY=django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32
+      - ALLOWED_HOSTS=localhost,0.0.0.0
 
-      - EMAIL_ADRESSE = eigene.mail@adresse.de
-      - EMAIL_PASSWORD = Top@Secret1
-      - IMAP_SERVER = imap.xyz.de
-      - IMAP_PORT = 993
-      - SMTP_SERVER = smtp.xyz.de
-      - SMTP_PORT = 465
-      - EMAIL_LEITSTELLE = email@leitstelle.de
-      - TELEGRAM_TOKEN = telegram.token.from.bot
-      - GROUP_CHAT_ID = -1234567890
-      - ZIP_CODE = 12345
+      - EMAIL_ADRESSE=eigene.mail@adresse.de
+      - EMAIL_PASSWORD=Top@Secret1
+      - IMAP_SERVER=imap.xyz.de
+      - IMAP_PORT=993
+      - SMTP_SERVER=smtp.xyz.de
+      - SMTP_PORT=465
+      - EMAIL_LEITSTELLE=email@leitstelle.de
+      - TELEGRAM_TOKEN=telegram.token.from.bot
+      - GROUP_CHAT_ID=-1234567890
+      - ZIP_CODE=12345
     depends_on:
       - db
     networks:
-      - django-network
+      - einsatzleiter-network
     labels:
       ofelia.enabled: "true"
       ofelia.job-exec.check-new-mission.schedule: "@every 30s"
@@ -45,11 +45,11 @@ services:
   db:
     image: postgres:alpine
     restart: unless-stopped
-    container_name: django-postgres
+    container_name: einsatzleiter-postgres
     ports:
       - 5432:5432
     networks:
-      - django-network
+      - einsatzleiter-network
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -62,10 +62,10 @@ services:
     # https://github.com/mcuadros/ofelia?tab=readme-ov-file
     image: mcuadros/ofelia:latest
     restart: unless-stopped
-    container_name: django-ofelia
+    container_name: einsatzleiter-ofelia
     command: daemon --docker
     networks:
-      - django-network
+      - einsatzleiter-network
     depends_on:
       - django
     volumes:
@@ -78,6 +78,6 @@ volumes:
   postgres_data:
 
 networks:
-  django-network:
-    name: django-network
+  einsatzleiter-network:
+    name: einsatzleiter-network
     driver: bridge

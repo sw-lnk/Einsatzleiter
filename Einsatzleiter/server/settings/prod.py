@@ -29,3 +29,11 @@ DATABASES = {
         "PORT": DB_PORT,
     }
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_SSL = True
+EMAIL_HOST = os.environ.get("SMTP_SERVER")
+EMAIL_PORT = os.environ.get("SMTP_PORT")
+DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_ADRESSE")
+EMAIL_HOST_USER = os.environ.get("EMAIL_ADRESSE")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
