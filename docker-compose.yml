@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     build:
       context: ./Einsatzleiter
+      network: host
     command: python manage.py runserver 0.0.0.0:8080
     volumes:
       - ./Einsatzleiter:/usr/src/app/
