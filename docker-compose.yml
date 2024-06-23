@@ -21,7 +21,7 @@ services:
     labels:
       ofelia.enabled: "true"
       ofelia.job-exec.check-new-mission.schedule: "@every 30s"
-      ofelia.job-exec.check-new-mission.command: "python manage.py runscript mission"
+      ofelia.job-exec.check-new-mission.command: "python scripts/mission.py"
 
   db:
     image: postgres:alpine
