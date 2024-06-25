@@ -12,6 +12,8 @@ ENV PORT 8080
 
 # Set the working directory within the container to /app for any subsequent commands
 WORKDIR /usr/src/app
+RUN mkdir assets
+RUN mkdir mediafiles
 
 # Copy the entire current directory contents into the container at /app
 COPY . /usr/src/app/
