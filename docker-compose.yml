@@ -6,7 +6,6 @@ services:
     build:
       context: ./Einsatzleiter
       network: host
-#    command: python manage.py runserver 0.0.0.0:8080
     command: gunicorn server.wsgi:application --bind 0.0.0.0:8080
     volumes:
       - ./Einsatzleiter:/usr/src/app/
@@ -34,7 +33,7 @@ services:
     container_name: einsatzleiter-postgres
     ports:
       - 5432:5432
-      networks:
+    networks:
       - einsatzleiter-network
     volumes:
       - postgres_data:/var/lib/postgresql/data/
