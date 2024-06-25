@@ -5,9 +5,13 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 from dotenv import load_dotenv
 load_dotenv()
+
 import requests
 from datetime import datetime
 from imap_tools import MailBox, AND
+
+import pytz
+time_zone = pytz.timezone('Europe/Berlin')
 
 Base = declarative_base()
 class Mission(Base):
@@ -43,29 +47,35 @@ class Mission(Base):
     status=Column(String(15), nullable=False, default=UNTREATED)
     prio=Column(String(15), nullable=False, default=MEDIUM)
     
-    start=Column(DateTime(), default=datetime.now)
+    start=Column(DateTime(), default=datetime.now(time_zone))
     end=Column(DateTime(), nullable=True)
     
-    creation=Column(DateTime(), default=datetime.now)
-    update=Column(DateTime(), default=datetime.now)
+    creation=Column(DateTime(), default=datetime.now(time_zone))
+    update=Column(DateTime(), default=datetime.now(time_zone))
     
     
     archiv=Column(Boolean(), default=False, nullable=False)
     
     author_id=Column(Integer(), default=1)
 
-url = URL.create(
-    drivername="postgresql",
-    username=os.getenv("POSTGRES_USER"),
-    host="192.168.178.21", #os.getenv("DB_IP"),
-    database=os.getenv("POSTGRES_DB"),
-    password=os.getenv("POSTGRES_PASSWORD"),
-    port=os.getenv("DB_PORT")
-)
+if os.getenv("PIPELINE"):
+    url = URL.create(
+        drivername="postgresql",
+        username=os.getenv("POSTGRES_USER"),
+        host=os.getenv("DEVICE_IP"),
+        database=os.getenv("POSTGRES_DB"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+        port=os.getenv("DB_PORT")
+    )
 
-engine = create_engine(url)
+    engine = create_engine(url)
+else:
+    engine = create_engine('sqlite:///db.sqlite3')
+    
 Session = sessionmaker(bind=engine)
 session = Session()
+
+    
 
 def all_mission() -> list[Mission]:
     return session.query(Mission).all()
@@ -100,7 +110,7 @@ def check_mission_excist(msg) -> bool:
 def new_mission(msg: dict) -> None:
     new_mission = Mission()
     new_mission.main_id = msg['main_id']
-    new_mission.keyword = f"{msg['key_word_short']} - {msg['key_word_long']}",
+    new_mission.keyword = f"{msg['key_word_short']} - {msg['key_word_long']}"
     new_mission.street = msg['street']
     new_mission.street_no = msg['street_no']
     new_mission.start = msg['date']
@@ -124,7 +134,7 @@ def send_to_telegram(msg) -> None:
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
     CHAT_GROUP_ID = os.getenv("GROUP_CHAT_ID")
     
-    year = datetime.now().year
+    year = datetime.now(time_zone).year
     deadline = datetime(year, 1, 1, 0, 0)
     
     cnt = session.query(Mission).filter(Mission.start > deadline).count()
@@ -177,9 +187,9 @@ def main() -> None:
 
 def main_plus() -> None:
     print('Script is running.')
-    start = datetime.now()
+    start = datetime.now(time_zone)
     main()
-    duration = datetime.now() - start
+    duration = datetime.now(time_zone) - start
     print(f"Finished script after {duration.seconds:.1f}s.")
     
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ def restore_mission(modeladmin, request, queryset):
     
 @admin.register(Mission)
 class MissionAdmin(admin.ModelAdmin):
-    list_display = ('archiv', 'main_id', 'keyword', 'street', 'start', 'status')
+    list_display = ('main_id', 'keyword', 'street', 'start', 'status', 'archiv')
     list_filter = ('status' ,'start', 'archiv')
     actions = [
         mark_as_untreated,
