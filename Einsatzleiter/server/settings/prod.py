@@ -10,6 +10,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(",")
+ALLOWED_HOSTS.append(os.environ.get("DEVICE_IP"))
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -29,6 +30,9 @@ DATABASES = {
         "PORT": DB_PORT,
     }
 }
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8080']
+CSRF_TRUSTED_ORIGINS.append(f'http://{os.environ.get("DEVICE_IP")}:1337')
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_SSL = True
