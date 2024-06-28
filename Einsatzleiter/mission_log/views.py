@@ -23,7 +23,7 @@ def dashboard(request):
 def all_missions(request):
     context = {}
     context['mission_list'] = Mission.objects.exclude(status__exact=Mission.CLOSED).order_by('prio', 'status', 'start',)
-    context['mission_list_closed'] = Mission.objects.filter(status__exact=Mission.CLOSED).exclude(archiv__exact=True)
+    context['mission_list_closed'] = Mission.objects.filter(status__exact=Mission.CLOSED).exclude(archiv__exact=True).order_by('-start')
     return render(request, "mission_log/mission.html", context)
 
 @login_required

@@ -9,9 +9,9 @@ load_dotenv()
 import requests
 from datetime import datetime
 from imap_tools import MailBox, AND
+from dateutil import tz
 
-import pytz
-time_zone = pytz.timezone('Europe/Berlin')
+time_zone = tz.gettz("Europe/Berlin")
 
 Base = declarative_base()
 class Mission(Base):
@@ -75,19 +75,17 @@ else:
 Session = sessionmaker(bind=engine)
 session = Session()
 
-    
+email_address = os.getenv("EMAIL_ADRESSE")
+email_password = os.getenv("EMAIL_PASSWORD")
+email_leitstelle = os.getenv("EMAIL_LEITSTELLE")
+imap_server = os.getenv("IMAP_SERVER")
+imap_port = os.getenv("IMAP_PORT")
+
 
 def all_mission() -> list[Mission]:
     return session.query(Mission).all()
 
 def get_mails() -> list[dict]:
-    email_address = os.getenv("EMAIL_ADRESSE")
-    email_password = os.getenv("EMAIL_PASSWORD")
-    email_leitstelle = os.getenv("EMAIL_LEITSTELLE")
-
-    imap_server = os.getenv("IMAP_SERVER")
-    imap_port = os.getenv("IMAP_PORT")
-
     list_mails = []
     with MailBox(imap_server, imap_port).login(email_address, email_password) as mailbox:
         for msg in mailbox.fetch(AND(from_=email_leitstelle)):
@@ -103,6 +101,12 @@ def get_mails() -> list[dict]:
             list_mails.append(dic)
     
     return list_mails
+
+def clear_inbox() -> None:    
+    with MailBox(imap_server, imap_port).login(email_address, email_password) as mailbox:
+        list_mails = [msg.uid for msg in mailbox.fetch()]
+        mailbox.delete(list_mails)
+        
 
 def check_mission_excist(msg) -> bool:
     return session.query(Mission).filter(Mission.main_id == msg['main_id']).count()
@@ -184,6 +188,7 @@ def main() -> None:
     for msg in all_mails:
         create_or_upate_mission(msg)
     session.close()
+    clear_inbox()
 
 def main_plus() -> None:
     print('Script is running.')
