@@ -64,5 +64,34 @@ class Mission(models.Model):
             a += f', {self.zip_code}'
         return a
     
+    def auto_entry(self) -> str:
+        for k, v in self.STATUS_CHOICES:
+            if k == self.status:
+               status_value = v
+        
+        for k, v in self.PRIO_CHOICES:
+            if k == self.prio:
+               prio_value = v
+        
+        return f'{self.keyword}, Status: {status_value}, Prio: {prio_value} - {self.address()}'
+    
     def __str__(self):
         return f'{self.keyword} - {self.street}'
+
+
+class Entry(models.Model):
+    
+    text = models.TextField(_("Entry text"), blank=False)
+    sender = models.CharField(_('Sender'), max_length=100, blank=True)
+    recipient = models.CharField(_('Recipient'), max_length=100, blank=True)
+    
+    time = models.DateTimeField(_('Time'), auto_now_add=True, editable=False)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.RESTRICT,
+        verbose_name=_("Author")
+    )
+    mission = models.ForeignKey(Mission, on_delete=models.RESTRICT, verbose_name=_("Mission"))
+    
+    def __str__(self):
+        return f"{self.time.strftime('%d.%m.%Y %H:%M')}: {self.text}"

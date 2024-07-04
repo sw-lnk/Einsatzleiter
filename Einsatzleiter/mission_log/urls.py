@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.all_missions, name="mission_all"),    
     path('dashboard', views.dashboard, name="mission_dashboard"),
     path('add', views.add, name="mission_new"),
+    path('entry/<int:main_id>/', views.entry, name="mission_entry"),
     path('update/<int:main_id>/', view=views.update, name='mission_update'),
     path('archiv/ask/<int:main_id>/', view=views.archiv_ask, name='mission_archiv_ask'),
     path('archiv/do/<int:main_id>/', view=views.archiv, name='mission_archiv_do'),

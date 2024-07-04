@@ -1,0 +1,43 @@
+{% extends "base_generic.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    <title>EL - Einsätze</title>
+{% endblock %}
+
+{% block content %} 
+    <div class="container">
+        <div class="row mx-1 mt-5">
+            <div class="col">
+                <h2>{{ mission }}</h2>
+            </div>
+            <div class="col-1 align-self-center">
+                <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_update' main_id=mission.main_id %}">Einsatzdetails</a>
+            </div>
+        </div>        
+        <div class="row m-1">
+            {{ form.media }}
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">{{ form.text | as_crispy_field }}</div>
+                    <!--
+                    <div class="col-2">{{ form.sender | as_crispy_field }}</div>
+                    <div class="col-2">{{ form.recipient | as_crispy_field }}</div>
+                    -->
+                    <div class="col-1 text-center align-self-center">
+                        <button class="btn btn-sm btn-primary text-light" type="submit">Senden</button>
+                    </div>
+                </div>             
+            </form>
+        </div>
+        <hr>
+        {% for entry in all_entries %}
+                <div class="mission_card m-2 px-4 py-2 rounded">
+                    <div class="row justify-content-between">
+                        {{ entry }}
+                    </div>
+                </div>                
+            {% endfor %}
+    </div>  
+{% endblock %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Mission
+from .models import Mission, Entry
 from django.utils.translation import gettext_lazy as _
 
 # Register your models here.
@@ -35,3 +35,4 @@ class MissionAdmin(admin.ModelAdmin):
         archiv_mission
         ]
 
+admin.site.register(Entry)

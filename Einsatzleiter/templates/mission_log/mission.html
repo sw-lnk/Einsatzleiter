@@ -41,7 +41,8 @@
                     </div>
                 </div>
                 <div class="row text-center mx-5 my-2">
-                    <a class="btn btn-sm btn-light text-dark" href="{% url 'mission_update' main_id=mission.main_id %}">Bearbeiten</a>
+                    <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_update' main_id=mission.main_id %}">Details</a>
+                    <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_entry' main_id=mission.main_id %}">Tagebuch</a>
                 </div>
             </div>
         {% endfor %}
@@ -81,7 +82,7 @@
                     </div>
                     <div class="row text-center mx-5 my-2">
                         <a class="btn btn-sm btn-danger m-1" href="{% url 'mission_archiv_ask' main_id=mission.main_id %}">Archivieren</a>
-                        <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_update' main_id=mission.main_id %}">Bearbeiten</a>
+                        <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_update' main_id=mission.main_id %}">Details</a>
                     </div>
                 </div>                
             {% endfor %}

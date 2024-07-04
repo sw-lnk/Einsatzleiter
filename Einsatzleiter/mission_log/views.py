@@ -1,10 +1,10 @@
 import datetime
 
-from django.shortcuts import HttpResponse, render, redirect,  get_object_or_404
+from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib.auth.decorators import login_required
 
-from .models import Mission
-from .forms import NewMission, UpdateMission
+from .models import Mission, Entry
+from .forms import NewMission, UpdateMission, NewEntry
 
 # Create your views here.
 def dashboard(request):
@@ -30,36 +30,43 @@ def all_missions(request):
 def add(request):
     context = {}
     context['header'] = 'Neuer Einsatz'
+    
     # check if the request is post 
     if request.method =='POST':  
         
         # Pass the form data to the form class
-        details = NewMission(request.POST)
+        new_mission = NewMission(request.POST)
  
         # In the 'form' class the clean function 
         # is defined, if all the data is correct 
         # as per the clean function, it returns true
-        if details.is_valid():  
+        if new_mission.is_valid():  
  
             # Temporarily make an object to be add some
             # logic into the data if there is such a need
             # before writing to the database   
-            post = details.save(commit = False)
-            post.author = request.user
+            mission = new_mission.save(commit = False)
+            mission.author = request.user
             # Finally write the changes into database
-            post.save()
+            mission.save()
+            
+            entry = Entry()
+            entry.text = f"Einsatz erstellt: {mission.auto_entry()}"
+            entry.author = request.user
+            entry.mission = mission
+            entry.save()
             
             # redirect it to some another page indicating data
             # was inserted successfully
-            context['form'] = details
+            context['form'] = new_mission
             context['header'] = 'Einsatz aktualisieren'
-            return render(request, "mission_log/mission_create.html", context)
+            return redirect("mission_entry", main_id=mission.main_id)
              
         else:
          
             # Redirect back to the same page if the data
             # was invalid
-            context['form'] = details
+            context['form'] = new_mission
             return render(request, "mission_log/mission_create.html", context)  
     else:
  
@@ -73,18 +80,26 @@ def add(request):
 def update(request, main_id):
     context = {}
     context['header'] = 'Einsatz Aktualisieren'
+    context['form_entry'] = NewEntry(None)
     
     mission = get_object_or_404(Mission, main_id=main_id)
-    form = UpdateMission(instance=mission)
+    form_mission = UpdateMission(instance=mission)
     if request.method == "POST":
-        form = UpdateMission(request.POST, instance=mission)
-        if form.is_valid():
-            form.save()
-            context['form'] = form
-            return render(request, "mission_log/mission_create.html", context)
+        form_mission = UpdateMission(request.POST, instance=mission)
+        if form_mission.is_valid():
+            mission = form_mission.save()
+            
+            entry = Entry()
+            entry.text = f"Einsatz aktualisiert: {mission.auto_entry()}"
+            entry.author = request.user
+            entry.mission = mission
+            entry.save()
+            
+            context['form'] = form_mission
+            return redirect("mission_entry", main_id=mission.main_id)
     
     context['mission'] = mission
-    context['form'] = form
+    context['form'] = form_mission    
     return render(request, 'mission_log/mission_create.html', context)
 
 @login_required
@@ -98,3 +113,51 @@ def archiv(request, main_id):
     mission.archiv = not mission.archiv
     mission.save()
     return redirect("mission_all")
+
+@login_required
+def entry(request, main_id):    
+    context = {}
+    mission = get_object_or_404(Mission, main_id=main_id)
+    context['mission'] = mission
+    
+    context['all_entries'] = Entry.objects.filter(mission=mission).order_by('-time')
+    
+    # check if the request is post 
+    if request.method =='POST':  
+        
+        # Pass the form data to the form class
+        new_entry = NewEntry(request.POST)
+ 
+        # In the 'form' class the clean function 
+        # is defined, if all the data is correct 
+        # as per the clean function, it returns true
+        if new_entry.is_valid():  
+ 
+            # Temporarily make an object to be add some
+            # logic into the data if there is such a need
+            # before writing to the database   
+            entry = new_entry.save(commit = False)
+            entry.author = request.user
+            entry.mission = mission
+            # Finally write the changes into database
+            entry.save()
+            
+            # redirect it to some another page indicating data
+            # was inserted successfully
+            context['all_entries'] = Entry.objects.filter(mission=mission).order_by('-time')
+            return redirect("mission_entry", main_id=mission.main_id)
+             
+        else:
+         
+            # Redirect back to the same page if the data
+            # was invalid
+            context['form'] = new_entry
+            return render(request, "mission_log/mission_entry.html", context)  
+    else:
+ 
+        # If the request is a GET request then,
+        # create an empty form object and 
+        # render it into the page
+        context['form'] = NewEntry(None)
+    
+    return render(request, 'mission_log/mission_entry.html', context)

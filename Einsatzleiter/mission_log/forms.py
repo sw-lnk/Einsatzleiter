@@ -24,3 +24,11 @@ class UpdateMission(forms.ModelForm):
             'start': DateTimeInput(),
             'end': DateTimeInput(),
         }
+
+class NewEntry(forms.ModelForm):
+    class Meta:
+        model = models.Entry
+        exclude = ('time', 'author', 'mission')
+        widgets = {
+          'text': forms.Textarea(attrs={'rows':1, 'cols':15}),
+        }
