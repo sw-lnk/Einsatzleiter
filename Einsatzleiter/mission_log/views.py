@@ -3,7 +3,7 @@ import datetime
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib.auth.decorators import login_required
 
-from .models import Mission, Entry
+from .models import Mission, Entry, Vehicle
 from .forms import NewMission, UpdateMission, NewEntry
 
 # Create your views here.
@@ -16,6 +16,17 @@ def dashboard(request):
     
     context['time_normal'] = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
     context['time_tactical'] = datetime.datetime.now().strftime('%d %H %M %b %y')
+    
+    all_vehicles = Vehicle.objects.exclude(status=2).exclude(status=6).order_by('call_sign')
+    context['all_vehicles'] = all_vehicles
+    context['staff'] = {
+        'vf': sum([v.vf for v in all_vehicles]),
+        'zf': sum([v.zf for v in all_vehicles]),
+        'gf': sum([v.gf for v in all_vehicles]),
+        'ms': sum([v.ms for v in all_vehicles]),
+        'agt': sum([v.agt for v in all_vehicles]),
+        'total': sum([v.staff_total() for v in all_vehicles])
+    }
     
     return render(request, 'mission_log/dashboard.html', context)
 
@@ -60,21 +71,21 @@ def add(request):
             # was inserted successfully
             context['form'] = new_mission
             context['header'] = 'Einsatz aktualisieren'
-            return redirect("mission_entry", main_id=mission.main_id)
+            return redirect("mission_overview", main_id=mission.main_id)
              
         else:
          
             # Redirect back to the same page if the data
             # was invalid
             context['form'] = new_mission
-            return render(request, "mission_log/mission_create.html", context)  
+            return render(request, "mission_log/mission_detail.html", context)  
     else:
  
         # If the request is a GET request then,
         # create an empty form object and 
         # render it into the page
         context['form'] = NewMission(None)   
-        return render(request, 'mission_log/mission_create.html', context)
+        return render(request, 'mission_log/mission_detail.html', context)
 
 @login_required
 def update(request, main_id):
@@ -96,11 +107,11 @@ def update(request, main_id):
             entry.save()
             
             context['form'] = form_mission
-            return redirect("mission_entry", main_id=mission.main_id)
+            return redirect("mission_overview", main_id=mission.main_id)
     
     context['mission'] = mission
     context['form'] = form_mission    
-    return render(request, 'mission_log/mission_create.html', context)
+    return render(request, 'mission_log/mission_detail.html', context)
 
 @login_required
 def archiv_ask(request, main_id):    
@@ -115,12 +126,23 @@ def archiv(request, main_id):
     return redirect("mission_all")
 
 @login_required
-def entry(request, main_id):    
+def mission_overview(request, main_id):    
     context = {}
     mission = get_object_or_404(Mission, main_id=main_id)
     context['mission'] = mission
     
     context['all_entries'] = Entry.objects.filter(mission=mission).order_by('-time')
+    all_vehicles = Vehicle.objects.filter(mission=mission).order_by('status')
+    context['all_vehicles'] = all_vehicles
+    context['staff'] = {
+        'vf': sum([v.vf for v in all_vehicles]),
+        'zf': sum([v.zf for v in all_vehicles]),
+        'gf': sum([v.gf for v in all_vehicles]),
+        'ms': sum([v.ms for v in all_vehicles]),
+        'agt': sum([v.agt for v in all_vehicles]),
+        'total': sum([v.staff_total() for v in all_vehicles])
+    }
+    
     
     # check if the request is post 
     if request.method =='POST':  
@@ -145,14 +167,14 @@ def entry(request, main_id):
             # redirect it to some another page indicating data
             # was inserted successfully
             context['all_entries'] = Entry.objects.filter(mission=mission).order_by('-time')
-            return redirect("mission_entry", main_id=mission.main_id)
+            return redirect("mission_overview", main_id=mission.main_id)
              
         else:
          
             # Redirect back to the same page if the data
             # was invalid
             context['form'] = new_entry
-            return render(request, "mission_log/mission_entry.html", context)  
+            return render(request, "mission_log/mission_overview.html", context)  
     else:
  
         # If the request is a GET request then,
@@ -160,4 +182,4 @@ def entry(request, main_id):
         # render it into the page
         context['form'] = NewEntry(None)
     
-    return render(request, 'mission_log/mission_entry.html', context)
+    return render(request, 'mission_log/mission_overview.html', context)

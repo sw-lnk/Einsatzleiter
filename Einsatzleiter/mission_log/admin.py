@@ -37,4 +37,23 @@ class MissionAdmin(admin.ModelAdmin):
 
 admin.site.register(Entry)
 admin.site.register(Orga)
-admin.site.register(Vehicle)
+
+@admin.action(description=_('Reset vehicle to default'))
+def reset_vehicle(modeladmin, request, queryset):
+    queryset.update(
+        status=2,
+        vf=0,
+        zf=0,
+        gf=0,
+        ms=0,
+        agt=0,
+        info='',
+        mission=None
+    )
+    
+@admin.register(Vehicle)
+class MissionAdmin(admin.ModelAdmin):
+    list_filter = ('status' ,'orga')
+    actions = [
+        reset_vehicle
+        ]

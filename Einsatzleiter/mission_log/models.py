@@ -91,7 +91,7 @@ class Entry(models.Model):
         on_delete=models.RESTRICT,
         verbose_name=_("Author")
     )
-    mission = models.ForeignKey(Mission, on_delete=models.RESTRICT, verbose_name=_("Mission"))
+    mission = models.ForeignKey(Mission, on_delete=models.CASCADE, verbose_name=_("Mission"))
     
     def __str__(self):
         return f"{self.time.strftime('%d.%m.%Y %H:%M')}: {self.text}"
@@ -120,7 +120,7 @@ class Vehicle(models.Model):
     )
     
     call_sign = models.CharField(_('Call sign'), max_length=100, unique=True, blank=False)
-    status=models.IntegerField(_('status'), max_length=35, choices=STATUS_CHOICES, default=6, blank=False)
+    status=models.IntegerField(_('status'), choices=STATUS_CHOICES, default=6, blank=False)
     
     vf = models.PositiveIntegerField('VF', default=0)
     zf = models.PositiveIntegerField('ZF', default=0)
@@ -132,8 +132,10 @@ class Vehicle(models.Model):
     
     orga = models.ForeignKey(Orga, on_delete=models.RESTRICT, verbose_name=_('Organization'))    
     
-    def total_people(self) -> int:
+    mission = models.ForeignKey(Mission, on_delete=models.CASCADE, verbose_name=_("Mission"), null=True, blank=True)
+    
+    def staff_total(self) -> int:
         return sum([self.vf, self.zf, self.gf, self.ms])
     
     def __str__(self):
-        return f"{self.call_sign}: ({self.vf}/{self.zf}/{self.gf}/{self.ms} = {self.total_people()} | AGT: {self.agt})"
+        return f"{self.call_sign} ({self.orga})"
