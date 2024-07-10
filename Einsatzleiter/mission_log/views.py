@@ -132,7 +132,7 @@ def update(request, main_id):
             entry.save()
             
             context['form'] = form_mission
-            return redirect("mission_all", main_id=mission.main_id)
+            return redirect("mission_update", main_id=mission.main_id)
     
     context['mission'] = mission
     context['form'] = form_mission    
@@ -184,8 +184,7 @@ def mission_overview(request, main_id):
             
             # redirect it to some another page indicating data
             # was inserted successfully
-            context['all_entries'] = Entry.objects.filter(mission=mission).order_by('-time')
-            return redirect("mission_all", main_id=mission.main_id)
+            return redirect("mission_entry", main_id=mission.main_id)
              
         else:
          
