@@ -6,6 +6,20 @@ from django.contrib.auth.decorators import login_required
 from .models import Mission, Entry, Vehicle
 from .forms import NewMission, UpdateMission, NewEntry
 
+def get_all_vehicles() -> list[Vehicle]:
+    all_vehicles = Vehicle.objects.exclude(status=2).exclude(status=6).order_by('call_sign')
+    return all_vehicles if all_vehicles else []
+
+def get_staff_dict(all_vehicles: list[Vehicle]) -> dict:
+    return {
+        'vf': sum([v.vf for v in all_vehicles]),
+        'zf': sum([v.zf for v in all_vehicles]),
+        'gf': sum([v.gf for v in all_vehicles]),
+        'ms': sum([v.ms for v in all_vehicles]),
+        'agt': sum([v.agt for v in all_vehicles]),
+        'total': sum([v.staff_total() for v in all_vehicles])
+    }
+
 # Create your views here.
 def dashboard(request):
     context = {}
@@ -17,16 +31,9 @@ def dashboard(request):
     context['time_normal'] = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
     context['time_tactical'] = datetime.datetime.now().strftime('%d %H %M %b %y')
     
-    all_vehicles = Vehicle.objects.exclude(status=2).exclude(status=6).order_by('call_sign')
+    all_vehicles = get_all_vehicles()
     context['all_vehicles'] = all_vehicles
-    context['staff'] = {
-        'vf': sum([v.vf for v in all_vehicles]),
-        'zf': sum([v.zf for v in all_vehicles]),
-        'gf': sum([v.gf for v in all_vehicles]),
-        'ms': sum([v.ms for v in all_vehicles]),
-        'agt': sum([v.agt for v in all_vehicles]),
-        'total': sum([v.staff_total() for v in all_vehicles])
-    }
+    context['staff'] = get_staff_dict(all_vehicles)
     
     return render(request, 'mission_log/dashboard.html', context)
 
@@ -132,16 +139,9 @@ def mission_overview(request, main_id):
     context['mission'] = mission
     
     context['all_entries'] = Entry.objects.filter(mission=mission).order_by('-time')
-    all_vehicles = Vehicle.objects.filter(mission=mission).order_by('status')
+    all_vehicles = get_all_vehicles()
     context['all_vehicles'] = all_vehicles
-    context['staff'] = {
-        'vf': sum([v.vf for v in all_vehicles]),
-        'zf': sum([v.zf for v in all_vehicles]),
-        'gf': sum([v.gf for v in all_vehicles]),
-        'ms': sum([v.ms for v in all_vehicles]),
-        'agt': sum([v.agt for v in all_vehicles]),
-        'total': sum([v.staff_total() for v in all_vehicles])
-    }
+    context['staff'] = context['staff'] = get_staff_dict(all_vehicles)
     
     
     # check if the request is post 
