@@ -6,10 +6,15 @@ from django.contrib.auth.decorators import login_required
 from .models import Mission, Entry, Vehicle
 from .forms import NewMission, UpdateMission, NewEntry
 
-def get_all_vehicles(exclude_status_6=True) -> list[Vehicle]:
+def get_all_vehicles(mission:Mission=None, exclude_status_6=True) -> list[Vehicle]:
     all_vehicles = Vehicle.objects.exclude(status=2)
+    
     if exclude_status_6:
         all_vehicles = all_vehicles.exclude(status=6)
+    
+    if mission:
+        all_vehicles = all_vehicles.filter(mission=mission)
+    
     return all_vehicles.order_by('call_sign')
 
 def get_staff_dict(all_vehicles: list[Vehicle]) -> dict:
@@ -42,7 +47,18 @@ def dashboard(request):
 @login_required
 def all_missions(request):
     context = {}
-    context['mission_list'] = Mission.objects.exclude(status__exact=Mission.CLOSED).order_by('prio', 'status', 'start',)
+    all_mission = Mission.objects.exclude(status__exact=Mission.CLOSED).order_by('prio', 'status', 'start',)
+    missions = []
+    for mission in all_mission:
+        missions.append({
+            'mission': mission,
+            'vehicles': get_all_vehicles(mission),
+            'staff': get_staff_dict(get_all_vehicles(mission))            
+        })
+    
+    context['missions'] = missions
+    
+    #context['mission_list'] = Mission.objects.exclude(status__exact=Mission.CLOSED).order_by('prio', 'status', 'start',)
     context['mission_list_closed'] = Mission.objects.filter(status__exact=Mission.CLOSED).exclude(archiv__exact=True).order_by('-start')
     return render(request, "mission_log/mission.html", context)
 
@@ -80,7 +96,7 @@ def add(request):
             # was inserted successfully
             context['form'] = new_mission
             context['header'] = 'Einsatz aktualisieren'
-            return redirect("mission_overview", main_id=mission.main_id)
+            return redirect("mission_all", main_id=mission.main_id)
              
         else:
          
@@ -116,7 +132,7 @@ def update(request, main_id):
             entry.save()
             
             context['form'] = form_mission
-            return redirect("mission_overview", main_id=mission.main_id)
+            return redirect("mission_all", main_id=mission.main_id)
     
     context['mission'] = mission
     context['form'] = form_mission    
@@ -169,7 +185,7 @@ def mission_overview(request, main_id):
             # redirect it to some another page indicating data
             # was inserted successfully
             context['all_entries'] = Entry.objects.filter(mission=mission).order_by('-time')
-            return redirect("mission_overview", main_id=mission.main_id)
+            return redirect("mission_all", main_id=mission.main_id)
              
         else:
          

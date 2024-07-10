@@ -10,39 +10,53 @@
         <h2 class="ui center aligned header">Einsatzübersicht</h2>
         <a class="btn btn-secondary" href="{% url 'mission_new' %}" role="button">Neuer Einsatz</a>
         <hr>
-        {% for mission in mission_list %}
+        {% for mission in missions %}
             <div class="mission_card m-2 px-4 py-2 rounded">
                 <div class="row justify-content-between">
-                    <div class="col-auto text-start">
-                        {% if mission.prio == mission.HIGH %}
-                            <span class="badge bg-danger  my-2">Priorität: Hoch</span>
-                        {% elif mission.prio == mission.MEDIUM %}
-                            <span class="badge bg-light text-dark my-2">Priorität: Mittel</span>
+                    <div class="col-auto">
+                        {% if mission.mission.prio == mission.mission.HIGH %}
+                            <span class="badge bg-danger">Priorität: Hoch</span>
+                        {% elif mission.mission.prio == mission.mission.MEDIUM %}
+                            <span class="badge bg-light text-dark">Priorität: Mittel</span>
                         {% else %}
-                            <span class="badge text-dark my-2">Priorität: Niedrig</span>
+                            <span class="badge text-dark">Priorität: Niedrig</span>
                         {% endif %}
-                        <p class="fw-bold mb-0">{{ mission.keyword }}</p>            
-                        <p class="m-0">Anschrift: {{ mission.address }}</p>
-                        <p class="m-0">Einsatznr.: {{ mission.main_id }}</p>
-                        <p class="mx-0 mt-1 mb-0">Start: {{ mission.start }}</p>
-                        <p class="mx-0 mt-0 mb-1">Ende: {% if mission.end %}{{ mission.end }}{% endif %}</p>
                     </div>
-                    
-                    <div class="col text-end align-bottom">
-                        <div class="col align-top">
-                            {% if mission.status == mission.CLOSED %}
-                                <p class="badge bg-success">Abgeschlossen</p>
-                            {% elif mission.status == mission.PROCESSING %}
-                                <p class="badge bg-primary text-dark">In Arbeit</p>
-                            {% else %}
-                                <p class="badge bg-warning text-dark">Unbearbeitet</p>
-                            {% endif %}
-                        </div>
+                    <div class="col-auto">
+                        {% if mission.mission.status == mission.mission.CLOSED %}
+                            <p class="badge bg-success">Abgeschlossen</p>
+                        {% elif mission.mission.status == mission.mission.PROCESSING %}
+                            <p class="badge bg-primary text-dark">In Arbeit</p>
+                        {% else %}
+                            <p class="badge bg-warning text-dark">Unbearbeitet</p>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="row text-center mx-5 my-2">
-                    <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_update' main_id=mission.main_id %}">Details</a>
-                    <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_entry' main_id=mission.main_id %}">Tagebuch</a>
+                <div class="row text-start">
+                    <div class="col-auto">                        
+                        <p class="fw-bold m-0">{{ mission.mission.keyword }}</p>
+                        <p class="m-0 mt-2">Einsatznr.: {{ mission.mission.main_id }}</p>                                            
+                    </div>
+                    <div class="col-auto">
+                        <p class="m-0">{{ mission.mission.address }}</p>
+                        <p class="m-0 mt-2">
+                            Personal: <span class="m-0 p-0">{{ mission.staff.vf }}/{{ mission.staff.zf }}/{{ mission.staff.gf }}/{{ mission.staff.ms }} =</span>
+                            <span class="m-0 p-0" style="text-decoration:underline">{{ mission.staff.total }}</span>
+                            <span class="m-0 p-0 ms-2">(AGT: {{ mission.staff.agt }})</span>
+                        </p>
+                    </div>                  
+                </div>
+                <div class="row text-start mt-2">
+                    <div class="col-auto">
+                        <p>Start: {{ mission.mission.start }}</p>
+                    </div>
+                    <div class="col-auto">
+                        <p>Ende: {% if mission.mission.end %}{{ mission.mission.end }}{% endif %}</p>
+                    </div>
+                </div>
+                <div class="row text-center mx-2 my-1">
+                    <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_update' main_id=mission.mission.main_id %}">Details</a>
+                    <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_entry' main_id=mission.mission.main_id %}">Tagebuch</a>
                 </div>
             </div>
         {% endfor %}
@@ -53,38 +67,47 @@
             {% for mission in mission_list_closed %}
                 <div class="mission_card m-2 px-4 py-2 rounded">
                     <div class="row justify-content-between">
-                        <div class="col-auto text-start">
+                        <div class="col-auto">
                             {% if mission.prio == mission.HIGH %}
-                                <span class="badge bg-danger my-2">Priorität: Hoch</span>
+                                <span class="badge bg-danger">Priorität: Hoch</span>
                             {% elif mission.prio == mission.MEDIUM %}
-                                <span class="badge bg-warning text-dark my-2">Priorität: Mittel</span>
+                                <span class="badge bg-light text-dark">Priorität: Mittel</span>
                             {% else %}
-                                <span class="badge bg-primary my-2">Priorität: Niedrig</span>
+                                <span class="badge text-dark">Priorität: Niedrig</span>
                             {% endif %}
-                            <p class="fw-bold mb-0">{{ mission.keyword }}</p>            
-                            <p class="m-0">Anschrift: {{ mission.address }}</p>
-                            <p class="m-0">Einsatznr.: {{ mission.main_id }}</p>
-                            <p class="mx-0 mt-1 mb-0">Start: {{ mission.start }}</p>
-                            <p class="mx-0 mt-0 mb-1">Ende: {% if mission.end %}{{ mission.end }}{% endif %}</p>
                         </div>
-                        
-                        <div class="col text-end align-bottom">
-                            <div class="col align-top">
-                                {% if mission.status == mission.CLOSED %}
-                                    <p class="badge bg-success">Abgeschlossen</p>
-                                {% elif mission.status == mission.PROCESSING %}
-                                    <p class="badge bg-primary text-dark">In Arbeit</p>
-                                {% else %}
-                                    <p class="badge bg-warning text-dark">Unbearbeitet</p>
-                                {% endif %}
-                            </div>
+                        <div class="col-auto">
+                            {% if mission.status == mission.CLOSED %}
+                                <p class="badge bg-success">Abgeschlossen</p>
+                            {% elif mission.status == mission.PROCESSING %}
+                                <p class="badge bg-primary text-dark">In Arbeit</p>
+                            {% else %}
+                                <p class="badge bg-warning text-dark">Unbearbeitet</p>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="row text-center mx-5 my-2">
+                    <div class="row text-start">
+                        <div class="col-auto">                        
+                            <p class="fw-bold m-0">{{ mission.keyword }}</p>
+                            <p class="m-0 mt-2">Einsatznr.: {{ mission.main_id }}</p>                                            
+                        </div>
+                        <div class="col-auto">
+                            <p class="m-0">{{ mission.address }}</p>
+                        </div>                  
+                    </div>
+                    <div class="row text-start mt-2">
+                        <div class="col-auto">
+                            <p>Start: {{ mission.start }}</p>
+                        </div>
+                        <div class="col-auto">
+                            <p>Ende: {% if mission.end %}{{ mission.end }}{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="row text-center mx-2 my-1">
                         <a class="btn btn-sm btn-danger m-1" href="{% url 'mission_archiv_ask' main_id=mission.main_id %}">Archivieren</a>
                         <a class="btn btn-sm btn-light text-dark m-1" href="{% url 'mission_update' main_id=mission.main_id %}">Details</a>
                     </div>
-                </div>                
+                </div>             
             {% endfor %}
         {% endif %}
     </div>
