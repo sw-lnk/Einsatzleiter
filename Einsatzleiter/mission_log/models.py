@@ -132,7 +132,7 @@ class Vehicle(models.Model):
     
     orga = models.ForeignKey(Orga, on_delete=models.RESTRICT, verbose_name=_('Organization'))    
     
-    mission = models.ForeignKey(Mission, on_delete=models.CASCADE, verbose_name=_("Mission"), null=True, blank=True)
+    mission = models.ForeignKey(Mission, on_delete=models.CASCADE, verbose_name=_("Mission"), null=True, blank=True, default=None)
     
     def staff_total(self) -> int:
         return sum([self.vf, self.zf, self.gf, self.ms])

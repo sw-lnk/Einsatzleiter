@@ -6,11 +6,11 @@ from django.contrib.auth.decorators import login_required
 from .models import Mission, Entry, Vehicle
 from .forms import NewMission, UpdateMission, NewEntry
 
-def get_all_vehicles() -> list[Vehicle]:
-    all_vehicles = Vehicle.objects.exclude(status=2).exclude(status=6).order_by('call_sign')
-    if all_vehicles:
-        return all_vehicles
-    return []
+def get_all_vehicles(exclude_status_6=True) -> list[Vehicle]:
+    all_vehicles = Vehicle.objects.exclude(status=2)
+    if exclude_status_6:
+        all_vehicles = all_vehicles.exclude(status=6)
+    return all_vehicles.order_by('call_sign')
 
 def get_staff_dict(all_vehicles: list[Vehicle]) -> dict:
     return {
