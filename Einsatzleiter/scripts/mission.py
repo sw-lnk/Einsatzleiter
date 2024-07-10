@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Text
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -57,6 +57,40 @@ class Mission(Base):
     archiv=Column(Boolean(), default=False, nullable=False)
     
     author_id=Column(Integer(), default=1)
+    
+    def address(self) -> str:
+        a = self.street
+        if self.street_no:
+            a += f' {self.street_no}'
+        if self.zip_code:
+            a += f', {self.zip_code}'
+        return a
+    
+    def auto_entry(self) -> str:
+        for k, v in self.STATUS_CHOICES:
+            if k == self.status:
+               status_value = v
+        
+        for k, v in self.PRIO_CHOICES:
+            if k == self.prio:
+               prio_value = v
+        
+        return f'{self.keyword}, Status: {status_value}, Prio: {prio_value} - {self.address()}'
+
+
+class Entry(Base):    
+    text = Column(Text(), nullable=False)
+    sender = Column(String(100), nullable=True)
+    recipient = Column(String(100), nullable=True)
+    
+    time = Column(DateTime(), default=datetime.now(time_zone))
+    author = Column(Integer(), default=1)
+    mission = Column(Integer(), nullable=False)
+    
+    def __str__(self):
+        return f"{self.time.strftime('%d.%m.%Y %H:%M')}: {self.text}"
+
+
 
 if os.getenv("PIPELINE"):
     url = URL.create(
@@ -118,7 +152,14 @@ def new_mission(msg: dict) -> None:
     new_mission.street = msg['street']
     new_mission.street_no = msg['street_no']
     new_mission.start = msg['date']
+    
+    entry = Entry()
+    entry.text = f"Automatisch erstellt: {new_mission.auto_entry()}"
+    entry.author = new_mission.author_id
+    entry.mission = new_mission.main_id
+    
     session.add(new_mission)
+    session.add(entry)
     session.commit()
 
 def update_mission_end(msg) -> None:
