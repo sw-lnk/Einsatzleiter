@@ -3,8 +3,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.all_missions, name="mission_all"),    
-    path('dashboard', views.dashboard, name="mission_dashboard"),
+    path('', views.dashboard, name="mission_dashboard"),
+    path('all', views.all_missions, name="mission_all"),    
     path('add', views.add, name="mission_new"),
     path('overview/<int:main_id>/', views.mission_overview, name="mission_entry"),
     path('detail/<int:main_id>/', view=views.update, name='mission_update'),
