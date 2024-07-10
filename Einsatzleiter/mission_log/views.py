@@ -8,7 +8,9 @@ from .forms import NewMission, UpdateMission, NewEntry
 
 def get_all_vehicles() -> list[Vehicle]:
     all_vehicles = Vehicle.objects.exclude(status=2).exclude(status=6).order_by('call_sign')
-    return all_vehicles if all_vehicles else []
+    if all_vehicles:
+        return all_vehicles
+    return []
 
 def get_staff_dict(all_vehicles: list[Vehicle]) -> dict:
     return {
