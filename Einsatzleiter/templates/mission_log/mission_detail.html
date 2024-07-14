@@ -14,30 +14,31 @@
                 <div class="row justify-content-between">
                     <div class="col"><h3 class="m-0">{{ header }}</h3></div>
                     {% if mission.main_id %}
-                    <div class="col-1 align-self-end text-end">
-                        <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_entry' main_id=mission.main_id %}">Tagebuch</a>
+                    <div class="col align-self-end text-end">
+                        <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_overview' main_id=mission.main_id %}">Tagebuch</a>
                     </div>
                     {% endif %}
                 </div>
                 <hr>
                 <div class="row">
-                    <div class="col-6">{{ form.keyword | as_crispy_field }}</div>
-                    <div class="col-2">{{ form.main_id | as_crispy_field }}</div>               
-                    <div class="col-2">{{ form.prio | as_crispy_field }}</div>
-                    <div class="col-2">{{ form.status | as_crispy_field }}</div>
+                    <div class="col">{{ form.keyword | as_crispy_field }}</div>
+                    <div class="col-auto">{{ form.main_id | as_crispy_field }}</div>
                 </div>
                 <div class="row">
-                    <div class="col-4">{{ form.street | as_crispy_field }}</div>
-                    <div class="col-1">{{ form.street_no | as_crispy_field }}</div>
-                    <div class="col-1">{{ form.zip_code | as_crispy_field }}</div>
-                    <div class="col-3">{{ form.start | as_crispy_field }}</div>
-                    <div class="col-3">{{ form.end | as_crispy_field }}</div>                            
+                    <div class="col">{{ form.street | as_crispy_field }}</div>
+                    <div class="col-auto">{{ form.street_no | as_crispy_field }}</div>
+                    <div class="col-auto">{{ form.zip_code | as_crispy_field }}</div>                          
+                </div><div class="row">
+                    <div class="col">{{ form.start | as_crispy_field }}</div>
+                    <div class="col">{{ form.end | as_crispy_field }}</div>                            
                 </div>
-                <div class="row justify-content-end">                                        
-                    <div class="col-1 align-self-end text-end">
-                        <input class="btn btn-sm btn-primary text-light m-1" type="submit" value="Speichern">
+                <div class="row justify-content-between">
+                    <div class="col-auto">{{ form.prio | as_crispy_field }}</div>
+                    <div class="col-auto">{{ form.status | as_crispy_field }}</div>
+                    <div class="col-auto align-self-center">
+                        <input class="btn btn-sm btn-primary text-light" type="submit" value="Speichern">
                     </div>
-                </div>                      
+                </div>                     
             </form>
         </div>
     </div>  

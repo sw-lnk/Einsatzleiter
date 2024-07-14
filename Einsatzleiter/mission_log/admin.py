@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Mission, Entry, Orga, Vehicle
+from .models import Mission, Entry, Orga, Unit
 from django.utils.translation import gettext_lazy as _
 
 # Register your models here.
@@ -38,8 +38,8 @@ class MissionAdmin(admin.ModelAdmin):
 admin.site.register(Entry)
 admin.site.register(Orga)
 
-@admin.action(description=_('Reset vehicle to default'))
-def reset_vehicle(modeladmin, request, queryset):
+@admin.action(description=_('Reset unit to default'))
+def reset_unit(modeladmin, request, queryset):
     queryset.update(
         status=2,
         vf=0,
@@ -51,9 +51,9 @@ def reset_vehicle(modeladmin, request, queryset):
         mission=None
     )
     
-@admin.register(Vehicle)
+@admin.register(Unit)
 class MissionAdmin(admin.ModelAdmin):
     list_filter = ('status' ,'orga')
     actions = [
-        reset_vehicle
+        reset_unit
         ]

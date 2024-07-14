@@ -45,7 +45,7 @@ class Mission(models.Model):
     end=models.DateTimeField(_('end time'), blank=True, null=True)
     
     creation=models.DateTimeField(_('creation time'), auto_now_add=True, editable=False)
-    update=models.DateTimeField(_('update time'), auto_now=True)
+    last_update=models.DateTimeField(_('update time'), auto_now=True)
     
     archiv=models.BooleanField(_('archiv'), default=False)
     
@@ -75,8 +75,11 @@ class Mission(models.Model):
         
         return f'{self.keyword}, Status: {status_value}, Prio: {prio_value} - {self.address()}'
     
-    def __str__(self):
+    def short(self):
         return f'{self.keyword} - {self.street}'
+    
+    def __str__(self):
+        return f'{self.main_id}: {self.keyword} - {self.street}'
 
 
 class Entry(models.Model):
@@ -104,20 +107,21 @@ class Orga(models.Model):
         return self.name
 
 
-class Vehicle(models.Model):
+class Unit(models.Model):
     
     STATUS_CHOICES=(
-        (0, 'Priorisierter Sprechwunsch'),
-        (1, 'Einsatzbereit Funk'),
-        (2, 'Einsatzbereit Wache'),
-        (3, 'Einsatz übernommen'),
-        (4, 'Einsatzstelle an'),
-        (5, 'Sprechwunsch'),
-        (6, 'Nicht einsatzbereit'),
-        (7, 'Patient aufgenommen'),
-        (8, 'Ankunft Krankenhaus'),
-        (9, 'Abruf Einsatzauftrag/Fremdanmeldung')
+        (0, '0 - Priorisierter Sprechwunsch'),
+        (1, '1 - Einsatzbereit Funk'),
+        (2, '2 - Einsatzbereit Wache'),
+        (3, '3 - Einsatz übernommen'),
+        (4, '4 - Einsatzstelle an'),
+        (5, '5 - Sprechwunsch'),
+        (6, '6 - Nicht einsatzbereit'),
+        (7, '7 - Patient aufgenommen'),
+        (8, '8 - Ankunft Krankenhaus'),
+        (9, '9 - Abruf Einsatzauftrag/Fremdanmeldung')
     )
+    STATUS_ORDER = [0,5,3,4,1,2,7,8,9,6]
     
     call_sign = models.CharField(_('Call sign'), max_length=100, unique=True, blank=False)
     status=models.IntegerField(_('status'), choices=STATUS_CHOICES, default=6, blank=False)
@@ -138,4 +142,8 @@ class Vehicle(models.Model):
         return sum([self.vf, self.zf, self.gf, self.ms])
     
     def __str__(self):
-        return f"{self.call_sign} ({self.orga})"
+        if self.mission:
+            return f"{self.call_sign} [{self.status}] - Einsatz: {self.mission}"
+        else:
+            return f"{self.call_sign} [{self.status}]"
+

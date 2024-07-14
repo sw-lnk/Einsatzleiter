@@ -32,3 +32,9 @@ class NewEntry(forms.ModelForm):
         widgets = {
           'text': forms.Textarea(attrs={'rows':1, 'cols':15}),
         }
+
+class UpdateUnit(forms.ModelForm):
+    class Meta:
+        model= models.Unit
+        fields='__all__'
+        

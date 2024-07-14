@@ -17,10 +17,26 @@
                 <span class="m-0 p-0 ms-2">(AGT: {{ staff.agt }})</span>
             </div>
             <div class="col-1 align-self-center">
-                <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_update' main_id=mission.main_id %}">Einsatzdetails</a>
+                <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_detail' main_id=mission.main_id %}">Einsatzdetails</a>
             </div>
-        </div>      
-        <div class="row m-1">
+        </div>
+        <div class="row">
+            {% for unit in all_units %}
+                <div class="col-auto">
+                    <a class="btn btn-sm btn-info" href="{% url 'unit_detail' pk=unit.id %}" role="button">
+                        {{ unit.call_sign }} 
+                        {% if unit.status == 0 %}
+                            <span class="badge bg-danger">{{ unit.status }}</span>
+                        {% elif unit.status == 5 %}
+                            <span class="badge bg-warning text-dark">{{ unit.status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ unit.status }}</span>
+                        {% endif%}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>     
+        <div class="row m-1 mt-5">
             {{ form.media }}
             <form method="post">
                 {% csrf_token %}
@@ -38,11 +54,11 @@
         </div>
         <hr>
         {% for entry in all_entries %}
-                <div class="mission_card m-2 px-4 py-2 rounded">
-                    <div class="row justify-content-between">
-                        {{ entry }}
-                    </div>
-                </div>                
-            {% endfor %}
+            <div class="mission_card m-2 px-4 py-2 rounded">
+                <div class="row justify-content-between">
+                    {{ entry }}
+                </div>
+            </div>                
+        {% endfor %}
     </div>  
 {% endblock %}

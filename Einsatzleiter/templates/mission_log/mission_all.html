@@ -1,0 +1,110 @@
+{% extends "base_generic.html" %}
+
+{% block title %}
+    <title>EL - Einsätze</title>
+    <meta http-equiv="refresh" content="10">
+{% endblock %}
+
+{% block content %} 
+    <div class="m-2 mt-4 text-center">
+        <div class="row justify-content-between">
+            <div class="col-auto">
+                <h2 class="ui center aligned header">Einsatzübersicht</h2>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-sm btn-info" href="{% url 'mission_new' %}" role="button">Neuer Einsatz</a>
+            </div>
+        </div>
+        <hr>        
+        <table class="table table-light table-hover table-bordered">
+            <thead class="table-secondary">
+            <tr>
+                <th scope="col">Nr.</th>
+                <th scope="col">Stichwort</th>
+                <th scope="col">Adresse</th>
+                <th scope="col">Prio</th>
+                <th scope="col">Status</th>
+                <th scope="col">Personal</th>
+                <th scope="col">Start</th>
+                <th scope="col">Aktion</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for mission in missions %}
+                    <tr>
+                        <th class="text-end" scope="row">{{ mission.mission.main_id }}</th>
+                        <td class="text-start">{{ mission.mission.keyword }}</td>
+                        <td class="text-start">{{ mission.mission.address }}</td>
+                        <td>
+                            {% if mission.mission.prio == mission.mission.HIGH %}
+                                <span class="badge bg-danger m-0">Hoch</span>
+                            {% elif mission.mission.prio == mission.mission.MEDIUM %}
+                                <span class="badge bg-light text-dark m-0">Mittel</span>
+                            {% else %}
+                                <span class="badge text-dark m-0">Niedrig</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if mission.mission.status == mission.mission.CLOSED %}
+                                <p class="badge bg-success m-0">Abgeschlossen</p>
+                            {% elif mission.mission.status == mission.mission.PROCESSING %}
+                                <p class="badge bg-primary text-light m-0">In Arbeit</p>
+                            {% else %}
+                                <p class="badge bg-warning text-dark m-0">Unbearbeitet</p>
+                            {% endif %}
+                        </td>
+                        <td class="text-start">{{ mission.staff.vf }}/{{ mission.staff.zf }}/{{ mission.staff.gf }}/{{ mission.staff.ms }} = {{ mission.staff.total }}</td>
+                        <td class="text-start">{{ mission.mission.start }}</td>
+                        <td>
+                            <a class="btn btn-sm btn-info text-dark m-0" href="{% url 'mission_detail' main_id=mission.mission.main_id %}">Details</a>
+                            <a class="btn btn-sm btn-info text-dark m-0" href="{% url 'mission_overview' main_id=mission.mission.main_id %}">Tagebuch</a>
+                        </td>                           
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if mission_list_closed %}
+            <hr>
+            <h4>Abgeschlossen Einsätze</h4>
+            <table class="table table-light table-hover table-bordered">
+                <thead class="table-secondary">
+                <tr>
+                    <th scope="col">Nr.</th>
+                    <th scope="col">Stichwort</th>
+                    <th scope="col">Adresse</th>
+                    <th scope="col">Prio</th>
+                    <th scope="col">Start</th>
+                    <th scope="col">Ende</th>
+                    <th scope="col">Aktion</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {% for mission in mission_list_closed %}
+                        <tr>
+                            <th class="text-end" scope="row">{{ mission.main_id }}</th>
+                            <td class="text-start">{{ mission.keyword }}</td>
+                            <td class="text-start">{{ mission.address }}</td>
+                            <td>
+                                {% if mission.prio == mission.HIGH %}
+                                    <span class="badge bg-danger">Hoch</span>
+                                {% elif mission.prio == mission.MEDIUM %}
+                                    <span class="badge bg-light text-dark">Mittel</span>
+                                {% else %}
+                                    <span class="badge text-dark">Niedrig</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-start">{{ mission.start }}</td>
+                            <td class="text-start">{% if mission.end %}{{ mission.end }}{% else %}-{% endif %}</td>
+                            <td>
+                                <a class="btn btn-sm btn-danger" href="{% url 'mission_archiv_ask' main_id=mission.main_id %}">Archivieren</a>
+                                <a class="btn btn-sm btn-info text-dark" href="{% url 'mission_detail' main_id=mission.main_id %}">Details</a>
+                                <a class="btn btn-sm btn-info text-dark m-0" href="{% url 'mission_overview' main_id=mission.main_id %}">Tagebuch</a>
+                            </td>                           
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}
