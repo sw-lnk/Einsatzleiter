@@ -157,8 +157,8 @@ def new_mission(msg: dict) -> None:
     
     entry = Entry()
     entry.text = f"Automatisch erstellt: {new_mission.auto_entry()}"
-    entry.author = new_mission.author_id
-    entry.mission = new_mission.main_id
+    entry.author_id = new_mission.author_id
+    entry.mission_id = new_mission.main_id
     
     session.add(new_mission)
     session.add(entry)
@@ -175,6 +175,13 @@ def update_mission_end(msg) -> None:
     
     mission.end = msg['date']
     mission.status = mission.CLOSED
+    
+    entry = Entry()
+    entry.text = f"Automatisch erstellt: {new_mission.auto_entry()}"
+    entry.author_id = mission.author_id
+    entry.mission_id = mission.main_id
+    session.add(entry)
+    
     session.commit()
         
 def send_to_telegram(msg) -> None:
