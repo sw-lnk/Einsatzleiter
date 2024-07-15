@@ -145,7 +145,7 @@ def clear_inbox() -> None:
         
 
 def check_mission_excist(msg) -> bool:
-    return True if session.query(Mission).filter(Mission.main_id == msg['main_id']).count() > 0 else False
+    return session.query(Mission).filter(Mission.main_id == msg['main_id']).count()
 
 def new_mission(msg: dict) -> None:
     new_mission = Mission()
@@ -223,10 +223,11 @@ def create_or_upate_mission(msg) -> None:
         try:
             new_mission(msg)
             send_to_telegram(msg)
-        except: pass
+        except Exception as e: print(e)
     elif ('Abschlußbericht' in msg['subject']):
         # Einsatz aktualisieren wenn die Abschlussdepeche zugestellt wird.
-        update_mission_end(msg)
+        try: update_mission_end(msg)
+        except Exception as e: print(e)
 
 def delete_mission(main_id: int) -> None:
     mission = session.query(Mission).filter(Mission.main_id == main_id).first()
