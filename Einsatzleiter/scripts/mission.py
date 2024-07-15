@@ -79,13 +79,15 @@ class Mission(Base):
 
 
 class Entry(Base):    
+    __tablename__ = "mission_log_entry"
+    id=Column(Integer(), primary_key=True)
     text = Column(Text(), nullable=False)
-    sender = Column(String(100), nullable=True)
-    recipient = Column(String(100), nullable=True)
+    sender = Column(String(100), default='')
+    recipient = Column(String(100), default='')
     
     time = Column(DateTime(), default=datetime.now(time_zone))
-    author = Column(Integer(), default=1)
-    mission = Column(Integer(), nullable=False)
+    author_id = Column(Integer(), default=1)
+    mission_id = Column(Integer(), nullable=False)
     
     def __str__(self):
         return f"{self.time.strftime('%d.%m.%Y %H:%M')}: {self.text}"
@@ -143,7 +145,7 @@ def clear_inbox() -> None:
         
 
 def check_mission_excist(msg) -> bool:
-    return session.query(Mission).filter(Mission.main_id == msg['main_id']).count()
+    return True if session.query(Mission).filter(Mission.main_id == msg['main_id']).count() > 0 else False
 
 def new_mission(msg: dict) -> None:
     new_mission = Mission()
