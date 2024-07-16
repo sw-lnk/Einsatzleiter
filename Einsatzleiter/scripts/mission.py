@@ -47,11 +47,11 @@ class Mission(Base):
     status=Column(String(15), nullable=False, default=UNTREATED)
     prio=Column(String(15), nullable=False, default=MEDIUM)
     
-    start=Column(DateTime(), default=datetime.now(time_zone))
+    start=Column(DateTime(), default=datetime.now())
     end=Column(DateTime(), nullable=True)
     
-    creation=Column(DateTime(), default=datetime.now(time_zone))
-    update=Column(DateTime(), default=datetime.now(time_zone))
+    creation=Column(DateTime(timezone=True), default=datetime.now())
+    last_update=Column(DateTime(timezone=True), default=datetime.now())
     
     
     archiv=Column(Boolean(), default=False, nullable=False)
@@ -85,13 +85,12 @@ class Entry(Base):
     sender = Column(String(100), default='')
     recipient = Column(String(100), default='')
     
-    time = Column(DateTime(), default=datetime.now(time_zone))
+    time = Column(DateTime(), default=datetime.now())
     author_id = Column(Integer(), default=1)
     mission_id = Column(Integer(), nullable=False)
     
     def __str__(self):
         return f"{self.time.strftime('%d.%m.%Y %H:%M')}: {self.text}"
-
 
 
 if os.getenv("PIPELINE"):
@@ -121,6 +120,7 @@ imap_port = os.getenv("IMAP_PORT")
 def all_mission() -> list[Mission]:
     return session.query(Mission).all()
 
+
 def get_mails() -> list[dict]:
     list_mails = []
     with MailBox(imap_server, imap_port).login(email_address, email_password) as mailbox:
@@ -130,13 +130,13 @@ def get_mails() -> list[dict]:
             dic = dict(zip(keys, values))
             dic['units'] = [e.strip() for e in dic['units'].split(',')]
             dic['date'] = msg.date
-            dic['subject'] = msg.subject
-            
+            dic['subject'] = msg.subject            
             dic['main_id'] = int(dic['main_id'])
             
             list_mails.append(dic)
     
     return list_mails
+
 
 def clear_inbox() -> None:    
     with MailBox(imap_server, imap_port).login(email_address, email_password) as mailbox:
@@ -145,7 +145,9 @@ def clear_inbox() -> None:
         
 
 def check_mission_excist(msg) -> bool:
-    return session.query(Mission).filter(Mission.main_id == msg['main_id']).count()
+    try: return session.query(Mission).filter(Mission.main_id == msg['main_id']).count()
+    except Exception as e: print('...Error message:', e)
+
 
 def new_mission(msg: dict) -> None:
     new_mission = Mission()
@@ -154,15 +156,19 @@ def new_mission(msg: dict) -> None:
     new_mission.street = msg['street']
     new_mission.street_no = msg['street_no']
     new_mission.start = msg['date']
-    
+    new_mission.status = new_mission.UNTREATED
+    new_mission.prio = new_mission.MEDIUM
+
     entry = Entry()
     entry.text = f"Automatisch erstellt: {new_mission.auto_entry()}"
+    entry.time = msg['date']
     entry.author_id = new_mission.author_id
     entry.mission_id = new_mission.main_id
     
     session.add(new_mission)
     session.add(entry)
     session.commit()
+
 
 def update_mission_end(msg) -> None:
     if not check_mission_excist(msg):
@@ -177,18 +183,20 @@ def update_mission_end(msg) -> None:
     mission.status = mission.CLOSED
     
     entry = Entry()
-    entry.text = f"Automatisch erstellt: {new_mission.auto_entry()}"
+    entry.text = f"Automatisch erstellt: {mission.auto_entry()}"
+    entry.time = msg['date']
     entry.author_id = mission.author_id
     entry.mission_id = mission.main_id
     session.add(entry)
     
     session.commit()
-        
+
+
 def send_to_telegram(msg) -> None:
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
     CHAT_GROUP_ID = os.getenv("GROUP_CHAT_ID")
     
-    year = datetime.now(time_zone).year
+    year = datetime.now().year
     deadline = datetime(year, 1, 1, 0, 0)
     
     cnt = session.query(Mission).filter(Mission.start > deadline).count()
@@ -217,22 +225,25 @@ def send_to_telegram(msg) -> None:
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage?chat_id={CHAT_GROUP_ID}&text={content}"
     requests.get(url).json()
 
+
 def create_or_upate_mission(msg) -> None:
     if not check_mission_excist(msg):
         # Neuen Einsatz anlegen wenn eine Alarmdepeche eingeht.
         try:
             new_mission(msg)
             send_to_telegram(msg)
-        except Exception as e: print(e)
+        except Exception as e: print('...Error message:', e)
     elif ('Abschlußbericht' in msg['subject']):
         # Einsatz aktualisieren wenn die Abschlussdepeche zugestellt wird.
         try: update_mission_end(msg)
-        except Exception as e: print(e)
+        except Exception as e: print('...Error message:', e)
+
 
 def delete_mission(main_id: int) -> None:
     mission = session.query(Mission).filter(Mission.main_id == main_id).first()
     session.delete(mission)
     session.commit()
+
 
 def main() -> None:
     all_mails = get_mails()
@@ -241,13 +252,15 @@ def main() -> None:
     session.close()
     clear_inbox()
 
+
 def main_plus() -> None:
     print('Script is running.')
-    start = datetime.now(time_zone)
+    start = datetime.now()
     main()
-    duration = datetime.now(time_zone) - start
+    duration = datetime.now() - start
     print(f"Finished script after {duration.seconds:.1f}s.")
-    
+
+   
 if __name__ == "__main__":
     main()
     

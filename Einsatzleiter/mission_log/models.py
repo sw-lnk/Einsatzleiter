@@ -95,8 +95,11 @@ class Entry(models.Model):
     )
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, verbose_name=_("Mission"))
     
+    def local_time(self):
+        return self.time.astimezone(timezone.get_current_timezone())
+    
     def __str__(self):
-        return f"{self.time.strftime('%d.%m.%Y %H:%M')}: {self.text}"
+        return f"{self.local_time().strftime('%d.%m.%Y %H:%M')}: {self.text}"
 
 
 class Orga(models.Model):
