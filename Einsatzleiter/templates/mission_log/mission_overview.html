@@ -9,7 +9,8 @@
     <div class="container">
         <div class="row mx-1 mt-5">
             <div class="col">
-                <h2>{{ mission }}</h2>
+                <h3 class="mb-1">{{ mission.keyword }}, {{ mission.street }} {{ mission.street_no }}</h3>
+                <small class="m-0">Einsatznr.: {{ mission.main_id }}</small> <!-- TODO: ID kleiner (evtl. in Zweiter Zeile) zeigen und Stichwort wie jetzt -->
             </div>
             <div class="col-3 align-self-center">
                 <span class="m-0 p-0 ms-5">{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
@@ -46,19 +47,30 @@
                     <div class="col-2">{{ form.sender | as_crispy_field }}</div>
                     <div class="col-2">{{ form.recipient | as_crispy_field }}</div>
                     -->
-                    <div class="col-1 text-center align-self-center">
+                    <div class="col-auto text-center align-self-center">
                         <button class="btn btn-sm btn-primary text-light" type="submit">Senden</button>
                     </div>
                 </div>             
             </form>
         </div>
         <hr>
-        {% for entry in all_entries %}
-            <div class="mission_card m-2 px-4 py-2 rounded">
-                <div class="row justify-content-between">
-                    {{ entry }}
-                </div>
-            </div>                
-        {% endfor %}
+        <table class="table table-light table-hover table-bordered">
+            <thead class="table-secondary">
+            <tr>
+                <th scope="col">Zeitstempel</th>
+                <th scope="col">Eintrag</th>
+                <th scope="col">Bearbeiter</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for entry in all_entries %}
+                    <tr>
+                        <td class="text-start" scope="row">{{ entry.time }}</td>
+                        <td class="text-start">{{ entry.text }}</td>
+                        <td class="text-start">{{ entry.author.name }}</td>                           
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>  
 {% endblock %}
