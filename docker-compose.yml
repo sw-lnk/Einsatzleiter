@@ -6,7 +6,6 @@ services:
     build:
       context: ./Einsatzleiter
       network: host
-#    command: python manage.py runserver 0.0.0.0:8080
     command: gunicorn server.wsgi:application --bind 0.0.0.0:8080
     volumes:
       - ./Einsatzleiter:/usr/src/app/

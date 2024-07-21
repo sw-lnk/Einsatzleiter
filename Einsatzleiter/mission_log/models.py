@@ -36,7 +36,7 @@ class Mission(models.Model):
     keyword=models.CharField(_('keyword'), max_length=100, blank=False)
     street=models.CharField(_('street'), max_length=100, blank=False)
     street_no=models.CharField(_('street no'), max_length=10, blank=True)
-    zip_code=models.CharField(_('zip code'), max_length=5, default=ZIP_CODE, blank=True)
+    zip_code=models.CharField(_('zip code'), max_length=5, blank=True)
     
     status=models.CharField(_('status'), max_length=15, choices=STATUS_CHOICES, default=UNTREATED, blank=False)
     prio=models.CharField(_('priority'), max_length=15, choices=PRIO_CHOICES, default=MEDIUM, blank=False)
