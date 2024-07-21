@@ -1,11 +1,14 @@
 import datetime
+import io
 
 from django.db.models import Case, When
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.http import FileResponse
 
 from .models import Mission, Entry, Orga, Unit
 from .forms import NewMission, UpdateMission, NewEntry, UpdateUnit
+from reports.mission_report import Protokoll
 
 def get_all_units(mission:Mission=None, exclude_status_6=True) -> list[Unit]:
     all_units = Unit.objects.exclude(status=2)
@@ -207,6 +210,23 @@ def mission_overview(request, main_id):
         context['form'] = NewEntry(None)
     
     return render(request, 'mission_log/mission_overview.html', context)
+
+@login_required
+def download_report(request, main_id):
+    mission = Mission.objects.get(main_id=main_id)
+    entries = Entry.objects.filter(mission=mission).order_by('-time')
+    units = Unit.objects.filter(mission=mission).order_by('call_sign')
+
+    pdf = Protokoll(request.user, mission, entries, units)
+    output = pdf.output()
+    buffer = io.BytesIO(output)
+    
+    file_name = f'{mission.keyword}-{mission.address()}.pdf'.replace(' ', '_').replace(',', '_')
+    
+    return FileResponse(
+    buffer, as_attachment=False, # or False, depending upon the desired behavior
+    filename=file_name, content_type='application/pdf'
+    )
 
 @login_required
 def all_units(request):

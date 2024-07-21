@@ -133,3 +133,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Orga name
+if os.environ.get("ORGA_NAME"):
+    ORGA_NAME = os.environ.get("ORGA_NAME")
+else:
+    ORGA_NAME = 'Feuerwehr Musterstadt'

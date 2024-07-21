@@ -12,13 +12,18 @@
                 <h3 class="mb-1">{{ mission.keyword }}, {{ mission.street }} {{ mission.street_no }}</h3>
                 <small class="m-0">Einsatznr.: {{ mission.main_id }}</small> <!-- TODO: ID kleiner (evtl. in Zweiter Zeile) zeigen und Stichwort wie jetzt -->
             </div>
-            <div class="col-3 align-self-center">
+            <div class="col-auto align-self-center">
                 <span class="m-0 p-0 ms-5">{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
                 <span class="m-0 p-0" style="text-decoration:underline">{{ staff.total }}</span>
                 <span class="m-0 p-0 ms-2">(AGT: {{ staff.agt }})</span>
             </div>
-            <div class="col-1 align-self-center">
+            <div class="col-auto align-self-center">
                 <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_detail' main_id=mission.main_id %}">Einsatzdetails</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-auto">
+                <a class="btn btn-sm btn-primary text-light my-2" href="{% url 'mission_report' main_id=mission.main_id %}" target="_blank">Download Protokoll</a>
             </div>
         </div>
         <div class="row">
@@ -36,8 +41,9 @@
                     </a>
                 </div>
             {% endfor %}
-        </div>     
-        <div class="row m-1 mt-5">
+        </div>        
+        <hr>
+        <div class="row m-1">
             {{ form.media }}
             <form method="post">
                 {% csrf_token %}
@@ -71,6 +77,6 @@
                     </tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table>        
     </div>  
 {% endblock %}
