@@ -238,8 +238,9 @@ def create_or_upate_mission(msg) -> None:
     if not check_mission_excist(msg):
         # Create new mission by new alarm mail
         try:
-            new_mission(msg)
-            send_to_telegram(msg)
+            new_mission(msg)            
+            if os.getenv("TELEGRAM_TOKEN"):
+                send_to_telegram(msg)
             if ('Abschlußbericht' in msg['subject']):
                 # Update mission when mission end mail arrived.
                 try: update_mission_end(msg)
