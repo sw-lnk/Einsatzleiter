@@ -9,15 +9,23 @@
         <div class="row justify-content-between">
             <div class="col-auto">
                 <h2 class="ui center aligned header">Einheitenübersicht</h2>
-            </div>
+                <h4>
+                    <span class="m-0 p-0 ms-5">{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
+                    <span class="m-0 p-0" style="text-decoration:underline">{{ staff.total }}</span>
+                </h4> 
+            </div>            
             <div class="col-auto">
-                <a class="btn btn-sm btn-info" href="{% url 'unit_new' %}" role="button">Neue Einheit</a>
+                <div class="row">
+                    <a class="btn btn-sm btn-info" href="{% url 'unit_new' %}" role="button">Neue Einheit</a>
+                </div>
+                <div class="row my-1">
+                    <a class="btn btn-sm btn-info" href="{% url 'unit_report_incl2' %}" target="_blank">Einheitenübersicht inkl. Status 2</a>
+                </div>
+                <div class="row">
+                    <a class="btn btn-sm btn-info" href="{% url 'unit_report_excl2' %}" target="_blank">Einheitenübersicht exkl. Status 2</a>
+                </div>              
             </div>
-        </div>
-        <h4>
-            <span class="m-0 p-0 ms-5">{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
-            <span class="m-0 p-0" style="text-decoration:underline">{{ staff.total }}</span>
-        </h4>       
+        </div>              
         <hr>
         {% for orga in orgas %}
             {% if orga.units %} 

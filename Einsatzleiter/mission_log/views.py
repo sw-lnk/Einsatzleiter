@@ -8,7 +8,8 @@ from django.http import FileResponse
 
 from .models import Mission, Entry, Orga, Unit
 from .forms import NewMission, UpdateMission, NewEntry, UpdateUnit
-from reports.mission_report import Protokoll
+from reports.mission_report import Report
+from reports.unit_report import UnitOverview
 
 def get_all_units(mission:Mission=None, exclude_status_6=True) -> list[Unit]:
     all_units = Unit.objects.exclude(status=2)
@@ -212,16 +213,46 @@ def mission_overview(request, main_id):
     return render(request, 'mission_log/mission_overview.html', context)
 
 @login_required
-def download_report(request, main_id):
+def download_mission_report(request, main_id):
     mission = Mission.objects.get(main_id=main_id)
     entries = Entry.objects.filter(mission=mission).order_by('-time')
     units = Unit.objects.filter(mission=mission).order_by('call_sign')
 
-    pdf = Protokoll(request.user, mission, entries, units)
+    pdf = Report(request.user, mission, entries, units)
     output = pdf.output()
     buffer = io.BytesIO(output)
     
     file_name = f'{mission.keyword}-{mission.address()}.pdf'.replace(' ', '_').replace(',', '_')
+    
+    return FileResponse(
+    buffer, as_attachment=False, # or False, depending upon the desired behavior
+    filename=file_name, content_type='application/pdf'
+    )
+
+@login_required
+def download_unit_report_incl2(request):
+    units = Unit.objects.all().order_by('call_sign')
+
+    pdf = UnitOverview(request.user, units)
+    output = pdf.output()
+    buffer = io.BytesIO(output)
+    
+    file_name = f"Kraefteuebersicht_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+    
+    return FileResponse(
+    buffer, as_attachment=False, # or False, depending upon the desired behavior
+    filename=file_name, content_type='application/pdf'
+    )
+
+@login_required
+def download_unit_report_excl2(request):
+    units = Unit.objects.all().exclude(status=2).order_by('call_sign')
+
+    pdf = UnitOverview(request.user, units)
+    output = pdf.output()
+    buffer = io.BytesIO(output)
+    
+    file_name = f"Kraefteuebersicht_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
     
     return FileResponse(
     buffer, as_attachment=False, # or False, depending upon the desired behavior
