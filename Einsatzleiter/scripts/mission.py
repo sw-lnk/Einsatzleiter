@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+import logging
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -12,6 +13,13 @@ from imap_tools import MailBox, AND
 from dateutil import tz
 
 time_zone = tz.gettz("Europe/Berlin")
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename='einsatzleiter.log',
+    encoding='utf-8',
+    format='%(asctime)s %(levelname)s %(message)s',
+    level=logging.ERROR)
 
 Base = declarative_base()
 class Mission(Base):
@@ -146,7 +154,7 @@ def clear_inbox() -> None:
 
 def check_mission_excist(msg) -> bool:
     try: return session.query(Mission).filter(Mission.main_id == msg['main_id']).count()
-    except Exception as e: print('...Error message:', e)
+    except Exception as e: logger.error(f'check mission excist -> {e}')
 
 
 def new_mission(msg: dict) -> None:
@@ -235,12 +243,12 @@ def create_or_upate_mission(msg) -> None:
             if ('Abschlußbericht' in msg['subject']):
                 # Update mission when mission end mail arrived.
                 try: update_mission_end(msg)
-                except Exception as e: print('...Error message:', e)
-        except Exception as e: print('...Error message:', e)
+                except Exception as e: logger.error(f'create mission and update mission end -> {e}')
+        except Exception as e: logger.error(f'create mission -> {e}')
     elif ('Abschlußbericht' in msg['subject']):
         # Update mission when mission end mail arrived.
         try: update_mission_end(msg)
-        except Exception as e: print('...Error message:', e)
+        except Exception as e: logger.error(f'upate mission end -> {e}')
 
 
 def delete_mission(main_id: int) -> None:
