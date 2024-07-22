@@ -206,7 +206,7 @@ def send_to_telegram(msg) -> None:
     if "Alarmdruck" in msg['subject']:
         content += f"⏰ {msg['date'].strftime('%d.%m.%Y %H:%M')}\n"
     else:
-        content += f"⏰ {msg['subject'].strftime('%d.%m.%Y')}\n"
+        content += f"⏰ {msg['date'].strftime('%d.%m.%Y')}\n"
 
     content += f"📍 {msg['street']}"
     if msg['street_no']:
@@ -228,13 +228,17 @@ def send_to_telegram(msg) -> None:
 
 def create_or_upate_mission(msg) -> None:
     if not check_mission_excist(msg):
-        # Neuen Einsatz anlegen wenn eine Alarmdepeche eingeht.
+        # Create new mission by new alarm mail
         try:
             new_mission(msg)
             send_to_telegram(msg)
+            if ('Abschlußbericht' in msg['subject']):
+                # Update mission when mission end mail arrived.
+                try: update_mission_end(msg)
+                except Exception as e: print('...Error message:', e)
         except Exception as e: print('...Error message:', e)
     elif ('Abschlußbericht' in msg['subject']):
-        # Einsatz aktualisieren wenn die Abschlussdepeche zugestellt wird.
+        # Update mission when mission end mail arrived.
         try: update_mission_end(msg)
         except Exception as e: print('...Error message:', e)
 
