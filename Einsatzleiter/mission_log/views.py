@@ -297,10 +297,12 @@ def unit_update(request, pk):
     context['unit'] = unit
     
     form_unit = UpdateUnit(instance=unit)
+    form_unit.fields["mission"].queryset = Mission.objects.exclude(status=2)
     context['form'] = form_unit
     
     if request.method == "POST":        
         form_unit = UpdateUnit(request.POST, instance=unit)
+        form_unit.fields["mission"].queryset = Mission.objects.exclude(status=2)
         context['form'] = form_unit
         if form_unit.is_valid():
             unit = form_unit.save()
@@ -323,5 +325,7 @@ def unit_add(request):
         else:
             return render(request, "mission_log/unit_detail.html", context)
     
-    context['form'] = UpdateUnit(None)
+    form = UpdateUnit(None)
+    form.fields["mission"].queryset = Mission.objects.exclude(status=2)
+    context['form'] = form
     return render(request, 'mission_log/unit_detail.html', context)
