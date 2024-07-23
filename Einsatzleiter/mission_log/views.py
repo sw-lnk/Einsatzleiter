@@ -277,7 +277,7 @@ def all_units(request):
     )
     
     for orga in all_orgas:        
-        units = Unit.objects.filter(orga=orga).order_by(preferred)
+        units = Unit.objects.filter(orga=orga).order_by(preferred, 'call_sign')
         
         orgas.append({
             'orga': orga,
