@@ -18,36 +18,34 @@
   <body>
     <div class="p-3 bg-danger text-white text-center">
       {% block header %}
-        <h2>Einsatzleiter</h2>
-        <p>Organisiere deine Feuerwehr</p>
+        <h3>Einsatzleiter</h3>        
+        {% if user.is_authenticated %}
+          <p>Nutzer: {{ user.name }}</p>
+        {% endif %}
       {% endblock %}       
     </div>
 
     <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-      <div class="container-fluid">
-            {% block navbar %}
+      <div class="container-fluid">            
             <ul class="navbar-nav">
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'main' %}">Start</a>
+                <a class="btn btn-outline-light btn-sm me-1" href="{% url 'main' %}">Übersicht</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'mission_all' %}">Einsätze</a>
+                <a class="btn btn-outline-light btn-sm me-1" href="{% url 'mission_all' %}">Einsätze</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{% url 'unit_all' %}">Einheiten</a>
+                <a class="btn btn-outline-light btn-sm me-1" href="{% url 'unit_all' %}">Einheiten</a>
               </li>
+              {% block navbar %}{% endblock %}            
+            </ul>            
+            <ul class="navbar-nav">                            
               {% if user.is_superuser %}
                 <li class="nav-item">
-                  <a class="nav-link" href="/admin">Admin Panel</a>
+                  <a class="btn btn-outline-light btn-sm me-1" href="/admin">Admin Panel</a>
                 </li>
               {% endif %}
-            </ul>
-            {% endblock %}
-            <ul class="navbar-nav">                            
               {% if user.is_authenticated %}
-                <li class="nav-item">
-                  <span class="badge rounded-pill text-bg-light p-2 mx-2">{{ user.name }}</span>
-                </li>
                 <li class="nav-item">
                   <form id="logout-form" method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
@@ -56,7 +54,7 @@
                 </li>
               {% else %}
                 <li class="nav-item">
-                  <a class="btn btn-outline-primary" href="{% url 'login' %}">Login</a>
+                  <a class="btn btn-outline-primary btn-sm" href="{% url 'login' %}">Login</a>
                 </li>
               {% endif %}
             </ul>
