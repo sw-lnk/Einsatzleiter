@@ -39,6 +39,10 @@ touch .env
 ```
 
 ```cmd
+chmod +x entrypoint.sh
+```
+
+```cmd
 nano .env
 ```
 
