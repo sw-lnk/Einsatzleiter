@@ -43,6 +43,7 @@ services:
 
   nginx:
     build: ./nginx
+    restart: unless-stopped
     container_name: einsatzleiter-nginx
     volumes:
       - static_volume:/usr/src/app/assets/
