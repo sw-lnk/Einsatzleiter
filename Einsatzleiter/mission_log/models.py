@@ -10,27 +10,17 @@ load_dotenv()
 
 # Create your models here.
 class Mission(models.Model):
+    class Status(models.IntegerChoices):
+        UNTREATED = 0, _('Unbearbeitet')
+        PROCESSING = 1, _('In Arbeit')
+        CLOSED = 2, _('Abgeschlossen')
+    
+    class Prio(models.IntegerChoices):
+        HIGH = 1, _('Hoch')
+        MEDIUM = 2, _('Mittel')
+        LOW = 3, _('Niedrig')
+    
     ZIP_CODE = os.getenv("ZIP_CODE")
-    
-    UNTREATED = '0'
-    PROCESSING= '1'
-    CLOSED = '2'
-    
-    STATUS_CHOICES=(
-        (UNTREATED, 'unbearbeitet'),
-        (PROCESSING, 'in Arbeit'),
-        (CLOSED, 'abgeschlossen')
-    )
-
-    HIGH = '1'
-    MEDIUM = '2'
-    LOW = '3'
-
-    PRIO_CHOICES=(
-        (HIGH, 'hoch'),
-        (MEDIUM, 'mittel'),
-        (LOW, 'niedrig'),
-    )
     
     main_id=models.IntegerField(_('main id'), primary_key=True)
     keyword=models.CharField(_('keyword'), max_length=100, blank=False)
@@ -38,8 +28,8 @@ class Mission(models.Model):
     street_no=models.CharField(_('street no'), max_length=10, blank=True)
     zip_code=models.CharField(_('zip code'), max_length=5, blank=True)
     
-    status=models.CharField(_('status'), max_length=15, choices=STATUS_CHOICES, default=UNTREATED, blank=False)
-    prio=models.CharField(_('priority'), max_length=15, choices=PRIO_CHOICES, default=MEDIUM, blank=False)
+    status=models.PositiveSmallIntegerField(_('status'), choices=Status.choices, default=Status.UNTREATED, blank=False)
+    prio=models.PositiveSmallIntegerField(_('priority'), choices=Prio.choices, default=Prio.MEDIUM, blank=False)
     
     start=models.DateTimeField(_('start time'), default=timezone.now, blank=False, null=False)
     end=models.DateTimeField(_('end time'), blank=True, null=True)
@@ -64,15 +54,7 @@ class Mission(models.Model):
         return a
     
     def auto_entry(self) -> str:
-        for k, v in self.STATUS_CHOICES:
-            if k == self.status:
-               status_value = v
-        
-        for k, v in self.PRIO_CHOICES:
-            if k == self.prio:
-               prio_value = v
-        
-        return f'{self.keyword}, Status: {status_value}, Prio: {prio_value} - {self.address()}'
+        return f'{self.keyword}, Status: {self.status}, Prio: {self.prio} - {self.address()}'
     
     def short(self):
         return f'{self.keyword} - {self.street}'
@@ -110,23 +92,22 @@ class Orga(models.Model):
 
 
 class Unit(models.Model):
-    
-    STATUS_CHOICES=(
-        (0, '0 - Priorisierter Sprechwunsch'),
-        (1, '1 - Einsatzbereit Funk'),
-        (2, '2 - Einsatzbereit Wache'),
-        (3, '3 - Einsatz übernommen'),
-        (4, '4 - Einsatzstelle an'),
-        (5, '5 - Sprechwunsch'),
-        (6, '6 - Nicht einsatzbereit'),
-        (7, '7 - Patient aufgenommen'),
-        (8, '8 - Ankunft Krankenhaus'),
-        (9, '9 - Abruf Einsatzauftrag/Fremdanmeldung')
-    )
+    class Status(models.IntegerChoices):
+        S0 = 0, _('0 - Priorisierter Sprechwunsch')
+        S1 = 1, _('1 - Einsatzbereit Funk')
+        S2 = 2, _('2 - Einsatzbereit Wache')
+        S3 = 3, _('3 - Einsatz übernommen')
+        S4 = 4, _('4 - Einsatzstelle an')
+        S5 = 5, _('5 - Sprechwunsch')
+        S6 = 6, _('6 - Nicht einsatzbereit')
+        S7 = 7, _('7 - Patient aufgenommen')
+        S8 = 8, _('8 - Ankunft Krankenhaus')
+        S9 = 9, _('9 - Abruf Einsatzauftrag/Fremdanmeldung')
+        
     STATUS_ORDER = [0,5,3,4,1,2,7,8,9,6]
     
     call_sign = models.CharField(_('Call sign'), max_length=100, unique=True, blank=False)
-    status=models.IntegerField(_('status'), choices=STATUS_CHOICES, default=6, blank=False)
+    status=models.PositiveSmallIntegerField(_('status'), choices=Status.choices, default=6, blank=False)
     
     vf = models.PositiveIntegerField('VF', default=0)
     zf = models.PositiveIntegerField('ZF', default=0)

@@ -36,9 +36,9 @@ def get_staff_dict(all_units: list[Unit]) -> dict:
 def dashboard(request):
     context = {}
     
-    context['cnt_untreaded'] = Mission.objects.filter(archiv=False, status=Mission.UNTREATED).count()
-    context['cnt_processing'] = Mission.objects.filter(archiv=False, status=Mission.PROCESSING).count()
-    context['cnt_closed'] = Mission.objects.filter(archiv=False, status=Mission.CLOSED).count()
+    context['cnt_untreaded'] = Mission.objects.filter(archiv=False, status=Mission.Status.UNTREATED).count()
+    context['cnt_processing'] = Mission.objects.filter(archiv=False, status=Mission.Status.PROCESSING).count()
+    context['cnt_closed'] = Mission.objects.filter(archiv=False, status=Mission.Status.CLOSED).count()
     
     context['time_normal'] = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
     context['time_tactical'] = datetime.datetime.now().strftime('%d %H %M %b %y')
@@ -52,7 +52,7 @@ def dashboard(request):
 @login_required
 def all_missions(request):
     context = {}
-    all_mission = Mission.objects.exclude(status__exact=Mission.CLOSED).order_by('prio', 'status', 'start',)
+    all_mission = Mission.objects.exclude(status__exact=Mission.Status.CLOSED).order_by('prio', 'status', 'start',)
     missions = []
     for mission in all_mission:
         missions.append({
@@ -63,8 +63,8 @@ def all_missions(request):
     
     context['missions'] = missions
     
-    #context['mission_list'] = Mission.objects.exclude(status__exact=Mission.CLOSED).order_by('prio', 'status', 'start',)
-    context['mission_list_closed'] = Mission.objects.filter(status__exact=Mission.CLOSED).exclude(archiv__exact=True).order_by('-start')
+    #context['mission_list'] = Mission.objects.exclude(status__exact=Mission.Status.CLOSED).order_by('prio', 'status', 'start',)
+    context['mission_list_closed'] = Mission.objects.filter(status__exact=Mission.Status.CLOSED).exclude(archiv__exact=True).order_by('-start')
     return render(request, "mission_log/mission_all.html", context)
 
 @login_required

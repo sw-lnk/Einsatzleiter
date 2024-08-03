@@ -36,18 +36,18 @@
                         <td class="text-start">{{ mission.mission.keyword }}</td>
                         <td class="text-start">{{ mission.mission.address }}</td>
                         <td>
-                            {% if mission.mission.prio == mission.mission.HIGH %}
+                            {% if mission.mission.prio == mission.mission.Prio.HIGH %}
                                 <span class="badge bg-danger m-0">Hoch</span>
-                            {% elif mission.mission.prio == mission.mission.MEDIUM %}
+                            {% elif mission.mission.prio == mission.mission.Prio.MEDIUM %}
                                 <span class="badge bg-light text-dark m-0">Mittel</span>
                             {% else %}
                                 <span class="badge text-dark m-0">Niedrig</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if mission.mission.status == mission.mission.CLOSED %}
+                            {% if mission.mission.status == mission.mission.Status.CLOSED %}
                                 <p class="badge bg-success m-0">Abgeschlossen</p>
-                            {% elif mission.mission.status == mission.mission.PROCESSING %}
+                            {% elif mission.mission.status == mission.mission.Status.PROCESSING %}
                                 <p class="badge bg-primary text-light m-0">In Arbeit</p>
                             {% else %}
                                 <p class="badge bg-warning text-dark m-0">Unbearbeitet</p>
@@ -86,9 +86,9 @@
                             <td class="text-start">{{ mission.keyword }}</td>
                             <td class="text-start">{{ mission.address }}</td>
                             <td>
-                                {% if mission.prio == mission.HIGH %}
+                                {% if mission.prio == mission.Prio.HIGH %}
                                     <span class="badge bg-danger">Hoch</span>
-                                {% elif mission.prio == mission.MEDIUM %}
+                                {% elif mission.prio == mission.Prio.MEDIUM %}
                                     <span class="badge bg-light text-dark">Mittel</span>
                                 {% else %}
                                     <span class="badge text-dark">Niedrig</span>

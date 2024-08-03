@@ -5,15 +5,15 @@ from django.utils.translation import gettext_lazy as _
 # Register your models here.
 @admin.action(description=_('Set status of selected mission to closed'))
 def mark_as_closed(modeladmin, request, queryset):
-    queryset.update(status=Mission.CLOSED)
+    queryset.update(status=Mission.Status.CLOSED)
 
 @admin.action(description=_('Set status of selected mission to untreated'))
 def mark_as_untreated(modeladmin, request, queryset):
-    queryset.update(status=Mission.UNTREATED)
+    queryset.update(status=Mission.Status.UNTREATED)
 
 @admin.action(description=_('Set status of selected mission to processing'))
 def mark_as_processing(modeladmin, request, queryset):
-    queryset.update(status=Mission.PROCESSING)
+    queryset.update(status=Mission.Status.PROCESSING)
 
 @admin.action(description=_('Archiv mission'))
 def archiv_mission(modeladmin, request, queryset):

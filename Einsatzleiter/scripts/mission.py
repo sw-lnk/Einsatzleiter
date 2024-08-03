@@ -26,25 +26,13 @@ class Mission(Base):
     __tablename__ = "mission_log_mission"
     ZIP_CODE = os.getenv("ZIP_CODE")
     
-    UNTREATED = '0'
-    PROCESSING= '1'
-    CLOSED = '2'
-    
-    STATUS_CHOICES=(
-        (UNTREATED, 'unbearbeitet'),
-        (PROCESSING, 'in Arbeit'),
-        (CLOSED, 'abgeschlossen')
-    )
+    UNTREATED = 0
+    PROCESSING= 1
+    CLOSED = 2
 
-    HIGH = '1'
-    MEDIUM = '2'
-    LOW = '3'
-
-    PRIO_CHOICES=(
-        (HIGH, 'hoch'),
-        (MEDIUM, 'mittel'),
-        (LOW, 'niedrig'),
-    )
+    HIGH = 1
+    MEDIUM = 2
+    LOW = 3
     
     main_id=Column(Integer(), primary_key=True)
     keyword=Column(String(100), nullable=False)
@@ -52,8 +40,8 @@ class Mission(Base):
     street_no=Column(String(10), nullable=True)
     zip_code=Column(String(5), nullable=True, default=ZIP_CODE)
     
-    status=Column(String(15), nullable=False, default=UNTREATED)
-    prio=Column(String(15), nullable=False, default=MEDIUM)
+    status=Column(Integer(), nullable=False, default=UNTREATED)
+    prio=Column(Integer(), nullable=False, default=MEDIUM)
     
     start=Column(DateTime(), default=datetime.now())
     end=Column(DateTime(), nullable=True)
