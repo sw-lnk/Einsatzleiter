@@ -4,33 +4,22 @@ import io
 from django.db.models import Case, When
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import FileResponse
+
+from django_tables2 import SingleTableMixin
+from django_filters.views import FilterView
+
+from .tables import MissionHTMxTable
+from .filters import MissionFilter
 
 from .models import Mission, Entry, Orga, Unit
 from .forms import NewMission, UpdateMission, NewEntry, UpdateUnit
+
+from .helper import get_all_units, get_staff_dict
+
 from reports.mission_report import Report
 from reports.unit_report import UnitOverview
-
-def get_all_units(mission:Mission=None, exclude_status_6=True) -> list[Unit]:
-    all_units = Unit.objects.exclude(status=2)
-    
-    if exclude_status_6:
-        all_units = all_units.exclude(status=6)
-    
-    if mission:
-        all_units = all_units.filter(mission=mission)
-    
-    return all_units.order_by('call_sign')
-
-def get_staff_dict(all_units: list[Unit]) -> dict:
-    return {
-        'vf': sum([v.vf for v in all_units]),
-        'zf': sum([v.zf for v in all_units]),
-        'gf': sum([v.gf for v in all_units]),
-        'ms': sum([v.ms for v in all_units]),
-        'agt': sum([v.agt for v in all_units]),
-        'total': sum([v.staff_total() for v in all_units])
-    }
 
 # Create your views here.
 def dashboard(request):
@@ -48,24 +37,6 @@ def dashboard(request):
     context['staff'] = get_staff_dict(all_units)
     
     return render(request, 'mission_log/dashboard.html', context)
-
-@login_required
-def all_missions(request):
-    context = {}
-    all_mission = Mission.objects.exclude(status__exact=Mission.Status.CLOSED).order_by('prio', 'status', 'start',)
-    missions = []
-    for mission in all_mission:
-        missions.append({
-            'mission': mission,
-            'units': get_all_units(mission),
-            'staff': get_staff_dict(get_all_units(mission))            
-        })
-    
-    context['missions'] = missions
-    
-    #context['mission_list'] = Mission.objects.exclude(status__exact=Mission.Status.CLOSED).order_by('prio', 'status', 'start',)
-    context['mission_list_closed'] = Mission.objects.filter(status__exact=Mission.Status.CLOSED).exclude(archiv__exact=True).order_by('-start')
-    return render(request, "mission_log/mission_all.html", context)
 
 @login_required
 def add(request):
@@ -329,3 +300,19 @@ def unit_add(request):
     form.fields["mission"].queryset = Mission.objects.exclude(status=2)
     context['form'] = form
     return render(request, 'mission_log/unit_detail.html', context)
+
+
+# @login_required
+class MissionHTMxTableView(LoginRequiredMixin, SingleTableMixin, FilterView):
+    table_class = MissionHTMxTable
+    queryset = Mission.objects.exclude(archiv=True)
+    filterset_class = MissionFilter
+    paginate_by = 15
+
+    def get_template_names(self):
+        if self.request.htmx:
+            template_name = "mission_log/mission_table_partial.html"
+        else:
+            template_name = "mission_log/mission_table_htmx.html"
+
+        return template_name

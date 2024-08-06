@@ -28,6 +28,10 @@ INSTALLED_APPS = [
     
     'django_extensions',
     
+    "django_tables2",
+    'django_filters',
+    "django_htmx",
+    
     "bootstrap_datepicker_plus",
     "crispy_forms",
     "crispy_bootstrap5",
@@ -40,6 +44,14 @@ INSTALLED_APPS = [
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
+DJANGO_TABLES2_TABLE_ATTRS = {
+    'class': 'table table-light table-hover table-bordered',
+    'thead': {
+        'class': 'table-secondary',
+    },
+}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -48,6 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 ROOT_URLCONF = "server.urls"

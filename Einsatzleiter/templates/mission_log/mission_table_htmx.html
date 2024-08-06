@@ -1,0 +1,51 @@
+{# templates/mission_log/mission_table_htmx.html #}
+{% extends "base_generic.html" %}
+
+{% load render_table from django_tables2 %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    <title>EL - Einsätze</title>
+    <!--<meta http-equiv="refresh" content="10">-->
+{% endblock %}
+
+{% block content %}
+    <div class="container-sm justify-content-center">
+        <div class="m-2 mt-4 text-center">
+            <div class="row justify-content-between">
+                <div class="col-auto">
+                    <h2 class="ui center aligned header">Einsatzübersicht</h2>
+                </div>            
+            </div>
+
+            <div class="row justify-content-between">
+                <div class="col-auto">
+                    <a class="btn btn-sm btn-info" href="{% url 'mission_new' %}" role="button">Neuer Einsatz</a>
+                </div>
+                <div class="col-auto">
+                    {# Search form #}                    
+                    <form hx-get="{% url 'mission_all' %}"
+                        hx-target="div.table-container" 
+                        hx-swap="outerHTML" 
+                        hx-indicator=".progress" 
+                        class="form-inline">                        
+                        {% crispy filter.form %}               
+                    </form>
+                </div>                    
+            </div>
+
+            <div class="row">
+                {# Progress indicator #}
+                <div class="progress">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                {# The actual table #}
+                {% render_table table %}
+            </div>
+        </div>
+    </div>  
+{% endblock %}

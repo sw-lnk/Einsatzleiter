@@ -1,0 +1,7 @@
+{% if record.prio == record.Prio.HIGH %}
+    <span class="badge bg-danger m-0">Hoch</span>
+{% elif record.prio == record.Prio.MEDIUM %}
+    <span class="badge bg-info text-dark m-0">Mittel</span>
+{% else %}
+    <span class="badge bg-secondary m-0">Niedrig</span>
+{% endif %}

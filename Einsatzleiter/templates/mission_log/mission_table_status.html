@@ -1,0 +1,7 @@
+{% if record.status == record.Status.CLOSED %}
+    <p class="badge bg-success m-0">Abgeschlossen</p>
+{% elif record.status == record.Status.PROCESSING %}
+    <p class="badge bg-primary text-light m-0">In Arbeit</p>
+{% else %}
+    <p class="badge bg-warning text-dark m-0">Unbearbeitet</p>
+{% endif %}

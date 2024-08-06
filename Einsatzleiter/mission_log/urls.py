@@ -5,7 +5,8 @@ from . import views
 urlpatterns = [
     path('', views.dashboard, name="mission_dashboard"),
     
-    path('mission_all', views.all_missions, name="mission_all"),    
+    path('mission_all', views.MissionHTMxTableView.as_view(), name='mission_all'),
+    #path('mission_old', views.all_missions, name="mission_old"),    
     path('mision_add', views.add, name="mission_new"),
     path('mission_overview/<int:main_id>/', views.mission_overview, name="mission_overview"),
     path('mission_detail/<int:main_id>/', view=views.update, name='mission_detail'),

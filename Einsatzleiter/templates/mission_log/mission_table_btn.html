@@ -1,0 +1,14 @@
+<div class="text-end">
+    {% if record.status == record.Status.CLOSED %}
+        <a href="{% url "mission_archiv_ask" record.main_id %}" class="btn btn-sm btn-warning m-0 py-0">
+            <i class="bi bi-archive"></i>
+        </a>
+    {% endif %}
+
+    <a href="{% url "mission_detail" record.main_id %}" class="btn btn-sm btn-info m-0 py-0">
+        <i class="bi bi-pencil-square"></i>
+    </a>
+    <a href="{% url "mission_overview" record.main_id %}" class="btn btn-sm btn-success m-0 py-0">
+        <i class="bi bi-book"></i>
+    </a>
+</div>

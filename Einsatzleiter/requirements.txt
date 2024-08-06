@@ -11,6 +11,9 @@ django-bootstrap5==24.2
 django-compat==1.0.15
 django-crispy-forms==2.1
 django-extensions==3.2.3
+django-filter==24.3
+django-htmx==1.18.0
+django-tables2==2.7.0
 fonttools==4.53.1
 fpdf2==2.7.9
 greenlet==3.0.3
