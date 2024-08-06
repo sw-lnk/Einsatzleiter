@@ -27,7 +27,7 @@ class Mission(Base):
     ZIP_CODE = os.getenv("ZIP_CODE")
     
     UNTREATED = 0
-    PROCESSING= 1
+    PROCESSING = 1
     CLOSED = 2
 
     HIGH = 1

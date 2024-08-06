@@ -305,7 +305,7 @@ def unit_add(request):
 # @login_required
 class MissionHTMxTableView(LoginRequiredMixin, SingleTableMixin, FilterView):
     table_class = MissionHTMxTable
-    queryset = Mission.objects.exclude(archiv=True)
+    queryset = Mission.objects.exclude(archiv=True).order_by('-start')
     filterset_class = MissionFilter
     paginate_by = 15
 
