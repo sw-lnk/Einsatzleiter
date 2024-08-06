@@ -6,40 +6,42 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">                
-        <form method="post" class="m-4">                   
-            {% csrf_token %}
-            <div class="row">
-                <div class="col"><h4 class="m-3 text-center">{{ header }}</h4></div>
-                <div class="col-auto align-self-center">
-                    <button class="btn btn-sm btn-primary" type="submit">Speichern</button>
+    <div class="container-sm justify-content-center d-flex">
+        <div class="container">                
+            <form method="post" class="m-4">                   
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col"><h4 class="m-3 text-center">{{ header }}</h4></div>
+                    <div class="col-auto align-self-center">
+                        <button class="btn btn-sm btn-primary" type="submit">Speichern</button>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col">{{ form.call_sign | as_crispy_field }}</div>
-                <div class="col-auto">{{ form.status | as_crispy_field }}</div>
-            </div>
-            <div class="row">
-                <div class="col">{{ form.info | as_crispy_field }}</div>
-            </div>
-            <div class="row">
-                <div class="col-2">{{ form.vf | as_crispy_field }}</div>
-                <div class="col-2">{{ form.zf | as_crispy_field }}</div>
-                <div class="col-2">{{ form.gf | as_crispy_field }}</div>
-                <div class="col-2">{{ form.ms | as_crispy_field }}</div>
-                <div class="col-2">{{ form.agt | as_crispy_field }}</div>
-            </div>
-            <div class="row">
-                <div class="col-auto">{{ form.orga | as_crispy_field }}</div>
-                <div class="col-auto">{{ form.mission | as_crispy_field }}</div>
-                <div class="col-auto align-self-center">
-                    {% if unit.mission %}
-                        <a class="btn btn-sm btn-info" href="{% url 'mission_overview' main_id=unit.mission.main_id %}" role="button">
-                            {{ unit.mission }}
-                        </a>
-                    {% endif%}
+                <div class="row">
+                    <div class="col">{{ form.call_sign | as_crispy_field }}</div>
+                    <div class="col-auto">{{ form.status | as_crispy_field }}</div>
                 </div>
-            </div>           
-        </form>
+                <div class="row">
+                    <div class="col">{{ form.info | as_crispy_field }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-2">{{ form.vf | as_crispy_field }}</div>
+                    <div class="col-2">{{ form.zf | as_crispy_field }}</div>
+                    <div class="col-2">{{ form.gf | as_crispy_field }}</div>
+                    <div class="col-2">{{ form.ms | as_crispy_field }}</div>
+                    <div class="col-2">{{ form.agt | as_crispy_field }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-auto">{{ form.orga | as_crispy_field }}</div>
+                    <div class="col-auto">{{ form.mission | as_crispy_field }}</div>
+                    <div class="col-auto align-self-center">
+                        {% if unit.mission %}
+                            <a class="btn btn-sm btn-info" href="{% url 'mission_overview' main_id=unit.mission.main_id %}" role="button">
+                                {{ unit.mission }}
+                            </a>
+                        {% endif%}
+                    </div>
+                </div>           
+            </form>
+        </div>
     </div>
 {% endblock %}

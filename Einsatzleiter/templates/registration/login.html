@@ -1,21 +1,23 @@
 {% extends "base_generic.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-<main class="form-signin">    
-    <form method="post" action="{% url 'login' %}" class="mt-5">
-        {% csrf_token %}
-        <div class="form-floating px-5 pt-4 pb-2 bg-light rounded">
-            {{ form.username | as_crispy_field }}
-            {{ form.password | as_crispy_field }}
-            <div class="text-center">
-                <input type="hidden" name="next" value="{{next}}" />
-                <button class="w-50 btn btn-lg btn-primary" type="submit">Login</button>
-                <p><a href="{% url 'password_reset' %}">Passwort vergessen?</a></p>
-            </div>
-            {% if form.errors %}
-                <span class="badge bg-warning text-dark mb-3">Passwort und Benutzername stimmen nicht überein.</span>
-            {% endif %}
-        </div>        
-    </form>
-</main>
+<div class="container-sm text-center justify-content-center d-flex">
+    <main class="form-signin">    
+        <form method="post" action="{% url 'login' %}" class="mt-5">
+            {% csrf_token %}
+            <div class="form-floating px-5 pt-4 pb-2 bg-light rounded">
+                {{ form.username | as_crispy_field }}
+                {{ form.password | as_crispy_field }}
+                <div class="text-center">
+                    <input type="hidden" name="next" value="{{next}}" />
+                    <button class="w-50 btn btn-sm btn-primary" type="submit">Login</button>
+                    <p><a href="{% url 'password_reset' %}">Passwort vergessen?</a></p>
+                </div>
+                {% if form.errors %}
+                    <span class="badge bg-warning text-dark mb-3">Passwort und Benutzername stimmen nicht überein.</span>
+                {% endif %}
+            </div>        
+        </form>
+    </main>
+</div>
 {% endblock %}

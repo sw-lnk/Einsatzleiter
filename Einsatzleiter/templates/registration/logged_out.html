@@ -1,10 +1,12 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-  <div class="text-center m-3 p-3 bg-light rounded">
-    <div class="alert alert-success" role="alert">
-      Erfolgreicher Logout.
+  <div class="container-sm justify-content-center d-flex">
+    <div class="text-center m-3 p-3 bg-light rounded">
+      <div class="alert alert-success" role="alert">
+        Erfolgreicher Logout.
+      </div>
+      <a class="btn btn-outline-info" href="{% url 'login'%}" role="button">Zum Login</a>
     </div>
-    <a class="btn btn-outline-info" href="{% url 'login'%}" role="button">Zum Login</a>
-  </div>  
+  </div>
 {% endblock %}

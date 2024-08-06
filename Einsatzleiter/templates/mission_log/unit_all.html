@@ -5,92 +5,94 @@
 {% endblock %}
 
 {% block content %}
-    <div class="accordion m-2 mt-4" id="accordionUnit">    
-        <div class="row justify-content-between">
-            <div class="col-auto">
-                <h2 class="ui center aligned header">Einheitenübersicht</h2>
-                <h4>
-                    <span class="m-0 p-0 ms-5">{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
-                    <span class="m-0 p-0" style="text-decoration:underline">{{ staff.total }}</span>
-                </h4> 
-            </div>            
-            <div class="col-auto">
-                <div class="row">
-                    <a class="btn btn-sm btn-info" href="{% url 'unit_new' %}" role="button">Neue Einheit</a>
-                </div>
-                <div class="row my-1">
-                    <a class="btn btn-sm btn-info" href="{% url 'unit_report_incl2' %}" target="_blank">Einheitenübersicht inkl. Status 2</a>
-                </div>
-                <div class="row">
-                    <a class="btn btn-sm btn-info" href="{% url 'unit_report_excl2' %}" target="_blank">Einheitenübersicht exkl. Status 2</a>
-                </div>              
-            </div>
-        </div>              
-        <hr>
-        {% for orga in orgas %}
-            {% if orga.units %} 
-                <div class="accordion-item">
-                <h2 class="accordion-header" id="heading{{orga.orga.id}}">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{orga.orga.id}}" aria-expanded="true" aria-controls="collapse{{orga.orga.id}}">
-                    {{ orga.orga.name }}
-                    </button>
-                </h2>
-                <div id="collapse{{orga.orga.id}}" class="accordion-collapse collapse show" aria-labelledby="heading{{orga.orga.id}}" data-bs-parent="#accordionUnit">
-                    <div class="accordion-body">
-                        <table class="table table-light table-hover table-bordered">
-                            <thead class="table-secondary">
-                            <tr>
-                                <th scope="col">Funkkennung</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Einsatz</th>
-                                <th scope="col">VF</th>
-                                <th scope="col">ZF</th>
-                                <th scope="col">GF</th>
-                                <th scope="col">MS</th>
-                                <th scope="col">Ges.</th>
-                                <th scope="col">AGT</th>
-                                <th scope="col"></th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                                {% for unit in orga.units %}
-                                    <tr>
-                                        <th class="text-start" scope="row">{{ unit.call_sign }}</th>
-                                        <td class="text-center">
-                                            {% if unit.status == 0 %}
-                                                <span class="badge bg-danger">{{ unit.status }}</span>
-                                            {% elif unit.status == 5 %}
-                                                <span class="badge bg-warning text-dark">{{ unit.status }}</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">{{ unit.status }}</span>
-                                            {% endif%}
-                                        </td>
-                                        <td class="text-center">
-                                            {% if unit.mission %}
-                                                <a class="btn btn-sm btn-info" href="{% url 'mission_overview' main_id=unit.mission.main_id %}" role="button">
-                                                    {{ unit.mission.short }}
-                                                </a>
-                                            {% endif%}
-                                        </td>
-                                        <td class="text-end">{{ unit.vf }}</td>
-                                        <td class="text-end">{{ unit.zf }}</td>
-                                        <td class="text-end">{{ unit.gf }}</td>
-                                        <td class="text-end">{{ unit.ms }}</td>
-                                        <td class="text-end">{{ unit.staff_total }}</td>
-                                        <td class="text-end">{{ unit.agt }}</td>
-                                        <td>
-                                            <a class="btn btn-sm btn-info text-dark" href="{% url 'unit_detail' pk=unit.id %}">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a>
-                                        </td> 
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+    <div class="container-sm justify-content-center d-flex">
+        <div class="accordion m-2 mt-4" id="accordionUnit">    
+            <div class="row justify-content-between">
+                <div class="col-auto">
+                    <h2 class="ui center aligned header">Einheitenübersicht</h2>
+                    <h4>
+                        <span class="m-0 p-0 ms-5">{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
+                        <span class="m-0 p-0" style="text-decoration:underline">{{ staff.total }}</span>
+                    </h4> 
+                </div>            
+                <div class="col-auto">
+                    <div class="row">
+                        <a class="btn btn-sm btn-info" href="{% url 'unit_new' %}" role="button">Neue Einheit</a>
                     </div>
+                    <div class="row my-1">
+                        <a class="btn btn-sm btn-info" href="{% url 'unit_report_incl2' %}" target="_blank">Einheitenübersicht inkl. Status 2</a>
+                    </div>
+                    <div class="row">
+                        <a class="btn btn-sm btn-info" href="{% url 'unit_report_excl2' %}" target="_blank">Einheitenübersicht exkl. Status 2</a>
+                    </div>              
                 </div>
-                </div>
-            {% endif %}         
-        {% endfor %}     
-      </div>
+            </div>              
+            <hr>
+            {% for orga in orgas %}
+                {% if orga.units %} 
+                    <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{orga.orga.id}}">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{orga.orga.id}}" aria-expanded="true" aria-controls="collapse{{orga.orga.id}}">
+                        {{ orga.orga.name }}
+                        </button>
+                    </h2>
+                    <div id="collapse{{orga.orga.id}}" class="accordion-collapse collapse show" aria-labelledby="heading{{orga.orga.id}}" data-bs-parent="#accordionUnit">
+                        <div class="accordion-body">
+                            <table class="table table-light table-hover table-bordered">
+                                <thead class="table-secondary">
+                                <tr>
+                                    <th scope="col">Funkkennung</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Einsatz</th>
+                                    <th scope="col">VF</th>
+                                    <th scope="col">ZF</th>
+                                    <th scope="col">GF</th>
+                                    <th scope="col">MS</th>
+                                    <th scope="col">Ges.</th>
+                                    <th scope="col">AGT</th>
+                                    <th scope="col"></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                    {% for unit in orga.units %}
+                                        <tr>
+                                            <th class="text-start" scope="row">{{ unit.call_sign }}</th>
+                                            <td class="text-center">
+                                                {% if unit.status == 0 %}
+                                                    <span class="badge bg-danger">{{ unit.status }}</span>
+                                                {% elif unit.status == 5 %}
+                                                    <span class="badge bg-warning text-dark">{{ unit.status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ unit.status }}</span>
+                                                {% endif%}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if unit.mission %}
+                                                    <a class="btn btn-sm btn-info" href="{% url 'mission_overview' main_id=unit.mission.main_id %}" role="button">
+                                                        {{ unit.mission.short }}
+                                                    </a>
+                                                {% endif%}
+                                            </td>
+                                            <td class="text-end">{{ unit.vf }}</td>
+                                            <td class="text-end">{{ unit.zf }}</td>
+                                            <td class="text-end">{{ unit.gf }}</td>
+                                            <td class="text-end">{{ unit.ms }}</td>
+                                            <td class="text-end">{{ unit.staff_total }}</td>
+                                            <td class="text-end">{{ unit.agt }}</td>
+                                            <td>
+                                                <a class="btn btn-sm btn-info text-dark" href="{% url 'unit_detail' pk=unit.id %}">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+                                            </td> 
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    </div>
+                {% endif %}         
+            {% endfor %}     
+        </div>
+    </div>
 {% endblock %}

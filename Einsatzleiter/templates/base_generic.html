@@ -1,4 +1,4 @@
-{% load static  %}
+{% load static from static %}
 {% load crispy_forms_tags %}
 <!DOCTYPE html>
 <html lang="en">
@@ -12,8 +12,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script type="text/javascript" src="{{ STATIC_URL }} /static/jquery-3.7.1.js"></script> 
+    <script type="text/javascript" src="{{ STATIC_URL }} /static/htmx.min.js" defer></script>
     <!-- Add additional CSS in static file -->
-    <link rel="stylesheet" href="{% static "css/styles.css" %}" />
+    <link rel="stylesheet" href="{{ STATIC_URL }} /static/css/styles.css"/>
   </head>
   <body>
     <div class="p-3 bg-danger text-white text-center">
@@ -61,13 +62,13 @@
       </div>
     </nav>    
     
-    <div class="container-fluid d-flex justify-content-center">
-      {% block content %}
-        <div class="container-fluid m-5 p-5 text-center">
-          <h1>Startseite</h1>
-        </div>
-      {% endblock %}
-    </div>
+
+    {% block content %}
+      <div class="container-fluid m-5 p-5 text-center">
+        <h1>Startseite</h1>
+      </div>
+    {% endblock %}
+    
 
     {% block footer %}{% endblock %}
   </body>
