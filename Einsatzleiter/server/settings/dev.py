@@ -1,4 +1,7 @@
 from pathlib import Path
+import os
+
+from .base import BASE_DIR, STATIC_URL, MEDIA_URL
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32"
@@ -6,6 +9,14 @@ SECRET_KEY = "django-insecure-pnxcsdqt#*edu21fs^c4d840sj*9r_#ym9mu@#0m%$ffiasg32
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = []
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.0/howto/static-files/
+
+STATICFILES_DIRS = [ os.path.join(BASE_DIR, STATIC_URL) ]
+STATIC_ROOT = os.path.join(BASE_DIR, STATIC_URL)
+
+MEDIA_ROOT = os.path.join(BASE_DIR, MEDIA_URL)
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

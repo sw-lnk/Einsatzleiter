@@ -1,5 +1,7 @@
 import os
 
+from .base import BASE_DIR, STATIC_URL, MEDIA_URL
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -11,6 +13,14 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = False
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(",")
 ALLOWED_HOSTS.append(os.environ.get("DEVICE_IP"))
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.0/howto/static-files/
+
+
+STATICFILES_DIRS = [ os.path.join('usr', 'src', 'app', STATIC_URL) ]
+STATIC_ROOT = os.path.join('usr', 'src', 'app', STATIC_URL)
+MEDIA_ROOT = os.path.join('usr', 'src', 'app', MEDIA_URL)
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
