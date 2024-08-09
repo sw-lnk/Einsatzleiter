@@ -17,8 +17,8 @@ ALLOWED_HOSTS.append(os.environ.get("DEVICE_IP"))
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 # STATICFILES_DIRS = [ os.path.join('usr', 'src', 'app', STATIC_URL) ]
-STATIC_ROOT = os.path.join('usr', 'src', 'app', 'staticfiles')
-MEDIA_ROOT = os.path.join('usr', 'src', 'app', 'mediafiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
