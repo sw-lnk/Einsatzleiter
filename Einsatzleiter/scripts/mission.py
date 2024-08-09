@@ -26,13 +26,9 @@ class Mission(Base):
     __tablename__ = "mission_log_mission"
     ZIP_CODE = os.getenv("ZIP_CODE")
     
-    UNTREATED = 0
-    PROCESSING = 1
-    CLOSED = 2
-
-    HIGH = 1
-    MEDIUM = 2
-    LOW = 3
+    UNTREATED = 0, 'Unbearbeitet'
+    CLOSED = 2, 'Abgeschlossen'
+    MEDIUM = 2, 'Mittel'
     
     main_id=Column(Integer(), primary_key=True)
     keyword=Column(String(100), nullable=False)
@@ -40,8 +36,8 @@ class Mission(Base):
     street_no=Column(String(10), nullable=True)
     zip_code=Column(String(5), nullable=True, default=ZIP_CODE)
     
-    status=Column(Integer(), nullable=False, default=UNTREATED)
-    prio=Column(Integer(), nullable=False, default=MEDIUM)
+    status=Column(Integer(), nullable=False, default=UNTREATED[0])
+    prio=Column(Integer(), nullable=False, default=MEDIUM[0])
     
     start=Column(DateTime(), default=datetime.now())
     end=Column(DateTime(), nullable=True)
@@ -63,15 +59,7 @@ class Mission(Base):
         return a
     
     def auto_entry(self) -> str:
-        for k, v in self.STATUS_CHOICES:
-            if k == self.status:
-               status_value = v
-        
-        for k, v in self.PRIO_CHOICES:
-            if k == self.prio:
-               prio_value = v
-        
-        return f'{self.keyword}, Status: {status_value}, Prio: {prio_value} - {self.address()}'
+        return f'{self.keyword}, Status: {self.UNTREATED[1]}, Prio: {self.MEDIUM[1]} - {self.address()}'
 
 
 class Entry(Base):    
@@ -152,8 +140,8 @@ def new_mission(msg: dict) -> None:
     new_mission.street = msg['street']
     new_mission.street_no = msg['street_no']
     new_mission.start = msg['date']
-    new_mission.status = new_mission.UNTREATED
-    new_mission.prio = new_mission.MEDIUM
+    new_mission.status = new_mission.UNTREATED[0]
+    new_mission.prio = new_mission.MEDIUM[0]
 
     entry = Entry()
     entry.text = f"Automatisch erstellt: {new_mission.auto_entry()}"
@@ -176,7 +164,7 @@ def update_mission_end(msg) -> None:
         return
     
     mission.end = msg['date']
-    mission.status = mission.CLOSED
+    mission.status = mission.CLOSED[0]
     
     entry = Entry()
     entry.text = f"Automatisch erstellt: {mission.auto_entry()}"
