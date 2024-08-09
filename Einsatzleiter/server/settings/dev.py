@@ -12,10 +12,8 @@ ALLOWED_HOSTS = []
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-
-STATICFILES_DIRS = [ os.path.join(BASE_DIR, STATIC_URL) ]
+# STATICFILES_DIRS = [ os.path.join(BASE_DIR, STATIC_URL) ]
 STATIC_ROOT = os.path.join(BASE_DIR, STATIC_URL)
-
 MEDIA_ROOT = os.path.join(BASE_DIR, MEDIA_URL)
 
 # Database
