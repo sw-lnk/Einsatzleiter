@@ -6,29 +6,29 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container-sm justify-content-center d-flex">
+    <div class="container-sm justify-content-center">
         <div class="container">                
             <form method="post" class="m-4">                   
                 {% csrf_token %}
                 <div class="row">
-                    <div class="col"><h4 class="m-3 text-center">{{ header }}</h4></div>
+                    <div class="col-auto"><h4 class="m-3 text-center">{{ header }}</h4></div>
                     <div class="col-auto align-self-center">
                         <button class="btn btn-sm btn-primary" type="submit">Speichern</button>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col">{{ form.call_sign | as_crispy_field }}</div>
+                    <div class="col col-sm">{{ form.call_sign | as_crispy_field }}</div>
                     <div class="col-auto">{{ form.status | as_crispy_field }}</div>
                 </div>
                 <div class="row">
-                    <div class="col">{{ form.info | as_crispy_field }}</div>
+                    <div class="col col-sm">{{ form.info | as_crispy_field }}</div>
                 </div>
                 <div class="row">
-                    <div class="col-2">{{ form.vf | as_crispy_field }}</div>
-                    <div class="col-2">{{ form.zf | as_crispy_field }}</div>
-                    <div class="col-2">{{ form.gf | as_crispy_field }}</div>
-                    <div class="col-2">{{ form.ms | as_crispy_field }}</div>
-                    <div class="col-2">{{ form.agt | as_crispy_field }}</div>
+                    <div class="col-auto col-sm">{{ form.vf | as_crispy_field }}</div>
+                    <div class="col-auto col-sm">{{ form.zf | as_crispy_field }}</div>
+                    <div class="col-auto col-sm">{{ form.gf | as_crispy_field }}</div>
+                    <div class="col-auto col-sm">{{ form.ms | as_crispy_field }}</div>
+                    <div class="col-auto col-sm">{{ form.agt | as_crispy_field }}</div>
                 </div>
                 <div class="row">
                     <div class="col-auto">{{ form.orga | as_crispy_field }}</div>

@@ -3,6 +3,10 @@
   background: #aaa;
 }
 
+.main-background {
+  background: #eeeeee;
+}
+
 .sidebar-nav {
   margin-top: 20px;
   padding: 0;
