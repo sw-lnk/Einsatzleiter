@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import requests
 
 from django.db import models
 from django.conf import settings
@@ -51,7 +52,26 @@ class Mission(models.Model):
             a += f' {self.street_no}'
         if self.zip_code:
             a += f', {self.zip_code}'
+            city = requests.get(f'https://openplzapi.org/de/Localities?postalCode={self.zip_code}').json()
+            if city:
+                a = a + ' ' + city[0]['name']            
         return a
+    
+    def street_long(self) -> str:
+        a = self.street
+        if self.street_no:
+            a += f' {self.street_no}'
+        return a
+    
+    def city(self) -> str:
+        city = requests.get(f'https://openplzapi.org/de/Localities?postalCode={self.zip_code}').json()
+        if city:
+            return f'{self.zip_code} {city[0]["name"]}'
+        else:
+            return f'{self.zip_code}'
+    
+    def prio_(self) -> str:
+        return self.Prio(self.prio)
     
     def auto_entry(self) -> str:
         return f'{self.keyword}, Status: {self.status}, Prio: {self.prio} - {self.address()}'

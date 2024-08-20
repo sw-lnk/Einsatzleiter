@@ -7,42 +7,95 @@
 
 {% block content %} 
     <div class="container">
-        <div class="row mx-1 mt-5">
-            <div class="col">
-                <h3 class="mb-1">{{ mission.keyword }}, {{ mission.street }} {{ mission.street_no }}</h3>
-                <small class="m-0">Einsatznr.: {{ mission.main_id }}</small> <!-- TODO: ID kleiner (evtl. in Zweiter Zeile) zeigen und Stichwort wie jetzt -->
-            </div>
-            <div class="col-auto align-self-center">
-                <span class="m-0 p-0 ms-5">{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
-                <span class="m-0 p-0" style="text-decoration:underline">{{ staff.total }}</span>
-                <span class="m-0 p-0 ms-2">(AGT: {{ staff.agt }})</span>
-            </div>
-            <div class="col-auto align-self-center">
-                <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_detail' main_id=mission.main_id %}">Einsatzdetails</a>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-auto">
-                <a class="btn btn-sm btn-primary text-light my-2" href="{% url 'mission_report' main_id=mission.main_id %}" target="_blank">Erstelle Protokoll</a>
-            </div>
-        </div>
-        <div class="row">
-            {% for unit in all_units %}
-                <div class="col-auto">
-                    <a class="btn btn-sm btn-info" href="{% url 'unit_detail' pk=unit.id %}" role="button">
-                        {{ unit.call_sign }} 
-                        {% if unit.status == 0 %}
-                            <span class="badge bg-danger">{{ unit.status }}</span>
-                        {% elif unit.status == 5 %}
-                            <span class="badge bg-warning text-dark">{{ unit.status }}</span>
-                        {% else %}
-                            <span class="badge bg-secondary">{{ unit.status }}</span>
-                        {% endif%}
-                    </a>
+        <div class="card my-4">
+            <div class="card-header">
+                <div class="row justify-content-between">
+                    <div class="col">
+                        <h3 style="display: inline;">{{ mission.keyword }}</h3>
+                        <small>({{ mission.main_id }})</small>
+                    </div>
+                    <div class="col-auto">
+                        <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_report' main_id=mission.main_id %}" target="_blank"><i class="bi bi-printer"></i></a>
+                        <a class="btn btn-sm btn-primary text-light m-1" href="{% url 'mission_detail' main_id=mission.main_id %}"><i class="bi bi-pencil-square"></i></a>
+                    </div>
                 </div>
-            {% endfor %}
-        </div>        
-        <hr>
+            </div>
+            <div class="card-body">
+                <div class="row justify-content-between">
+                    <div class="col-auto">
+                        <small>Anschrift</small>
+                        <p class="m-0">{{ mission.street_long }}</p>
+                        <p>{{ mission.city }}</p>
+                    </div>
+                    <div class="col-auto">
+                        <small>Kräfteübersicht</small>
+                        <p class="m-0 p-0">
+                            <span>{{ staff.vf }}/{{ staff.zf }}/{{ staff.gf }}/{{ staff.ms }} =</span>
+                            <span style="text-decoration:underline">{{ staff.total }}</span>
+                        </p>
+                        <small class="m-0 p-0">AGT: {{ staff.agt }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <small>Startzeit</small>
+                        <p>{{ mission.start }}</p>
+                        {% if mission.end %}
+                            <small>Endzeit</small>
+                            <p>{{ mission.end }}</p>
+                        {% endif%}
+                    </div>
+                    <div class="col-auto">
+                        <small>Priorität</small>
+                        <p class="m-0">
+                            {% if mission.prio == mission.Prio.HIGH %}
+                                <span class="badge bg-danger">Hoch</span>
+                            {% elif mission.prio == mission.Prio.MEDIUM %}
+                                <span class="badge bg-warning text-dark">Mittel</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Niedrig</span>
+                            {% endif %}
+                        </p>
+
+                        <small>Status</small>
+                        <p class="m-0">
+                            {% if mission.status == mission.Status.CLOSED %}
+                                <span class="badge bg-success">Abgeschlossen</span>
+                            {% elif mission.status == mission.Status.PROCESSING %}
+                                <span class="badge bg-secondary">In Arbeit</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Unbearbeitet</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if all_units %}
+            <div class="card my-4">
+                <div class="card-header">
+                    <h5>Einheiten</h5>                
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for unit in all_units %}
+                            <div class="col-auto m-0">
+                                <a class="btn btn-sm btn-info" href="{% url 'unit_detail' pk=unit.id %}" role="button">
+                                    {{ unit.call_sign }} 
+                                    {% if unit.status == 0 %}
+                                        <span class="badge bg-danger">{{ unit.status }}</span>
+                                    {% elif unit.status == 5 %}
+                                        <span class="badge bg-warning text-dark">{{ unit.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ unit.status }}</span>
+                                    {% endif%}
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif%}
+
         <div class="row m-1">
             {{ form.media }}
             <form method="post">
@@ -59,7 +112,7 @@
                 </div>             
             </form>
         </div>
-        <hr>
+        
         <table class="table table-light table-hover table-bordered">
             <thead class="table-secondary">
             <tr>
